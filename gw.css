@@ -1058,17 +1058,17 @@ body.overlay-active #player-name {
   /* Fixed footer at bottom */
   .start-panel-footer {
     flex: 0 0 auto;
-    margin-top: 0.6em;
+    margin-top: 0.8em;
   }
 
   .start-header {
     text-align: center;
-    margin-bottom: 0.3em;
+    margin-bottom: 0.5em;
   }
 
   .start-title-logo {
     max-width: 100%;
-    width: 85%;
+    width: 92%;
     height: auto;
     display: inline-block;
     filter:
@@ -1082,12 +1082,12 @@ body.overlay-active #player-name {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 1em;
-    gap: 0.4em;
+    margin-bottom: 1.2em;
+    gap: 0.5em;
   }
 
   .start-logo {
-    max-width: 6em;
+    max-width: 7em;
     height: auto;
     display: block;
   }
@@ -1113,14 +1113,14 @@ body.overlay-active #player-name {
   }
 
   .start-body {
-    margin-bottom: 0.6em;
+    margin-bottom: 0.8em;
   }
 
   .start-field-row {
     display: flex;
     align-items: center;
-    gap: 0.7em;
-    margin-bottom: 0.9em;
+    gap: 0.8em;
+    margin-bottom: 1em;
     padding-left: clamp(8px, 3vw, 52px);
     padding-right: clamp(8px, 3vw, 8px);
   }
@@ -1151,7 +1151,7 @@ body.overlay-active #player-name {
   }
 
   .opponent-block {
-    margin-top: 0.4em;
+    margin-top: 0.5em;
   }
 
   .opponent-title-row {
@@ -1180,7 +1180,7 @@ body.overlay-active #player-name {
     column-gap: 0.6em;
     align-items: center;
     font-size: 1em;
-    padding: 0.21em 0.14em;
+    padding: 0.35em 0.2em;
   }
 
   .opponent-row + .opponent-row {
@@ -1218,7 +1218,7 @@ body.overlay-active #player-name {
   }
 
   .firstdeal-block {
-    margin-top: 0.6em;
+    margin-top: 0.8em;
   }
 
   .firstdeal-title {
@@ -1326,7 +1326,7 @@ body.overlay-active #player-name {
   .start-buttons-main button {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 0.7em 1.1em;
+    padding: 0.8em 1.2em;
     font-size: 1.14em;
     line-height: 1.3;
     white-space: normal;
