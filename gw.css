@@ -1286,11 +1286,15 @@ body.overlay-active #player-name {
 
   /* When the start panel is in instructions mode, let the instructions panel
      become the flexible child that fills the remaining panel height. */
-  #start-panel.instructions-open #instructions-panel,
-  #start-panel.results-open #results-panel {
+  #start-panel.instructions-open #instructions-panel {
     display: flex;
     flex: 1 1 auto;
     min-height: 0; /* allow flex child to shrink/scroll correctly */
+  }
+
+  #start-panel.results-open #results-panel {
+    display: flex;
+    flex: 0 0 auto; /* size to content, don't fill height */
   }
 
   /* Make the instructions content inside the panel take the available space and scroll;
@@ -1367,11 +1371,9 @@ body.overlay-active #player-name {
 
   /* Results panel content */
   #results-panel .results-content {
-    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     gap: 1.5em;
     padding: 2em;
     text-align: center;
