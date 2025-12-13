@@ -1466,7 +1466,7 @@ body.overlay-active #player-name {
     display: grid;
     grid-template-columns: 3.2em 1fr;
     column-gap: 0.6em;
-    row-gap: 0.35em;
+    row-gap: 0.22em;
     align-items: center;
     width: 100%;
   }
@@ -1496,18 +1496,25 @@ body.overlay-active #player-name {
     line-height: 1;
     letter-spacing: 0.02em;
     opacity: 0.95;
-    margin-bottom: 0.35em;
+    margin-bottom: 0.15em;
   }
 
   #results-panel .results-ruler .ruler-track {
     position: relative;
-    padding: 0.25em 0;
+    padding: 0.10em 0;
+  }
+
+  #results-panel .results-ruler .ruler-track-grid .ruler-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   #results-panel .results-ruler .ruler-line {
     position: absolute;
-    left: 0;
-    right: 0;
+    /* start/end at the first/last tick centers (half a cell inset) */
+    left: calc(100% / 28);
+    right: calc(100% / 28);
     top: 50%;
     height: 0;
     border-top: 2px solid rgba(30,192,0,0.55);
@@ -1532,7 +1539,7 @@ body.overlay-active #player-name {
     line-height: 1;
     letter-spacing: 0.02em;
     opacity: 0.92;
-    margin-top: 0.35em;
+    margin-top: 0.15em;
   }
 
   #results-panel .results-ruler .ruler-marker-grid {
