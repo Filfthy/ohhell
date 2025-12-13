@@ -1649,7 +1649,9 @@
           }
 
           if (gameOver) {
-            this.view.setStatus(this.game.getFinalResultText());
+            const resultText = this.game.getFinalResultText();
+            this.view.setStatus(resultText);
+            setTimeout(() => alert(resultText), 500);
           }
         };
 
