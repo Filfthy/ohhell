@@ -993,10 +993,8 @@
         this.overlayActive = true;
         document.body.classList.add("overlay-active");
 
-        // Lock panel height and switch to results mode
+        // Switch to results mode (do not lock height)
         if (startPanel) {
-          const r = startPanel.getBoundingClientRect();
-          startPanel.style.height = Math.round(r.height) + 'px';
           startPanel.classList.add('results-open');
         }
 

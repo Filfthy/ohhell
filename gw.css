@@ -1012,6 +1012,17 @@ body.overlay-active #player-name {
     max-height: 92vh;
   }
 
+  /* Results should not force a full-height panel */
+  #start-panel.results-open {
+    height: auto;
+    max-height: 92vh;
+  }
+
+  #start-panel.results-open .start-panel-content,
+  #start-panel.results-open .start-panel-footer {
+    display: none;
+  }
+
   #start-panel.instructions-open .start-header {
     flex: 0 0 auto;
   }
