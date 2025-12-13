@@ -64,7 +64,6 @@
     <div id="controls"></div>
   </div>
 
-  <!-- START OVERLAY -->
 <!-- START OVERLAY -->
 <div id="start-overlay">
   <div id="start-panel">
@@ -705,8 +704,10 @@
         this.aiNameEl = document.getElementById("ai-name");
         this.playerNameEl = document.getElementById("player-name");
 
-        document.getElementById("new-game-btn")
-          .addEventListener("click", () => this.startNewGame());
+        const newGameBtn = document.getElementById("new-game-btn");
+        if (newGameBtn) {
+          newGameBtn.addEventListener("click", () => this.startNewGame());
+        }
 
         this.bindStartOverlay();
 
