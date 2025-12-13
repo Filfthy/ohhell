@@ -222,11 +222,12 @@
     <!-- GAME RESULTS -->
     <div id="results-panel" style="display:none;">
       <div class="results-content">
-        <h2 id="results-title">Game Over</h2>
-        <div id="results-message"></div>
+        <h2 id="results-winner"></h2>
+        <div id="results-breakdown"></div>
+        <div id="results-match-table" style="display:none;"></div>
         <div class="results-buttons">
-          <button id="btn-play-again">Play Again</button>
-          <button id="btn-new-game">New Game</button>
+          <button id="btn-next-game" style="display:none;">Next Game</button>
+          <button id="btn-close-results">Close</button>
         </div>
       </div>
     </div>
@@ -655,6 +656,11 @@
         this.matchMode = "quick";
         this.suitColors = "rbbg"; // default suit colours profile
 
+        // Match score tracking
+        this.playerMatchScore = 0;
+        this.aiMatchScore = 0;
+        this.matchHistory = []; // Array of {playerTricks, aiTricks, playerPoints, aiPoints}
+
         // Load saved settings if available
         try {
           const savedName = localStorage.getItem("gw_playerName");
@@ -920,17 +926,66 @@
         const overlay = document.getElementById("start-overlay");
         const startPanel = document.getElementById("start-panel");
         const resultsPanel = document.getElementById("results-panel");
-        const resultsMessage = document.getElementById("results-message");
+        const resultsWinner = document.getElementById("results-winner");
+        const resultsBreakdown = document.getElementById("results-breakdown");
+        const resultsMatchTable = document.getElementById("results-match-table");
         const startBody = overlay.querySelector('.start-body');
         const startButtons = overlay.querySelector('.start-buttons');
-        const playAgainBtn = document.getElementById("btn-play-again");
-        const newGameBtn = document.getElementById("btn-new-game");
+        const nextGameBtn = document.getElementById("btn-next-game");
+        const closeBtn = document.getElementById("btn-close-results");
 
         if (!overlay || !resultsPanel) return;
 
-        // Set results message
-        if (resultsMessage) {
-          resultsMessage.textContent = resultText;
+        // Get game results
+        const playerTricks = this.game.scoreScorePhase.player;
+        const aiTricks = this.game.scoreScorePhase.ai;
+        const playerPoints = Math.max(0, playerTricks - 6);
+        const aiPoints = Math.max(0, aiTricks - 6);
+
+        // Update match scores
+        this.playerMatchScore += playerPoints;
+        this.aiMatchScore += aiPoints;
+        this.matchHistory.push({ playerTricks, aiTricks, playerPoints, aiPoints });
+
+        // Determine winner
+        let winnerText = "";
+        if (playerTricks > aiTricks) {
+          winnerText = `${this.playerName} Wins!`;
+        } else if (aiTricks > playerTricks) {
+          winnerText = `${this.opponentName} Wins!`;
+        } else {
+          winnerText = "It's a Tie!";
+        }
+
+        if (resultsWinner) {
+          resultsWinner.textContent = winnerText;
+        }
+
+        // Breakdown
+        if (resultsBreakdown) {
+          let breakdown = `<strong>${this.playerName}:</strong> ${playerTricks} tricks, ${playerPoints} points<br>`;
+          breakdown += `<strong>${this.opponentName}:</strong> ${aiTricks} tricks, ${aiPoints} points`;
+          resultsBreakdown.innerHTML = breakdown;
+        }
+
+        // Check if match is over
+        const isMatch = this.matchMode === "match";
+        const matchOver = isMatch && (this.playerMatchScore >= this.matchTarget || this.aiMatchScore >= this.matchTarget);
+
+        // Show match table if in match mode
+        if (resultsMatchTable) {
+          if (isMatch && this.matchHistory.length > 0) {
+            let table = '<table><thead><tr><th>Round</th><th>' + this.playerName + '</th><th>' + this.opponentName + '</th></tr></thead><tbody>';
+            this.matchHistory.forEach((round, idx) => {
+              table += `<tr><td>${idx + 1}</td><td>${round.playerPoints}</td><td>${round.aiPoints}</td></tr>`;
+            });
+            table += `<tr style="font-weight:700;"><td>Total</td><td>${this.playerMatchScore}</td><td>${this.aiMatchScore}</td></tr>`;
+            table += '</tbody></table>';
+            resultsMatchTable.innerHTML = table;
+            resultsMatchTable.style.display = 'block';
+          } else {
+            resultsMatchTable.style.display = 'none';
+          }
         }
 
         // Show overlay
@@ -952,17 +1007,27 @@
         // Show results panel
         resultsPanel.style.display = 'flex';
 
-        // Play Again button - restart same game type
-        if (playAgainBtn) {
-          playAgainBtn.onclick = () => {
-            this.hideGameResults();
-            this.startNewGame();
-          };
+        // Configure buttons based on match status
+        if (nextGameBtn) {
+          if (isMatch && !matchOver) {
+            // Match in progress - show Next Game button
+            nextGameBtn.style.display = 'inline-block';
+            nextGameBtn.onclick = () => {
+              this.hideGameResults();
+              this.startNewGame();
+            };
+          } else {
+            nextGameBtn.style.display = 'none';
+          }
         }
 
-        // New Game button - show start screen
-        if (newGameBtn) {
-          newGameBtn.onclick = () => {
+        // Close button - always visible
+        if (closeBtn) {
+          closeBtn.onclick = () => {
+            // Reset match scores for new match
+            this.playerMatchScore = 0;
+            this.aiMatchScore = 0;
+            this.matchHistory = [];
             this.hideGameResults();
           };
         }
