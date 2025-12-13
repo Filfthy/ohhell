@@ -920,6 +920,39 @@
             if (instrBtn) instrBtn.focus();
           }
         });
+
+        // Cheat key for testing: press 'p' to force game over with a random
+        // split of 13 scoring-phase tricks, then show the results overlay.
+        document.addEventListener("keydown", (ev) => {
+          if (ev.key !== "p" && ev.key !== "P") return;
+          if (ev.defaultPrevented) return;
+          if (this.overlayActive) return;
+          if (this.animating) return;
+
+          ev.preventDefault();
+          this.cheatEndGameRandom();
+        });
+      }
+
+      cheatEndGameRandom() {
+        const total = 13;
+        const playerTricks = Math.floor(Math.random() * (total + 1));
+        const aiTricks = total - playerTricks;
+
+        // Force the score-phase counters used by the results overlay.
+        if (!this.game.scoreScorePhase) this.game.scoreScorePhase = { player: 0, ai: 0 };
+        this.game.scoreScorePhase.player = playerTricks;
+        this.game.scoreScorePhase.ai = aiTricks;
+
+        // Optional: keep the on-table won-token stacks consistent if visible.
+        if (Array.isArray(this.game.playerWon)) this.game.playerWon = new Array(playerTricks).fill(1);
+        if (Array.isArray(this.game.aiWon)) this.game.aiWon = new Array(aiTricks).fill(1);
+
+        const resultText = (typeof this.game.getFinalResultText === "function")
+          ? this.game.getFinalResultText()
+          : "Game over.";
+
+        this.showGameResults(resultText);
       }
 
       showGameResults(resultText) {
