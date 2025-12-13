@@ -402,23 +402,13 @@ class CardView {
         img.draggable = false;
         img.style.pointerEvents = "none";
 
-        // Kings/Queens: stretch/squash into an 8% inset rounded rectangle.
-        if (card.rank === "K" || card.rank === "Q") {
+        // Royals: stretch/squash into an 8% inset rounded rectangle.
+        if (card.rank === "K" || card.rank === "Q" || card.rank === "J") {
           const inset = document.createElement("div");
           inset.className = "royal-inset";
           img.className = "royal-inset-img";
           inset.appendChild(img);
           center.appendChild(inset);
-        } else {
-          // Jacks keep the existing oversized look.
-          img.style.position = "absolute";
-          img.style.top = "50%";
-          img.style.left = "50%";
-          img.style.transform = "translate(-50%, -50%)";
-          img.style.width = "95%";
-          img.style.height = "160%";
-          img.style.objectFit = "fill";
-          center.appendChild(img);
         }
       } else {
         center.style.display = "block";
