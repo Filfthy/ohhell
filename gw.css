@@ -1425,6 +1425,13 @@ body.overlay-active #player-name {
     font-weight: 700;
   }
 
+  #results-panel #results-context {
+    font-size: 1.05em;
+    line-height: 1.2;
+    opacity: 0.9;
+    margin-top: -0.15em;
+  }
+
   #results-panel #results-breakdown {
     font-size: 1.2em;
     line-height: 1.6;

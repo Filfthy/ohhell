@@ -220,6 +220,7 @@
     <div id="results-panel" style="display:none;">
       <div class="results-content">
         <h2 id="results-winner"></h2>
+        <div id="results-context"></div>
         <div id="results-breakdown"></div>
         <div id="results-ruler" aria-label="Score ruler"></div>
         <div id="results-match-table" style="display:none;"></div>
@@ -960,6 +961,7 @@
         const startPanel = document.getElementById("start-panel");
         const resultsPanel = document.getElementById("results-panel");
         const resultsWinner = document.getElementById("results-winner");
+        const resultsContext = document.getElementById("results-context");
         const resultsBreakdown = document.getElementById("results-breakdown");
         const resultsRuler = document.getElementById("results-ruler");
         const resultsMatchTable = document.getElementById("results-match-table");
@@ -1003,6 +1005,26 @@
 
         if (resultsWinner) {
           resultsWinner.textContent = winnerText;
+        }
+
+        // Context line: game/round/match outcome
+        if (resultsContext) {
+          const matchOver = isMatch && (this.playerMatchScore >= this.matchTarget || this.aiMatchScore >= this.matchTarget);
+          let contextText = "";
+
+          if (!isMatch) {
+            contextText = "Game result";
+          } else if (matchOver) {
+            contextText = `Match result — First to ${this.matchTarget} points`;
+          } else {
+            contextText = `Round result — Match to ${this.matchTarget} points`;
+          }
+
+          if (isMatch) {
+            contextText += ` • ${this.playerMatchScore}–${this.aiMatchScore}`;
+          }
+
+          resultsContext.textContent = contextText;
         }
 
         // Breakdown
