@@ -1003,6 +1003,8 @@
           winnerText = "It's a Tie!";
         }
 
+        const isTie = (playerTricks === aiTricks);
+
         if (resultsWinner) {
           resultsWinner.textContent = winnerText;
         }
@@ -1013,11 +1015,11 @@
           let contextText = "";
 
           if (!isMatch) {
-            contextText = "Game result";
+            contextText = isTie ? "Game tied" : "Wins the game";
           } else if (matchOver) {
-            contextText = `Match result — First to ${this.matchTarget} points`;
+            contextText = isTie ? `Match tied — First to ${this.matchTarget} points` : `Wins the match — First to ${this.matchTarget} points`;
           } else {
-            contextText = `Round result — Match to ${this.matchTarget} points`;
+            contextText = isTie ? `Round tied — Match to ${this.matchTarget} points` : `Wins the round — Match to ${this.matchTarget} points`;
           }
 
           if (isMatch) {
