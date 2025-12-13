@@ -1068,7 +1068,8 @@ body.overlay-active #player-name {
 
   .start-title-logo {
     max-width: 100%;
-    width: 92%;
+    width: 100%;
+    max-height: 6em;
     height: auto;
     display: inline-block;
     filter:
