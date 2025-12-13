@@ -983,8 +983,8 @@ body.overlay-active #player-name {
     --scale-factor: calc(var(--panel-height) / 100);
     
     width: auto;
-    min-width: min(85vw, 400px);
-    max-width: min(95vw, 600px);
+    min-width: min(95vw, 320px);
+    max-width: min(98vw, 450px);
     height: var(--panel-height);
     max-height: var(--panel-height);
     background: rgba(3, 32, 18, 0.96);
