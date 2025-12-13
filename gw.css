@@ -41,7 +41,7 @@
  .suit-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.4em;
+  gap: 0.25em;
   cursor: pointer;
 
   /* cream/parchment pill */
@@ -136,7 +136,7 @@
 .firstdeal-option{
   display: inline-flex;
   align-items: center;
-  gap: 0.4em;
+  gap: 0.25em;
   font-size: 1em;
   white-space: nowrap;
 }
