@@ -1377,6 +1377,22 @@ body.overlay-active #player-name {
     background: rgba(30,192,0,0.16);
   }
 
+  #btn-instructions-done {
+    background: #1EC000;
+    color: #021408;
+    font-weight: 700;
+    border: 0;
+    padding-inline: 14px;
+    padding-block: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+
+  #btn-instructions-done:hover {
+    background: #23e000;
+  }
+
   /* Legacy .instructions-panel rules removed. Use the in-panel
      instructions layout driven by #start-panel.instructions-open. */
 
