@@ -219,6 +219,18 @@
     </div>
     </div> <!-- Close start-panel-content -->
 
+    <!-- GAME RESULTS -->
+    <div id="results-panel" style="display:none;">
+      <div class="results-content">
+        <h2 id="results-title">Game Over</h2>
+        <div id="results-message"></div>
+        <div class="results-buttons">
+          <button id="btn-play-again">Play Again</button>
+          <button id="btn-new-game">New Game</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MAIN BUTTONS -->
     <div class="start-panel-footer">
       <div class="start-buttons">
@@ -902,6 +914,76 @@
             if (instrBtn) instrBtn.focus();
           }
         });
+      }
+
+      showGameResults(resultText) {
+        const overlay = document.getElementById("start-overlay");
+        const startPanel = document.getElementById("start-panel");
+        const resultsPanel = document.getElementById("results-panel");
+        const resultsMessage = document.getElementById("results-message");
+        const startBody = overlay.querySelector('.start-body');
+        const startButtons = overlay.querySelector('.start-buttons');
+        const playAgainBtn = document.getElementById("btn-play-again");
+        const newGameBtn = document.getElementById("btn-new-game");
+
+        if (!overlay || !resultsPanel) return;
+
+        // Set results message
+        if (resultsMessage) {
+          resultsMessage.textContent = resultText;
+        }
+
+        // Show overlay
+        overlay.style.display = "flex";
+        this.overlayActive = true;
+        document.body.classList.add("overlay-active");
+
+        // Lock panel height and switch to results mode
+        if (startPanel) {
+          const r = startPanel.getBoundingClientRect();
+          startPanel.style.height = Math.round(r.height) + 'px';
+          startPanel.classList.add('results-open');
+        }
+
+        // Hide normal body and buttons
+        if (startBody) startBody.style.display = 'none';
+        if (startButtons) startButtons.style.display = 'none';
+
+        // Show results panel
+        resultsPanel.style.display = 'flex';
+
+        // Play Again button - restart same game type
+        if (playAgainBtn) {
+          playAgainBtn.onclick = () => {
+            this.hideGameResults();
+            this.startNewGame();
+          };
+        }
+
+        // New Game button - show start screen
+        if (newGameBtn) {
+          newGameBtn.onclick = () => {
+            this.hideGameResults();
+          };
+        }
+      }
+
+      hideGameResults() {
+        const overlay = document.getElementById("start-overlay");
+        const startPanel = document.getElementById("start-panel");
+        const resultsPanel = document.getElementById("results-panel");
+        const startBody = overlay.querySelector('.start-body');
+        const startButtons = overlay.querySelector('.start-buttons');
+
+        if (startPanel) {
+          startPanel.classList.remove('results-open');
+          startPanel.style.height = '';
+        }
+
+        if (startBody) startBody.style.display = '';
+        if (startButtons) startButtons.style.display = '';
+
+        if (resultsPanel) resultsPanel.style.display = 'none';
       }
 
       startNewGame() {
@@ -1651,7 +1733,7 @@
           if (gameOver) {
             const resultText = this.game.getFinalResultText();
             this.view.setStatus(resultText);
-            setTimeout(() => alert(resultText), 500);
+            setTimeout(() => this.showGameResults(resultText), 500);
           }
         };
 

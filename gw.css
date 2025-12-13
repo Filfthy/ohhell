@@ -1273,7 +1273,8 @@ body.overlay-active #player-name {
   /* Instructions panel sits over the inner start-panel content without changing layout
      It uses the same padding as the panel and scrolls if content overflows. */
   /* Normal (non-absolute) instructions panel used when #start-panel has .instructions-open */
-  #instructions-panel {
+  #instructions-panel,
+  #results-panel {
     position: relative;
     display: none;
     z-index: 20;
@@ -1285,7 +1286,8 @@ body.overlay-active #player-name {
 
   /* When the start panel is in instructions mode, let the instructions panel
      become the flexible child that fills the remaining panel height. */
-  #start-panel.instructions-open #instructions-panel {
+  #start-panel.instructions-open #instructions-panel,
+  #start-panel.results-open #results-panel {
     display: flex;
     flex: 1 1 auto;
     min-height: 0; /* allow flex child to shrink/scroll correctly */
@@ -1363,9 +1365,53 @@ body.overlay-active #player-name {
   /* Legacy .instructions-panel rules removed. Use the in-panel
      instructions layout driven by #start-panel.instructions-open. */
 
+  /* Results panel content */
+  #results-panel .results-content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2em;
+    padding: 2em;
+    text-align: center;
+  }
+
+  #results-panel #results-title {
+    font-size: 2em;
+    margin: 0;
+    color: #1EC000;
+  }
+
+  #results-panel #results-message {
+    font-size: 1.3em;
+    line-height: 1.5;
+  }
+
+  #results-panel .results-buttons {
+    display: flex;
+    gap: 1em;
+  }
+
+  #results-panel .results-buttons button {
+    padding: 0.8em 1.5em;
+    font-size: 1.1em;
+    background: rgba(30,192,0,0.2);
+    border: 2px solid #1EC000;
+    color: #1EC000;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  #results-panel .results-buttons button:hover {
+    background: rgba(30,192,0,0.35);
+  }
+
   /* Hide the logo row when instructions are shown so the title area
      doesn't compete for vertical space. */
-  #start-panel.instructions-open .start-logo-row {
+  #start-panel.instructions-open .start-logo-row,
+  #start-panel.results-open .start-logo-row {
     display: none;
   }
 
