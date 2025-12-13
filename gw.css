@@ -999,7 +999,7 @@ body.overlay-active #player-name {
     display: flex;
     flex-direction: column;
     
-    font-size: calc(var(--scale-factor) * 1.6);
+    font-size: calc(var(--scale-factor) * 2);
   }
 
   /* When instructions are open, use a simple column flex layout so
