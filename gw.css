@@ -1079,11 +1079,7 @@ body.overlay-active #player-name {
   }
 
   .start-logo-row {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 1.2em;
-    gap: 0.5em;
+    display: none;
   }
 
   .start-logo {
@@ -1093,7 +1089,7 @@ body.overlay-active #player-name {
   }
 
   .start-copyright {
-    font-size: 0.93em;
+    font-size: 1em;
     letter-spacing: 0.08em;
     color: #1EC000;
   }
@@ -1106,7 +1102,7 @@ body.overlay-active #player-name {
   }
 
   .start-artwork-credit {
-    font-size: 0.79em;
+    font-size: 1em;
     letter-spacing: 0.05em;
     color: #1EC000;
     opacity: 0.85;
@@ -1158,7 +1154,7 @@ body.overlay-active #player-name {
     display: grid;
     grid-template-columns: clamp(25px, 8vw, 40px) 1fr clamp(60px, 15vw, 80px);
     column-gap: 0.6em;
-    font-size: 0.93em;
+    font-size: 1em;
     margin-bottom: 0.3em;
     padding-inline: 0.3em;
     opacity: 0.85;
@@ -1213,7 +1209,7 @@ body.overlay-active #player-name {
 
   .opponent-rating .pip {
     color: #ffffff;
-    font-size: 1.29em;
+    font-size: 1.2em;
     margin-right: 0.3em;
   }
 
@@ -1222,7 +1218,7 @@ body.overlay-active #player-name {
   }
 
   .firstdeal-title {
-    font-size: 0.93em;
+    font-size: 1em;
     margin-bottom: 0.3em;
     padding-inline: 0.3em;
     margin-left: 40px;
@@ -1247,7 +1243,7 @@ body.overlay-active #player-name {
     display: flex;
     align-items: center;
     gap: 0.4em;
-    font-size: 0.93em;
+    font-size: 1em;
   }
 
   .firstdeal-option input[type="radio"] {
@@ -1349,7 +1345,7 @@ body.overlay-active #player-name {
     background: transparent;
     border: 1px solid #1EC000;
     color: #1EC000;
-    font-size: 0.93em;
+    font-size: 1em;
     padding-inline: 0.7em;
     padding-block: 0.4em;
   }
