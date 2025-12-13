@@ -979,21 +979,25 @@ body.overlay-active #player-name {
   }
 
   #start-panel {
+    --panel-height: 92vh;
+    --scale-factor: calc(var(--panel-height) / 100);
+    
     width: min(95vw, 520px);
-    height: 92vh; /* fixed height */
-    max-height: 92vh;
+    height: var(--panel-height);
+    max-height: var(--panel-height);
     background: rgba(3, 32, 18, 0.96);
     border-radius: 16px;
     border: 2px solid #1EC000;
     box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
-    padding: clamp(8px, 2vw, 24px) clamp(10px, 2.5vw, 28px) clamp(8px, 2vw, 20px);
+    padding: calc(var(--scale-factor) * 2.5) calc(var(--scale-factor) * 3) calc(var(--scale-factor) * 2);
     box-sizing: border-box;
     position: relative;
-    overflow: hidden; /* prevent panel scrolling */
+    overflow: hidden;
     
-    /* Flexbox layout */
     display: flex;
     flex-direction: column;
+    
+    font-size: calc(var(--scale-factor) * 1.4);
   }
 
   /* When instructions are open, use a simple column flex layout so
@@ -1020,8 +1024,8 @@ body.overlay-active #player-name {
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 0;
-    margin-top: clamp(2px, 0.6vw, 4px);
-    padding-right: 4px;
+    margin-top: 0.3em;
+    padding-right: 0.3em;
   }
 
   /* Custom scrollbar for content */
@@ -1052,17 +1056,17 @@ body.overlay-active #player-name {
   /* Fixed footer at bottom */
   .start-panel-footer {
     flex: 0 0 auto;
-    margin-top: clamp(8px, 1.5vw, 12px);
+    margin-top: 0.6em;
   }
 
   .start-header {
     text-align: center;
-    margin-bottom: clamp(2px, 0.6vw, 4px);
+    margin-bottom: 0.3em;
   }
 
   .start-title-logo {
-    max-width: 580px;
-    width: 82%;
+    max-width: 100%;
+    width: 85%;
     height: auto;
     display: inline-block;
     filter:
@@ -1076,18 +1080,18 @@ body.overlay-active #player-name {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: clamp(10px, 2vw, 16px);
-    gap: clamp(4px, 0.8vw, 6px);
+    margin-bottom: 1em;
+    gap: 0.4em;
   }
 
   .start-logo {
-    max-width: 90px;
+    max-width: 6em;
     height: auto;
     display: block;
   }
 
   .start-copyright {
-    font-size: clamp(11px, 1.6vw, 13px);
+    font-size: 0.93em;
     letter-spacing: 0.08em;
     color: #1EC000;
   }
@@ -1100,21 +1104,21 @@ body.overlay-active #player-name {
   }
 
   .start-artwork-credit {
-    font-size: clamp(9px, 1.4vw, 11px);
+    font-size: 0.79em;
     letter-spacing: 0.05em;
     color: #1EC000;
     opacity: 0.85;
   }
 
   .start-body {
-    margin-bottom: clamp(4px, 1vw, 8px);
+    margin-bottom: 0.6em;
   }
 
   .start-field-row {
     display: flex;
     align-items: center;
-    gap: clamp(4px, 1vw, 10px);
-    margin-bottom: clamp(6px, 1.2vw, 12px);
+    gap: 0.7em;
+    margin-bottom: 0.9em;
     padding-left: clamp(8px, 3vw, 52px);
     padding-right: clamp(8px, 3vw, 8px);
   }
@@ -1122,7 +1126,7 @@ body.overlay-active #player-name {
   .start-field-row label {
     flex: 0 0 auto;
     min-width: clamp(70px, 15vw, 110px);
-    font-size: clamp(11px, 2.2vw, 14px);
+    font-size: 1em;
     text-align: left;
     opacity: 0.9;
     font-weight: 700;
@@ -1132,12 +1136,12 @@ body.overlay-active #player-name {
     flex: 1 1 auto;
     min-width: 0;
     max-width: 100%;
-    padding: clamp(4px, 0.8vw, 6px) clamp(6px, 1vw, 8px);
+    padding: 0.43em 0.57em;
     border-radius: 4px;
     border: 1px solid #1EC000;
     background: rgba(0, 0, 0, 0.4);
     color: #fdf6e3;
-    font-size: clamp(11px, 2.2vw, 14px);
+    font-size: 1em;
   }
 
   #player-name-input::placeholder {
@@ -1145,16 +1149,16 @@ body.overlay-active #player-name {
   }
 
   .opponent-block {
-    margin-top: clamp(4px, 0.8vw, 6px);
+    margin-top: 0.4em;
   }
 
   .opponent-title-row {
     display: grid;
     grid-template-columns: clamp(25px, 8vw, 40px) 1fr clamp(60px, 15vw, 80px);
-    column-gap: clamp(4px, 1.5vw, 8px);
-    font-size: clamp(10px, 2vw, 13px);
-    margin-bottom: 4px;
-    padding-inline: 4px;
+    column-gap: 0.6em;
+    font-size: 0.93em;
+    margin-bottom: 0.3em;
+    padding-inline: 0.3em;
     opacity: 0.85;
     font-weight: 700;
   }
@@ -1162,7 +1166,7 @@ body.overlay-active #player-name {
   .opponent-rows {
     border-radius: 6px;
     border: 1px solid rgba(255,255,255,0.12);
-    padding: 4px 4px 2px;
+    padding: 0.3em 0.3em 0.15em;
     background: radial-gradient(circle at 10% 0%,
                 rgba(30,192,0,0.20) 0,
                 rgba(4,27,16,0.95) 55%);
@@ -1171,10 +1175,10 @@ body.overlay-active #player-name {
   .opponent-row {
     display: grid;
     grid-template-columns: clamp(25px, 8vw, 40px) 1fr clamp(60px, 15vw, 80px);
-    column-gap: clamp(4px, 1.5vw, 8px);
+    column-gap: 0.6em;
     align-items: center;
-    font-size: clamp(11px, 2.2vw, 14px);
-    padding: 3px 2px;
+    font-size: 1em;
+    padding: 0.21em 0.14em;
   }
 
   .opponent-row + .opponent-row {
@@ -1184,9 +1188,9 @@ body.overlay-active #player-name {
   .opponent-row label {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 0.3em;
     cursor: pointer;
-    font-size: clamp(12px, 1.8vw, 14px);
+    font-size: 1em;
   }
 
   .opponent-row input[type="radio"] {
@@ -1199,7 +1203,7 @@ body.overlay-active #player-name {
   }
 
   .opponent-rating {
-    font-size: clamp(12px, 1.8vw, 14px);
+    font-size: 1em;
     letter-spacing: 0.08em;
     text-align: left;
     color: #ffffff;
@@ -1207,18 +1211,18 @@ body.overlay-active #player-name {
 
   .opponent-rating .pip {
     color: #ffffff;
-    font-size: clamp(15px, 2.2vw, 18px);
-    margin-right: 4px;
+    font-size: 1.29em;
+    margin-right: 0.3em;
   }
 
   .firstdeal-block {
-    margin-top: clamp(8px, 1.5vw, 12px);
+    margin-top: 0.6em;
   }
 
   .firstdeal-title {
-    font-size: clamp(11px, 1.6vw, 13px);
-    margin-bottom: 4px;
-    padding-inline: 4px;
+    font-size: 0.93em;
+    margin-bottom: 0.3em;
+    padding-inline: 0.3em;
     margin-left: 40px;
     opacity: 0.9;
     font-weight: 700;
@@ -1240,8 +1244,8 @@ body.overlay-active #player-name {
   .firstdeal-option {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: clamp(11px, 1.6vw, 13px);
+    gap: 0.4em;
+    font-size: 0.93em;
   }
 
   .firstdeal-option input[type="radio"] {
@@ -1254,12 +1258,12 @@ body.overlay-active #player-name {
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: clamp(8px, 1.5vw, 10px);
+    gap: 0.7em;
   }
 
   .start-buttons-main {
     display: flex;
-    gap: clamp(6px, 1.2vw, 8px);
+    gap: 0.6em;
   }
 
   /* Instructions panel sits over the inner start-panel content without changing layout
@@ -1320,8 +1324,8 @@ body.overlay-active #player-name {
   .start-buttons-main button {
     flex: 1 1 auto;
     min-width: 0;
-    padding: clamp(6px, 1.2vw, 10px) clamp(10px, 2vw, 16px);
-    font-size: clamp(12px, 2.5vw, 16px);
+    padding: 0.7em 1.1em;
+    font-size: 1.14em;
     line-height: 1.3;
     white-space: normal;
     word-break: break-word;
@@ -1343,8 +1347,9 @@ body.overlay-active #player-name {
     background: transparent;
     border: 1px solid #1EC000;
     color: #1EC000;
-    font-size: clamp(11px, 1.6vw, 13px);
-    padding-inline: clamp(8px, 1.5vw, 10px);
+    font-size: 0.93em;
+    padding-inline: 0.7em;
+    padding-block: 0.4em;
   }
 
   #btn-instructions:hover {
