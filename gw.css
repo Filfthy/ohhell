@@ -982,7 +982,9 @@ body.overlay-active #player-name {
     --panel-height: 92vh;
     --scale-factor: calc(var(--panel-height) / 100);
     
-    width: min(95vw, 520px);
+    width: auto;
+    min-width: min(85vw, 400px);
+    max-width: min(95vw, 600px);
     height: var(--panel-height);
     max-height: var(--panel-height);
     background: rgba(3, 32, 18, 0.96);
@@ -997,7 +999,7 @@ body.overlay-active #player-name {
     display: flex;
     flex-direction: column;
     
-    font-size: calc(var(--scale-factor) * 1.4);
+    font-size: calc(var(--scale-factor) * 1.6);
   }
 
   /* When instructions are open, use a simple column flex layout so
