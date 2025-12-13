@@ -1510,7 +1510,8 @@
 
       computePlayerGapIndex(card) {
         const arr = [...this.game.playerHand.cards, card];
-        const suitOrder = { "♠": 0, "♥": 1, "♦": 2, "♣": 3 };
+        // Match the actual player hand sort order: Spades, Diamonds, Clubs, Hearts
+        const suitOrder = { "♠": 0, "♦": 1, "♣": 2, "♥": 3 };
         arr.sort((a, b) => {
           const s = suitOrder[a.suit] - suitOrder[b.suit];
           if (s !== 0) return s;
