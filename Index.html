@@ -974,6 +974,7 @@
         if (resultsBreakdown) {
           let breakdown = `<strong>${this.playerName}:</strong> ${playerTricks} tricks, ${playerPoints} points<br>`;
           breakdown += `<strong>${this.opponentName}:</strong> ${aiTricks} tricks, ${aiPoints} points`;
+          breakdown += `<div style="margin-top:8px; font-size:0.95em; opacity:0.9;">Scoring: 1 point for each trick beyond 6.</div>`;
           resultsBreakdown.innerHTML = breakdown;
         }
 
@@ -1503,10 +1504,15 @@
 
         const card = this.game.aiHand.cards[idx];
 
+        // Prevent a visible "duplicate": hide the source back card while the
+        // animated (face-up) card moves to the play slot.
+        const aiHandDiv = this.view.dom.aiHand;
+        const aiBackEl = aiHandDiv && aiHandDiv.children ? aiHandDiv.children[idx] : null;
+        if (aiBackEl) aiBackEl.style.visibility = "hidden";
+
         const aiN = this.game.aiHand.length;
         const scale = layoutMetrics.scale;
         const geom = computeAiFanSlot(idx, Math.max(aiN, 1), scale);
-        const aiHandDiv = this.view.dom.aiHand;
         const handRect = aiHandDiv.getBoundingClientRect();
         const w = layoutMetrics.cardWidth;
 
