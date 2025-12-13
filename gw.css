@@ -136,7 +136,7 @@
 .firstdeal-option{
   display: inline-flex;
   align-items: center;
-  gap: 0.25em;
+  gap: 0.15em;
   font-size: 1em;
   white-space: nowrap;
 }
