@@ -980,15 +980,20 @@ body.overlay-active #player-name {
 
   #start-panel {
     width: min(95vw, 520px);
-    max-height: 92vh; /* allow the panel to use most of viewport height */
+    height: 92vh; /* fixed height */
+    max-height: 92vh;
     background: rgba(3, 32, 18, 0.96);
     border-radius: 16px;
     border: 2px solid #1EC000;
     box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
     padding: clamp(8px, 2vw, 24px) clamp(10px, 2.5vw, 28px) clamp(8px, 2vw, 20px);
     box-sizing: border-box;
-    position: relative; /* allow absolutely positioned children (instructions panel) */
-    overflow-x: hidden;
+    position: relative;
+    overflow: hidden; /* prevent panel scrolling */
+    
+    /* Flexbox layout */
+    display: flex;
+    flex-direction: column;
   }
 
   /* When instructions are open, use a simple column flex layout so
