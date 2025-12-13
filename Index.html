@@ -1028,8 +1028,11 @@
           }
         }
 
-        // Close button - always visible
+        // Close button - hidden during an unfinished match
         if (closeBtn) {
+          const showClose = (!isMatch) || matchOver;
+          closeBtn.style.display = showClose ? 'inline-block' : 'none';
+
           closeBtn.onclick = () => {
             // Reset match scores for new match
             this.playerMatchScore = 0;
