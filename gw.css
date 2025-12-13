@@ -1,0 +1,1315 @@
+/* gw.css */
+
+/* gw.css */
+
+.suitcolors-block { margin-top: 10px; }
+.firstdeal-block  { margin-top: 10px; }
+
+/* --- 4-column settings row (label + 3 options) --- */
+.settings4{
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;        /* stable columns */
+  margin: 0;
+}
+
+.settings4 th,
+.settings4 td{
+  padding: 0;
+  vertical-align: middle;
+}
+
+/* match opponent header vibe + keep left indent consistent */
+.settings4-label{
+  width: 110px;               /* matches Player name label width */
+  padding-left: 52px;         /* matches .start-field-row indent */
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.settings4-opt{
+  width: calc((100% - 110px) / 3);
+  text-align: left;
+  padding-right: 10px;        /* consistent gap between pills */
+  white-space: nowrap;
+}
+
+ .suit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px; /* tighter */
+  cursor: pointer;
+
+  /* cream/parchment pill */
+  padding: 3px 10px;      /* less height */
+  border-radius: 999px;
+  background: rgba(245, 236, 210, 0.807);
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 236, 210, 0.35),
+    0 2px 6px rgba(0,0,0,0.25);
+
+  user-select: none;
+  white-space: nowrap;
+ }
+
+ .suit-pill input[type="radio"] {
+   margin: 0;
+   flex: 0 0 auto;
+   transform: scale(0.92);    /* tiny shave */
+   transform-origin: center;
+ }
+
+ .pill-suits {
+   display: inline-flex;
+   gap: 4px;                 /* tighter suit spacing */
+   padding: 0;               /* no “pill inside pill” padding */
+   border-radius: 0;
+   background: transparent;  /* kill inner pill */
+   box-shadow: none;         /* kill inner pill */
+   font-weight: 800;
+ }
+
+ .pill-suits span {
+   font-size: 15px; /* tiny shave */
+   line-height: 1;
+ }
+
+/* remove any layout influence from the old flex wrapper if still present */
+.suitcolors-line,
+.suitcolors-row{
+  display: contents;
+}
+
+ /* Colour sets */
+ .pill-suits.classic span:nth-child(1),
+ .pill-suits.classic span:nth-child(3) { color: #dc322f; }
+ .pill-suits.classic span:nth-child(2),
+ .pill-suits.classic span:nth-child(4) { color: #111; }
+
+ .pill-suits.rbbg span:nth-child(1) { color: #dc322f; }
+ .pill-suits.rbbg span:nth-child(2) { color: #111; }
+ .pill-suits.rbbg span:nth-child(3) { color: #1f6feb; }
+ .pill-suits.rbbg span:nth-child(4) { color: #2ea043; }
+
+ .pill-suits.rbbo span:nth-child(1) { color: #dc322f; }
+ .pill-suits.rbbo span:nth-child(2) { color: #111; }
+ .pill-suits.rbbo span:nth-child(3) { color: #1b4fbf; }
+ .pill-suits.rbbo span:nth-child(4) { color: #f08c00; }
+
+ /* Optional: clearer selected state without changing layout */
+ .suit-pill input[type="radio"]:checked + .pill-suits {
+   filter: drop-shadow(0 0 6px rgba(120, 255, 120, 0.35));
+ }
+
+/* =========================
+   FIRST DEAL TABLE LAYOUT
+   ========================= */
+
+.firstdeal-block{
+  margin-top: 12px;
+}
+
+.firstdeal-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.firstdeal-cell{
+  padding: 0 14px 0 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.firstdeal-label{
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.85;
+  padding-right: 0px;
+  padding-left: 0px; /* align with other left-indented overlay fields */
+}
+
+.firstdeal-option{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.firstdeal-option input[type="radio"]{
+  transform: scale(0.92);
+  transform-origin: center;
+}
+
+.firstdeal-actions{
+  padding-right: 0;
+}
+
+.firstdeal-actions #btn-instructions{
+  margin-left: 0;
+}
+
+:root {
+    --card-scale: 1;
+    --index-size: 16px;
+    --pip-size: 10px;
+
+    /* small hand cards */
+    --small-card-width:  calc(60px * var(--card-scale));
+    --small-card-height: calc(90px * var(--card-scale));
+    --hand-inset-v:      calc(18px * var(--card-scale));
+
+    /* base gap for inner rectangles (Deck–Prize, AI–Player) */
+    --table-gap:         calc(24px * var(--card-scale));
+    /* slightly bigger gap between the two sections (Prize group ↔ AI play) */
+    --table-section-gap: calc(var(--table-gap) * 1.5);
+  }
+
+/* === Instructions scrollbar styling (casino / baize look) === */
+
+/* Prevent native scrollbars on outer containers */
+#instructions-panel {
+  overflow: hidden;
+}
+
+/* The actual scrolling happens here */
+#instructions-panel .instructions-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(30,192,0,0.9)
+    rgba(6,47,26,0.85);
+}
+
+/* WebKit browsers (Chrome, Edge, Safari) */
+#instructions-panel .instructions-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+#instructions-panel .instructions-content::-webkit-scrollbar-track {
+  background: rgba(6,47,26,0.85); /* baize shadow */
+  border-radius: 8px;
+}
+
+#instructions-panel .instructions-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(30,192,0,1),
+    rgba(20,140,0,1)
+  );
+  border-radius: 8px;
+  border: 2px solid rgba(0,0,0,0.35);
+}
+
+#instructions-panel .instructions-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(50,220,50,1),
+    rgba(30,180,30,1)
+  );
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  color: #eee;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Verdana", sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+
+  /* default suit colour vars (classic) */
+  --sc-heart:   #dc322f;
+  --sc-diamond: #268bd2;
+  --sc-spade:   #002b36;
+  --sc-club:    #228B22;
+
+  /* --- baize visible, vignette only darkens edges --- */
+  background-image:
+    radial-gradient(circle at 50% 50%,
+      rgba(0, 0, 0, 0.0) 0%,
+      rgba(0, 0, 0, 0.25) 65%,
+      rgba(0, 0, 0, 0.60) 100%
+    ),
+    url("baize.jpg");
+
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, auto;
+  background-color: #062f1a;
+}
+
+/* Suit colour themes driven by body class */
+body.suitcolors-classic {
+  --sc-heart:   #dc322f;
+  --sc-spade:   #111111;
+  --sc-diamond: #dc322f; /* classic: red diamonds */
+  --sc-club:    #111111;
+}
+
+body.suitcolors-rbbg {
+  --sc-heart:   #dc322f; /* red */
+  --sc-spade:   #111111; /* black */
+  --sc-diamond: #1f6feb; /* blue */
+  --sc-club:    #2ea043; /* green */
+}
+
+body.suitcolors-rbbo {
+  --sc-heart:   #dc322f; /* red */
+  --sc-spade:   #111111; /* black */
+  --sc-diamond: #1b4fbf; /* deep blue */
+  --sc-club:    #f08c00; /* orange */
+}
+
+  #game-area {
+    flex: 1;
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .row {
+    position: static;
+    width: 100%;
+    height: 0;
+  }
+
+  #top-row {
+    position: static;
+    width: 100%;
+    height: 0;
+  }
+
+  /* === Card base styles === */
+  .card {
+    width: calc(80px * var(--card-scale));
+    height: calc(120px * var(--card-scale));
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fdf6e3;
+    color: #000;
+    box-sizing: border-box;
+    padding: 4px;
+    cursor: default;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    font-size: calc(20px * var(--card-scale));
+    transform-origin: bottom center; /* overridden for AI hand */
+  }
+
+  .card.small {
+    width:  var(--small-card-width);
+    height: var(--small-card-height);
+    font-size: calc(16px * var(--card-scale));
+  }
+
+  .card.back {
+    background-color: #fdf6e3;
+    border-color: #fdf6e3;
+    color: transparent;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    background-image: url("back.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 92% 92%;
+  }
+
+  .card.clickable {
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease,
+      filter 0.12s ease,
+      opacity 0.12s ease;
+  }
+
+  /* CORNER INDICES */
+
+  .card .corner {
+    position: absolute;
+    top: calc(2px * var(--card-scale));
+    left: calc(2px * var(--card-scale));
+    font-weight: 600;
+    text-align: center;
+    font-size: var(--index-size);
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    z-index: 10;
+    text-shadow:
+      -1px -1px 0 #fdf6e3,
+      1px -1px 0 #fdf6e3,
+      -1px 1px 0 #fdf6e3,
+      1px 1px 0 #fdf6e3,
+      -2px 0 0 #fdf6e3,
+      2px 0 0 #fdf6e3,
+      0 -2px 0 #fdf6e3,
+      0 2px 0 #fdf6e3;
+  }
+
+  .card .corner.bottom {
+    top: auto;
+    bottom: calc(2px * var(--card-scale));
+    left: auto;
+    right: calc(2px * var(--card-scale));
+    transform: rotate(180deg);
+  }
+
+  .card .corner .rank,
+  .card .corner .suit {
+    display: block;
+  }
+
+  .card .corner .suit {
+    margin-top: -0.25em;
+  }
+
+  .card .face-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    font-size: var(--pip-size);
+    text-align: center;
+    pointer-events: none;
+    display: block;
+  }
+
+  .card .face-icon.ace-spades {
+    font-size: calc(var(--pip-size) * 5.6);
+  }
+
+  .face-icon span {
+    display: block;
+  }
+
+  .s-spade  { color: var(--sc-spade); }
+  .s-heart  { color: var(--sc-heart); }
+  .s-diamond{ color: var(--sc-diamond); }
+  .s-club   { color: var(--sc-club); }
+
+  .card-highlight {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 0, 1),
+      0 0 12px rgba(255, 255, 0, 0.9);
+    animation: cardGlow 1s ease-out forwards;
+  }
+
+  @keyframes cardGlow {
+    0% {
+      box-shadow:
+        0 0 0 3px rgba(255, 255, 0, 1),
+        0 0 16px rgba(255, 255, 0, 1);
+    }
+    100% {
+      box-shadow:
+        0 0 0 0 rgba(255, 255, 0, 0),
+        0 0 0 0 rgba(255, 255, 0, 0);
+    }
+  }
+
+  .card-incoming-player {
+    box-shadow:
+      0 0 0 3px rgba(255, 0, 0, 1),
+      0 0 14px rgba(255, 0, 0, 0.95);
+  }
+
+  /* === Hands === */
+
+  #ai-hand,
+  #player-hand {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    transform: none;
+  }
+
+  #ai-hand {
+    top: 5vh;
+    height: calc(var(--small-card-height) + 2 * var(--hand-inset-v));
+  }
+
+  #player-hand {
+    bottom: 5vh;
+    height: calc(var(--small-card-height) + 2 * var(--hand-inset-v));
+  }
+
+  #player-hand .card,
+  #ai-hand .card {
+    position: absolute;
+    left: 50%;
+    /* fan-position variables + hover scale */
+    --fan-x: 0px;
+    --fan-y: 0px;
+    --fan-angle: 0deg;
+    --hover-scale: 1;
+    transform:
+      translateX(-50%)
+      translateX(var(--fan-x))
+      translateY(var(--fan-y))
+      rotate(var(--fan-angle))
+      scale(var(--hover-scale));
+  }
+
+  #player-hand .card {
+    transform-origin: 50% 100%; /* grow upwards from bottom */
+  }
+
+  #ai-hand .card {
+    transform-origin: 50% 0%;   /* AI fan stays the same */
+  }
+
+  /* default subtle shadow */
+  #player-hand .card.clickable {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.45);
+  }
+
+  body.player-turn #player-hand .card.clickable.legal-move:hover {
+    --hover-scale: 1.12;
+    box-shadow:
+      0 10px 18px rgba(0,0,0,0.85),
+      0 0 0 3px rgba(255,255,255,0.45);
+  }
+
+  /* === Central table === */
+
+  #table {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 0;
+    min-height: calc(96px * var(--card-scale));
+  }
+
+  .table-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative; /* for absolute captions */
+  }
+
+  /* central round label: painted on baize, no glow */
+  #round-label {
+    position: absolute;
+    left: 50%;
+    /* closer to the card boxes, still proportional */
+    top: calc(50% - 0.88 * var(--small-card-height));
+    transform: translateX(-50%);
+    font-size: calc(18px * var(--card-scale));   /* smaller */
+    font-weight: 600;
+    letter-spacing: 0.03em;                      /* much tighter */
+    color: rgba(250, 244, 224, 0.96);
+    text-shadow: none;
+    text-transform: none;
+    pointer-events: none;
+    opacity: 0.70;
+  }
+
+  /* Per-slot captions UNDER boxes, centred, painted look, no layout shift */
+  #deck-area .deck-col > div:first-child,
+  #ai-play-area > div:first-child,
+  #player-play-area > div:first-child {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    /* slightly closer to box, considerably smaller text */
+    top: calc(100% + 0.10 * var(--small-card-height));
+    font-size: calc(12px * var(--card-scale));
+    font-weight: 500;
+    letter-spacing: 0.03em;                      /* calmer spacing */
+    color: rgba(250, 244, 224, 0.96);
+    text-shadow: none;
+    text-transform: none;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0.70;
+  }
+
+  #deck-area .deck-col {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* card slot elements participate in layout via their container rules above */
+
+  #deck-area {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--table-gap);
+    margin-right: var(--table-section-gap);
+  }
+
+  #ai-play-area {
+    margin-right: var(--table-gap);
+  }
+
+  #deck-slot,
+  #prize-slot,
+  #ai-play-slot,
+  #player-play-slot {
+    min-width:  calc(64px * var(--card-scale));
+    min-height: calc(96px * var(--card-scale));
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #deck-slot::before,
+  #prize-slot::before,
+  #ai-play-slot::before,
+  #player-play-slot::before {
+    content: "";
+    position: absolute;
+    inset: calc(-6px * var(--card-scale));
+    border-radius: calc(10px * var(--card-scale));
+    border: calc(1px * var(--card-scale)) solid rgba(255, 255, 255, 0.9);
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  #deck-slot > .card,
+  #prize-slot > .card,
+  #ai-play-slot > .card,
+  #player-play-slot > .card {
+    position: relative;
+    z-index: 1;
+  }
+
+  #info-bar {
+    display: none;
+  }
+
+  #controls {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    margin: 0;
+    text-align: right;
+    z-index: 50;
+  }
+
+  button {
+    background: #268bd2;
+    color: #fdf6e3;
+    border: none;
+    border-radius: 4px;
+    padding: calc(6px * var(--card-scale)) calc(12px * var(--card-scale));
+    margin: 0 4px;
+    cursor: pointer;
+    font-size: calc(14px * var(--card-scale));
+  }
+
+  button:hover {
+    background: #2aa198;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  /* Won tricks */
+
+  .won-stack {
+    position: absolute;
+    left: 50%;
+    margin-left: calc(180px * var(--card-scale));
+    width: calc(24px * var(--card-scale));
+  }
+
+  .won-trick {
+    position: absolute;
+    width: calc(22px * var(--card-scale));
+    height: calc(22px * var(--card-scale));
+    object-fit: contain;
+    pointer-events: none;
+  }
+
+  #ai-won {
+    top: calc(2px * var(--card-scale));
+  }
+
+  #player-won {
+    bottom: calc(32px * var(--card-scale));
+  }
+
+  .won-stack .won-card {
+    position: absolute;
+    width: calc(14px * var(--card-scale));
+    height: calc(9px * var(--card-scale));
+    border-radius: 2px;
+    background-color: #cb4b16;
+    border: 1px solid #fdf6e3;
+    box-sizing: border-box;
+  }
+
+  .won-stack .won-count {
+    display: none;
+  }
+
+/* === CENTRE TRUMP MARKER (painted on baize, JS-positioned) === */
+#trump-marker{
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.8;
+
+  max-width: 1px;   /* JS overwrites */
+  overflow: hidden;
+}
+
+#trump-marker .trump-suit{
+  font-size: calc(28px * var(--card-scale));
+  font-weight: 900;
+  line-height: 1;
+  margin: 0.20em 0;
+  -webkit-text-stroke: 0.8px rgba(255,255,255,0.95);
+  text-shadow: none;
+  opacity: 0.70;
+}
+
+/* B: stack letters as spans so we control spacing */
+#trump-marker .trump-word{
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: calc(0px * var(--card-scale)); /* <-- THIS is the spacing knob */
+
+  font-size: calc(12px * var(--card-scale)); /* JS may adjust */
+  font-weight: 700;
+  text-transform: none;
+
+  color: rgba(250,244,224,0.92);
+  text-shadow: none;
+  opacity: 0.80;
+}
+
+#trump-marker .trump-word span{
+  line-height: 0.82;
+}
+
+  body[data-phase="draw"] #deck-area {
+    display: flex;
+  }
+
+  body[data-phase="score"] #deck-area {
+    display: none;
+  }
+
+  body[data-phase="score"] #table {
+    justify-content: center;
+  }
+
+  body[data-phase="score"] #ai-play-area {
+    margin-right: var(--table-section-gap);
+  }
+
+  /* === Name labels === */
+
+  .name-label {
+    position: absolute;
+    font-size: calc(18px * var(--card-scale));
+    font-weight: 700;
+    color: #fdf6e3;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.7);
+    pointer-events: none;
+  }
+
+  #ai-name,
+  #player-name {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-block;
+    font-size: calc(22px * var(--card-scale));
+    line-height: 0.5;
+    font-weight: 700;
+    font-style: italic;
+    color: lab(19.34% 17.6 -42.6);
+    -webkit-text-stroke: 0.02em #ffffff;
+    text-shadow: none;
+    pointer-events: none;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 0.15em 0.7em;
+    border-radius: 9999px;
+  }
+
+  #ai-name {
+    top: 4vh;
+  }
+
+  #player-name {
+    bottom: 4vh;
+  }
+
+  @keyframes turnPulse {
+    0% {
+      text-shadow:
+        0 0 4px  rgba(255, 255, 160, 0.6),
+        0 0 10px rgba(255, 255, 200, 0.7),
+        0 0 16px rgba(255, 255, 220, 0.8);
+    }
+    50% {
+      text-shadow:
+        0 0 6px  rgba(255, 255, 200, 1),
+        0 0 18px rgba(255, 255, 255, 1),
+        0 0 32px rgba(255, 255, 220, 1),
+        0 0 46px rgba(255, 255, 200, 0.9);
+    }
+    100% {
+      text-shadow:
+        0 0 4px  rgba(255, 255, 160, 0.6),
+        0 0 10px rgba(255, 255, 200, 0.7),
+        0 0 16px rgba(255, 255, 220, 0.8);
+    }
+  }
+
+  #ai-name.turn-glow,
+  #player-name.turn-glow,
+  #ai-name.active-turn,
+  #player-name.active-turn {
+    animation: turnPulse 0.9s ease-in-out infinite;
+    will-change: text-shadow;
+  }
+
+  /* hide names while start overlay is active */
+body.overlay-active #ai-name,
+body.overlay-active #player-name {
+  display: none;
+}
+
+/* === END OVERLAY (game / match summary) === */
+#end-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+
+#end-panel{
+  min-width: min(420px, 62vw);
+  max-width: 520px;
+  max-height: 92vh;
+  background: rgba(3, 32, 18, 0.96);
+  border-radius: 16px;
+  border: 2px solid #1EC000;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+  padding: 22px 26px 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.end-header{
+  text-align: center;
+}
+
+.end-title-logo{
+  width: 78%;
+  max-width: 580px;
+  height: auto;
+  display: inline-block;
+  filter:
+    drop-shadow(1px 0 0 #ffffff)
+    drop-shadow(-1px 0 0 #ffffff)
+    drop-shadow(0 1px 0 #ffffff)
+    drop-shadow(0 -1px 0 #ffffff);
+}
+
+.end-sub{
+  margin-top: 6px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: #1EC000;
+  opacity: 0.95;
+}
+
+.end-body{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.end-result{
+  font-size: 22px;
+  font-weight: 800;
+  color: #fdf6e3;
+  text-align: center;
+}
+
+.end-scoreline{
+  font-size: 14px;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.end-section-title{
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.end-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: radial-gradient(circle at 10% 0%,
+              rgba(30,192,0,0.20) 0,
+              rgba(4,27,16,0.95) 55%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.end-table th,
+.end-table td{
+  padding: 8px 10px;
+  font-size: 13px;
+  text-align: left;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+
+.end-table tr:first-child th{
+  border-top: none;
+}
+
+.end-table th{
+  opacity: 0.9;
+  font-weight: 800;
+}
+
+.end-totals{
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+.end-buttons{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+#btn-end-close{
+  background: transparent;
+  border: 1px solid #1EC000;
+  color: #1EC000;
+  font-size: 14px;
+  padding-inline: 14px;
+}
+
+#btn-end-close:hover{
+  background: rgba(30,192,0,0.16);
+}
+
+#btn-end-next{
+  background: #1EC000;
+  color: #021408;
+  font-weight: 700;
+  font-size: 14px;
+  padding-inline: 14px;
+}
+
+#btn-end-next:hover{
+  background: #23e000;
+}
+  /* === START OVERLAY === */
+
+  #start-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.30);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  }
+
+  #start-panel {
+    min-width: min(400px, 60vw);
+    max-width: 460px;
+    max-height: 92vh; /* allow the panel to use most of viewport height */
+    background: rgba(3, 32, 18, 0.96);
+    border-radius: 16px;
+    border: 2px solid #1EC000;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+    padding: 24px 28px 20px;
+    box-sizing: border-box;
+    position: relative; /* allow absolutely positioned children (instructions panel) */
+  }
+
+  /* When instructions are open, use a simple column flex layout so
+     header -> content -> footer sizing is natural and predictable. */
+  #start-panel.instructions-open {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: 92vh;
+  }
+
+  #start-panel.instructions-open .start-header {
+    flex: 0 0 auto;
+  }
+
+  .start-header {
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .start-title-logo {
+    max-width: 580px;
+    width: 82%;
+    height: auto;
+    display: inline-block;
+    filter:
+      drop-shadow(1px 0 0 #ffffff)
+      drop-shadow(-1px 0 0 #ffffff)
+      drop-shadow(0 1px 0 #ffffff)
+      drop-shadow(0 -1px 0 #ffffff);
+  }
+
+  .start-logo-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 6px;
+  }
+
+  .start-logo {
+    max-width: 90px;
+    height: auto;
+    display: block;
+  }
+
+  .start-copyright {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: #1EC000;
+  }
+
+  .start-copyright-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.2;
+  }
+
+  .start-artwork-credit {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: #1EC000;
+    opacity: 0.85;
+  }
+
+  .start-body {
+    margin-top: 4px;
+    margin-bottom: 14px;
+  }
+
+  .start-field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-left: 52px;
+  }
+
+  .start-field-row label {
+    flex: 0 0 110px;
+    font-size: 14px;
+    text-align: left;
+    opacity: 0.9;
+    font-weight: 700;
+  }
+
+  #player-name-input {
+    flex: 0 0 200px;
+    max-width: 200px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #1EC000;
+    background: rgba(0, 0, 0, 0.4);
+    color: #fdf6e3;
+    font-size: 14px;
+  }
+
+  #player-name-input::placeholder {
+    color: #9fbfa0;
+  }
+
+  .opponent-block {
+    margin-top: 6px;
+  }
+
+  .opponent-title-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px;
+    column-gap: 8px;
+    font-size: 13px;
+    margin-bottom: 4px;
+    padding-inline: 4px;
+    opacity: 0.85;
+    font-weight: 700;
+  }
+
+  .opponent-rows {
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 4px 4px 2px;
+    background: radial-gradient(circle at 10% 0%,
+                rgba(30,192,0,0.20) 0,
+                rgba(4,27,16,0.95) 55%);
+  }
+
+  .opponent-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px;
+    column-gap: 8px;
+    align-items: center;
+    font-size: 14px;
+    padding: 3px 2px;
+  }
+
+  .opponent-row + .opponent-row {
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .opponent-row label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .opponent-row input[type="radio"] {
+    accent-color: #1EC000;
+    cursor: pointer;
+  }
+
+  .opponent-name {
+    white-space: nowrap;
+  }
+
+  .opponent-rating {
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-align: left;
+    color: #ffffff;
+  }
+
+  .opponent-rating .pip {
+    color: #ffffff;
+    font-size: 18px;
+    margin-right: 4px;
+  }
+
+  .firstdeal-block {
+    margin-top: 12px;
+  }
+
+  .firstdeal-title {
+    font-size: 13px;
+    margin-bottom: 4px;
+    padding-inline: 4px;
+    margin-left: 40px;
+    opacity: 0.9;
+    font-weight: 700;
+  }
+
+  .firstdeal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px 0;
+    gap: 12px;
+  }
+
+  .firstdeal-rows {
+    display: flex;
+    gap: 14px;
+  }
+
+  .firstdeal-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+
+  .firstdeal-option input[type="radio"] {
+    accent-color: #1EC000;
+    cursor: pointer;
+  }
+
+  .start-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .start-buttons-main {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Instructions panel sits over the inner start-panel content without changing layout
+     It uses the same padding as the panel and scrolls if content overflows. */
+  /* Normal (non-absolute) instructions panel used when #start-panel has .instructions-open */
+  #instructions-panel {
+    position: relative;
+    display: none;
+    z-index: 20;
+    background: transparent;
+    color: #eee;
+    flex-direction: column;
+    margin: 0; /* fill the available panel area when shown */
+  }
+
+  /* When the start panel is in instructions mode, let the instructions panel
+     become the flexible child that fills the remaining panel height. */
+  #start-panel.instructions-open #instructions-panel {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0; /* allow flex child to shrink/scroll correctly */
+  }
+
+  /* Make the instructions content inside the panel take the available space and scroll;
+     keep the footer (Done button) fixed to the bottom of the overlay panel. */
+  #instructions-panel .instructions-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding-right: 18px; /* more space so text and button don't crowd scrollbar */
+    min-height: 0; /* allow flex child to shrink and overflow correctly */
+  }
+
+  #instructions-panel .instructions-footer {
+    flex: 0 0 auto;
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end; /* bottom-right */
+    margin-bottom: 8px;
+    padding-right: 18px; /* keep Done away from scrollbar */
+    padding-bottom: 2px;
+  }
+
+  /* reduce default margins so content uses more vertical space */
+  #instructions-panel .instructions-content h3 {
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #8be08b;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+  }
+
+  #instructions-panel .instructions-content ul {
+    margin: 6px 0 0 18px;
+    padding-right: 6px;
+  }
+
+  .start-buttons-main button {
+    flex: 1;
+    min-width: 140px;
+    padding: 10px 16px;
+    font-size: 16px;
+    line-height: 1.3;
+    white-space: normal;
+  }
+
+  #btn-quick,
+  #btn-match {
+    background: #1EC000;
+    color: #021408;
+    font-weight: 600;
+  }
+
+  #btn-quick:hover,
+  #btn-match:hover {
+    background: #23e000;
+  }
+
+  #btn-instructions {
+    background: transparent;
+    border: 1px solid #1EC000;
+    color: #1EC000;
+    font-size: 13px;
+    padding-inline: 10px;
+  }
+
+  #btn-instructions:hover {
+    background: rgba(30,192,0,0.16);
+  }
+
+  /* Legacy .instructions-panel rules removed. Use the in-panel
+     instructions layout driven by #start-panel.instructions-open. */
+
+  /* Hide the logo row when instructions are shown so the title area
+     doesn't compete for vertical space. */
+  #start-panel.instructions-open .start-logo-row {
+    display: none;
+  }
+
+  /* When the panel is in instructions mode, pin the footer to the
+     bottom of the panel by allowing the content to take the remaining
+     space. The footer receives `margin-top: auto` in this state. */
+  #start-panel.instructions-open .instructions-footer {
+    margin-top: auto;
+  }
