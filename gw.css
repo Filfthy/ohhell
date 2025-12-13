@@ -24,7 +24,7 @@
 .settings4-label{
   width: clamp(70px, 15vw, 110px);               /* matches Player name label width */
   padding-left: clamp(8px, 3vw, 52px);         /* matches .start-field-row indent */
-  font-size: clamp(10px, 2vw, 13px);
+  font-size: 1em;
   font-weight: 700;
   opacity: 0.85;
   text-align: left;
@@ -41,11 +41,11 @@
  .suit-pill {
   display: inline-flex;
   align-items: center;
-  gap: 6px; /* tighter */
+  gap: 0.4em;
   cursor: pointer;
 
   /* cream/parchment pill */
-  padding: 3px 10px;      /* less height */
+  padding: 0.2em 0.7em;
   border-radius: 999px;
   background: rgba(245, 236, 210, 0.807);
   box-shadow:
@@ -74,7 +74,7 @@
  }
 
  .pill-suits span {
-   font-size: clamp(13px, 1.8vw, 15px); /* tiny shave */
+   font-size: 1em;
    line-height: 1;
  }
 
@@ -120,13 +120,13 @@
 }
 
 .firstdeal-cell{
-  padding: 0 14px 0 0;
+  padding: 0 1em 0 0;
   vertical-align: middle;
   white-space: nowrap;
 }
 
 .firstdeal-label{
-  font-size: 13px;
+  font-size: 1em;
   font-weight: 700;
   opacity: 0.85;
   padding-right: 0px;
@@ -136,8 +136,8 @@
 .firstdeal-option{
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 0.4em;
+  font-size: 1em;
   white-space: nowrap;
 }
 
