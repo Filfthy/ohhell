@@ -929,12 +929,18 @@
         const resultsWinner = document.getElementById("results-winner");
         const resultsBreakdown = document.getElementById("results-breakdown");
         const resultsMatchTable = document.getElementById("results-match-table");
-        const startBody = overlay.querySelector('.start-body');
-        const startButtons = overlay.querySelector('.start-buttons');
         const nextGameBtn = document.getElementById("btn-next-game");
         const closeBtn = document.getElementById("btn-close-results");
 
         if (!overlay || !resultsPanel) return;
+
+        const startBody = overlay.querySelector('.start-body');
+        const startButtons = overlay.querySelector('.start-buttons');
+
+        // Match tracking may be missing if the page wasn't refreshed after updates
+        if (typeof this.playerMatchScore !== "number") this.playerMatchScore = 0;
+        if (typeof this.aiMatchScore !== "number") this.aiMatchScore = 0;
+        if (!Array.isArray(this.matchHistory)) this.matchHistory = [];
 
         // Get game results
         const playerTricks = this.game.scoreScorePhase.player;
@@ -942,10 +948,14 @@
         const playerPoints = Math.max(0, playerTricks - 6);
         const aiPoints = Math.max(0, aiTricks - 6);
 
-        // Update match scores
-        this.playerMatchScore += playerPoints;
-        this.aiMatchScore += aiPoints;
-        this.matchHistory.push({ playerTricks, aiTricks, playerPoints, aiPoints });
+        const isMatch = this.matchMode === "match";
+
+        // Update match scores (match mode only)
+        if (isMatch) {
+          this.playerMatchScore += playerPoints;
+          this.aiMatchScore += aiPoints;
+          this.matchHistory.push({ playerTricks, aiTricks, playerPoints, aiPoints });
+        }
 
         // Determine winner
         let winnerText = "";
@@ -969,7 +979,6 @@
         }
 
         // Check if match is over
-        const isMatch = this.matchMode === "match";
         const matchOver = isMatch && (this.playerMatchScore >= this.matchTarget || this.aiMatchScore >= this.matchTarget);
 
         // Show match table if in match mode
@@ -1011,7 +1020,7 @@
             // Match in progress - show Next Game button
             nextGameBtn.style.display = 'inline-block';
             nextGameBtn.onclick = () => {
-              this.hideGameResults();
+              this.hideGameResults({ hideOverlay: true });
               this.startNewGame();
             };
           } else {
@@ -1026,15 +1035,18 @@
             this.playerMatchScore = 0;
             this.aiMatchScore = 0;
             this.matchHistory = [];
-            this.hideGameResults();
+            this.hideGameResults({ hideOverlay: false });
           };
         }
       }
 
-      hideGameResults() {
+      hideGameResults({ hideOverlay } = { hideOverlay: false }) {
         const overlay = document.getElementById("start-overlay");
         const startPanel = document.getElementById("start-panel");
         const resultsPanel = document.getElementById("results-panel");
+
+        if (!overlay) return;
+
         const startBody = overlay.querySelector('.start-body');
         const startButtons = overlay.querySelector('.start-buttons');
 
@@ -1047,6 +1059,12 @@
         if (startButtons) startButtons.style.display = '';
 
         if (resultsPanel) resultsPanel.style.display = 'none';
+
+        if (hideOverlay) {
+          overlay.style.display = "none";
+          document.body.classList.remove("overlay-active");
+          this.overlayActive = false;
+        }
       }
 
       startNewGame() {
