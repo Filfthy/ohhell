@@ -235,12 +235,13 @@ body {
   --sc-spade:   #002b36;
   --sc-club:    #228B22;
 
-  /* --- baize visible, vignette only darkens edges --- */
+  /* --- smoky falloff / vignette over baize --- */
   background-image:
-    radial-gradient(circle at 50% 50%,
-      rgba(0, 0, 0, 0.0) 0%,
-      rgba(0, 0, 0, 0.38) 55%,
-      rgba(0, 0, 0, 0.78) 100%
+    radial-gradient(ellipse at 50% 46%,
+      rgba(0, 0, 0, 0.00) 0%,
+      rgba(0, 0, 0, 0.18) 42%,
+      rgba(0, 0, 0, 0.72) 78%,
+      rgba(0, 0, 0, 0.88) 100%
     ),
     url("baize.jpg");
 
