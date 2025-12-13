@@ -1425,11 +1425,11 @@ body.overlay-active #player-name {
     font-weight: 700;
   }
 
-  #results-panel #results-context {
-    font-size: 1.05em;
+  #results-panel #results-subtitle {
+    font-size: 1.15em;
     line-height: 1.2;
-    opacity: 0.9;
-    margin-top: -0.15em;
+    opacity: 0.92;
+    margin-top: -0.20em;
   }
 
   #results-panel #results-breakdown {

@@ -220,8 +220,7 @@
     <div id="results-panel" style="display:none;">
       <div class="results-content">
         <h2 id="results-winner"></h2>
-        <div id="results-context"></div>
-        <div id="results-breakdown"></div>
+        <div id="results-subtitle"></div>
         <div id="results-ruler" aria-label="Score ruler"></div>
         <div id="results-match-table" style="display:none;"></div>
         <div class="results-buttons">
@@ -961,8 +960,7 @@
         const startPanel = document.getElementById("start-panel");
         const resultsPanel = document.getElementById("results-panel");
         const resultsWinner = document.getElementById("results-winner");
-        const resultsContext = document.getElementById("results-context");
-        const resultsBreakdown = document.getElementById("results-breakdown");
+        const resultsSubtitle = document.getElementById("results-subtitle");
         const resultsRuler = document.getElementById("results-ruler");
         const resultsMatchTable = document.getElementById("results-match-table");
         const nextGameBtn = document.getElementById("btn-next-game");
@@ -993,47 +991,37 @@
           this.matchHistory.push({ playerTricks, aiTricks, playerPoints, aiPoints });
         }
 
-        // Determine winner
-        let winnerText = "";
-        if (playerTricks > aiTricks) {
-          winnerText = `${this.playerName} Wins!`;
-        } else if (aiTricks > playerTricks) {
-          winnerText = `${this.opponentName} Wins!`;
-        } else {
-          winnerText = "It's a Tie!";
-        }
+        const matchOver = isMatch && (this.playerMatchScore >= this.matchTarget || this.aiMatchScore >= this.matchTarget);
 
+        // Determine winner
         const isTie = (playerTricks === aiTricks);
+        const winnerIsPlayer = playerTricks > aiTricks;
+        const winnerIsAi = aiTricks > playerTricks;
+
+        const scopeWord = (isMatch && matchOver) ? "match" : "game";
+
+        let winnerText = "";
+        if (winnerIsPlayer) winnerText = `${this.playerName} wins ${scopeWord}!`;
+        else if (winnerIsAi) winnerText = `${this.opponentName} wins ${scopeWord}!`;
+        else winnerText = `It's a tie ${scopeWord}!`;
 
         if (resultsWinner) {
           resultsWinner.textContent = winnerText;
         }
 
-        // Context line: game/round/match outcome
-        if (resultsContext) {
-          const matchOver = isMatch && (this.playerMatchScore >= this.matchTarget || this.aiMatchScore >= this.matchTarget);
-          let contextText = "";
-
-          if (!isMatch) {
-            contextText = isTie ? "Game tied" : "Wins the game";
-          } else if (matchOver) {
-            contextText = isTie ? `Match tied — First to ${this.matchTarget} points` : `Wins the match — First to ${this.matchTarget} points`;
+        // Subtitle: winner + points (match total if match is over; else points from this game)
+        if (resultsSubtitle) {
+          let subtitle = "";
+          if (isTie) {
+            subtitle = "No points awarded";
           } else {
-            contextText = isTie ? `Round tied — Match to ${this.matchTarget} points` : `Wins the round — Match to ${this.matchTarget} points`;
+            const winnerName = winnerIsPlayer ? this.playerName : this.opponentName;
+            const points = (isMatch && matchOver)
+              ? (winnerIsPlayer ? this.playerMatchScore : this.aiMatchScore)
+              : (winnerIsPlayer ? playerPoints : aiPoints);
+            subtitle = `${winnerName} wins ${points} point${points === 1 ? "" : "s"}`;
           }
-
-          if (isMatch) {
-            contextText += ` • ${this.playerMatchScore}–${this.aiMatchScore}`;
-          }
-
-          resultsContext.textContent = contextText;
-        }
-
-        // Breakdown
-        if (resultsBreakdown) {
-          let breakdown = `<strong>${this.playerName}:</strong> ${playerTricks} tricks, ${playerPoints} points<br>`;
-          breakdown += `<strong>${this.opponentName}:</strong> ${aiTricks} tricks, ${aiPoints} points`;
-          resultsBreakdown.innerHTML = breakdown;
+          resultsSubtitle.textContent = subtitle;
         }
 
         if (resultsRuler) {
@@ -1043,9 +1031,6 @@
             aiTricks
           });
         }
-
-        // Check if match is over
-        const matchOver = isMatch && (this.playerMatchScore >= this.matchTarget || this.aiMatchScore >= this.matchTarget);
 
         // Show match table if in match mode
         if (resultsMatchTable) {
