@@ -136,12 +136,13 @@
 .firstdeal-option{
   display: inline-flex;
   align-items: center;
-  gap: 0.15em;
+  gap: 0.01em;
   font-size: 1em;
   white-space: nowrap;
 }
 
 .firstdeal-option input[type="radio"]{
+  margin: 0;
   transform: scale(0.92);
   transform-origin: center;
 }
