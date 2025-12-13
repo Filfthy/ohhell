@@ -1067,84 +1067,83 @@
         container.innerHTML = "";
         container.className = "results-ruler";
 
-        const rulerArea = document.createElement("div");
-        rulerArea.className = "ruler-area";
+        const aiBox = document.querySelector("#ai-play-area > div:first-child");
+        const playerBox = document.querySelector("#player-play-area > div:first-child");
+        const aiLabelText = (aiBox && aiBox.textContent && aiBox.textContent.trim()) ? aiBox.textContent.trim() : "CPU";
+        const playerLabelText = (playerBox && playerBox.textContent && playerBox.textContent.trim()) ? playerBox.textContent.trim() : "PL";
 
-        const top = document.createElement("div");
-        top.className = "ruler-grid ruler-top";
-        for (let i = 0; i < 14; i++) {
-          const cell = document.createElement("div");
-          cell.className = "ruler-cell";
-          if (i >= 7) cell.textContent = String(i - 6); // 1..7 for tricks 7..13
-          top.appendChild(cell);
-        }
+        const layout = document.createElement("div");
+        layout.className = "ruler-layout";
 
-        const track = document.createElement("div");
-        track.className = "ruler-track";
-        const trackGrid = document.createElement("div");
-        trackGrid.className = "ruler-grid";
-        for (let i = 0; i < 14; i++) {
-          const cell = document.createElement("div");
-          cell.className = "ruler-cell";
-          const tick = document.createElement("div");
-          tick.className = (i === 6) ? "ruler-tick ruler-tick-mid" : "ruler-tick";
-          cell.appendChild(tick);
-          trackGrid.appendChild(cell);
-        }
-        const line = document.createElement("div");
-        line.className = "ruler-line";
-        track.appendChild(line);
-        track.appendChild(trackGrid);
+        const makeLabelCell = (txt) => {
+          const el = document.createElement("div");
+          el.className = "ruler-label";
+          el.textContent = txt || "";
+          return el;
+        };
 
-        const bottom = document.createElement("div");
-        bottom.className = "ruler-grid ruler-bottom";
-        for (let i = 0; i < 14; i++) {
-          const cell = document.createElement("div");
-          cell.className = "ruler-cell";
-          cell.textContent = String(i);
-          bottom.appendChild(cell);
-        }
-
-        const rows = document.createElement("div");
-        rows.className = "ruler-rows";
-
-        const makeRow = (labelText, trickIndex) => {
-          const row = document.createElement("div");
-          row.className = "ruler-row";
-
-          const label = document.createElement("div");
-          label.className = "ruler-row-label";
-          label.textContent = labelText;
-
+        const makeScaleGrid = (cls, fillCell) => {
           const grid = document.createElement("div");
-          grid.className = "ruler-grid ruler-row-grid";
-
+          grid.className = `ruler-grid ${cls}`;
           for (let i = 0; i < 14; i++) {
             const cell = document.createElement("div");
             cell.className = "ruler-cell";
-            if (i === trickIndex) {
-              const marker = document.createElement("div");
-              marker.className = "ruler-marker";
-              marker.textContent = "@";
-              cell.appendChild(marker);
-            }
+            if (fillCell) fillCell(cell, i);
             grid.appendChild(cell);
           }
-
-          row.appendChild(label);
-          row.appendChild(grid);
-          return row;
+          return grid;
         };
 
-        rows.appendChild(makeRow("PL", pT));
-        rows.appendChild(makeRow("CPU", aT));
+        // Top: points 1..7 aligned to tricks 7..13
+        layout.appendChild(makeLabelCell(""));
+        layout.appendChild(
+          makeScaleGrid("ruler-top", (cell, i) => {
+            if (i >= 7) cell.textContent = String(i - 6);
+          })
+        );
 
-        rulerArea.appendChild(top);
-        rulerArea.appendChild(track);
-        rulerArea.appendChild(bottom);
+        // Middle: line + ticks
+        layout.appendChild(makeLabelCell(""));
+        const track = document.createElement("div");
+        track.className = "ruler-track";
+        const line = document.createElement("div");
+        line.className = "ruler-line";
+        track.appendChild(line);
+        track.appendChild(
+          makeScaleGrid("ruler-track-grid", (cell, i) => {
+            const tick = document.createElement("div");
+            tick.className = (i === 6) ? "ruler-tick ruler-tick-mid" : "ruler-tick";
+            cell.appendChild(tick);
+          })
+        );
+        layout.appendChild(track);
 
-        container.appendChild(rulerArea);
-        container.appendChild(rows);
+        // Bottom: tricks 0..13
+        layout.appendChild(makeLabelCell(""));
+        layout.appendChild(
+          makeScaleGrid("ruler-bottom", (cell, i) => {
+            cell.textContent = String(i);
+          })
+        );
+
+        const makeMarkerRow = (labelText, trickIndex) => {
+          layout.appendChild(makeLabelCell(labelText));
+          layout.appendChild(
+            makeScaleGrid("ruler-marker-grid", (cell, i) => {
+              if (i !== trickIndex) return;
+              const img = document.createElement("img");
+              img.src = "trick.png";
+              img.alt = "";
+              img.className = "ruler-token";
+              cell.appendChild(img);
+            })
+          );
+        };
+
+        makeMarkerRow(playerLabelText, pT);
+        makeMarkerRow(aiLabelText, aT);
+
+        container.appendChild(layout);
       }
 
       hideGameResults({ hideOverlay } = { hideOverlay: false }) {

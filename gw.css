@@ -1462,8 +1462,21 @@ body.overlay-active #player-name {
     margin: 0.25em auto 0;
   }
 
-  #results-panel .results-ruler .ruler-area {
+  #results-panel .results-ruler .ruler-layout {
+    display: grid;
+    grid-template-columns: 3.2em 1fr;
+    column-gap: 0.6em;
+    row-gap: 0.35em;
+    align-items: center;
     width: 100%;
+  }
+
+  #results-panel .results-ruler .ruler-label {
+    text-align: right;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    opacity: 0.9;
+    white-space: nowrap;
   }
 
   #results-panel .results-ruler .ruler-grid {
@@ -1522,34 +1535,18 @@ body.overlay-active #player-name {
     margin-top: 0.35em;
   }
 
-  #results-panel .results-ruler .ruler-rows {
-    margin-top: 0.65em;
-    display: grid;
-    gap: 0.25em;
-    width: 100%;
+  #results-panel .results-ruler .ruler-marker-grid {
+    min-height: 1.6em;
   }
 
-  #results-panel .results-ruler .ruler-row {
-    display: grid;
-    grid-template-columns: 3.2em 1fr;
-    align-items: center;
-    column-gap: 0.6em;
-  }
-
-  #results-panel .results-ruler .ruler-row-label {
-    text-align: right;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    opacity: 0.9;
-  }
-
-  #results-panel .results-ruler .ruler-marker {
-    display: inline-block;
-    font-weight: 900;
-    font-size: 1.25em;
-    line-height: 1;
-    color: #fdf6e3;
-    text-shadow: 0 1px 0 rgba(0,0,0,0.55);
+  #results-panel .results-ruler .ruler-token {
+    width: 1.35em;
+    height: 1.35em;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.55));
+    pointer-events: none;
   }
 
   #results-panel .results-buttons {
