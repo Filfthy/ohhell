@@ -1413,8 +1413,8 @@ body.overlay-active #player-name {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1.5em;
-    padding: 2em;
+    gap: 0.75em;
+    padding: 1.2em 1.4em;
     text-align: center;
   }
 
@@ -1459,7 +1459,7 @@ body.overlay-active #player-name {
   /* Results score ruler (tricks + points + markers) */
   #results-panel #results-ruler.results-ruler {
     width: min(46em, 95%);
-    margin: 0.25em auto 0;
+    margin: 0.1em auto 0;
   }
 
   #results-panel .results-ruler .ruler-layout {
