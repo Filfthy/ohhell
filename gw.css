@@ -401,7 +401,8 @@ body.suitcolors-rbbo {
   /* Kings/Queens inset art layer */
   .card .royal-inset {
     position: absolute;
-    inset: 8%;
+    /* Use equal pixel inset on a 2:3 card: 8% of width => (8% * 2/3) of height */
+    inset: calc(8% * 2 / 3) 8%;
     border-radius: 6px;
     overflow: hidden;
     pointer-events: none;
