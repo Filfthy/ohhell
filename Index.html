@@ -993,6 +993,15 @@
 
         const matchOver = isMatch && (this.playerMatchScore >= this.matchTarget || this.aiMatchScore >= this.matchTarget);
 
+        const aiBox = document.querySelector("#ai-play-area > div:first-child");
+        const playerBox = document.querySelector("#player-play-area > div:first-child");
+        const aiShort = (aiBox && aiBox.textContent && aiBox.textContent.trim())
+          ? aiBox.textContent.trim()
+          : this.opponentName;
+        const playerShort = (playerBox && playerBox.textContent && playerBox.textContent.trim())
+          ? playerBox.textContent.trim()
+          : this.playerName;
+
         // Determine winner
         const winnerIsPlayer = playerTricks > aiTricks;
         const winnerIsAi = aiTricks > playerTricks;
@@ -1000,8 +1009,8 @@
         const scopeWord = (isMatch && matchOver) ? "match" : "game";
 
         let winnerText = "";
-        if (winnerIsPlayer) winnerText = `${this.playerName} wins ${scopeWord}!`;
-        else winnerText = `${this.opponentName} wins ${scopeWord}!`;
+        if (winnerIsPlayer) winnerText = `${playerShort} wins ${scopeWord}!`;
+        else winnerText = `${aiShort} wins ${scopeWord}!`;
 
         if (resultsWinner) {
           resultsWinner.textContent = winnerText;
@@ -1009,7 +1018,7 @@
 
         // Subtitle: winner + points (match total if match is over; else points from this game)
         if (resultsSubtitle) {
-          const winnerName = winnerIsPlayer ? this.playerName : this.opponentName;
+          const winnerName = winnerIsPlayer ? playerShort : aiShort;
           const points = (isMatch && matchOver)
             ? (winnerIsPlayer ? this.playerMatchScore : this.aiMatchScore)
             : (winnerIsPlayer ? playerPoints : aiPoints);
