@@ -22,7 +22,7 @@
 
 /* match opponent header vibe + keep left indent consistent */
 .settings4-label{
-  width: clamp(70px, 15vw, 110px);               /* matches Player name label width */
+  width: clamp(60px, 12vw, 90px);               /* reduced to give pills more space */
   padding-left: clamp(8px, 3vw, 52px);         /* matches .start-field-row indent */
   font-size: 1em;
   font-weight: 700;
@@ -32,9 +32,9 @@
 }
 
 .settings4-opt{
-  width: calc((100% - clamp(70px, 15vw, 110px)) / 3);
+  width: calc((100% - clamp(60px, 12vw, 90px)) / 3);
   text-align: left;
-  padding-right: clamp(6px, 1.5vw, 10px);        /* consistent gap between pills */
+  padding-right: clamp(8px, 2vw, 12px);        /* increased gap between pills */
   white-space: nowrap;
 }
 
@@ -120,7 +120,7 @@
 }
 
 .firstdeal-cell{
-  padding: 0 1em 0 0;
+  padding: 0 0.6em 0 0;
   vertical-align: middle;
   white-space: nowrap;
 }
@@ -999,7 +999,7 @@ body.overlay-active #player-name {
     display: flex;
     flex-direction: column;
     
-    font-size: calc(var(--scale-factor) * 2.3);
+    font-size: calc(var(--scale-factor) * 2.2);
   }
 
   /* When instructions are open, use a simple column flex layout so
