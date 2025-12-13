@@ -221,6 +221,7 @@
       <div class="results-content">
         <h2 id="results-winner"></h2>
         <div id="results-breakdown"></div>
+        <div id="results-ruler" aria-label="Score ruler"></div>
         <div id="results-match-table" style="display:none;"></div>
         <div class="results-buttons">
           <button id="btn-next-game" style="display:none;">Next Game</button>
@@ -927,6 +928,7 @@
         const resultsPanel = document.getElementById("results-panel");
         const resultsWinner = document.getElementById("results-winner");
         const resultsBreakdown = document.getElementById("results-breakdown");
+        const resultsRuler = document.getElementById("results-ruler");
         const resultsMatchTable = document.getElementById("results-match-table");
         const nextGameBtn = document.getElementById("btn-next-game");
         const closeBtn = document.getElementById("btn-close-results");
@@ -976,6 +978,14 @@
           breakdown += `<strong>${this.opponentName}:</strong> ${aiTricks} tricks, ${aiPoints} points`;
           breakdown += `<div style="margin-top:8px; font-size:0.95em; opacity:0.9;">Scoring: 1 point for each trick beyond 6.</div>`;
           resultsBreakdown.innerHTML = breakdown;
+        }
+
+        if (resultsRuler) {
+          this.renderResultsRuler({
+            container: resultsRuler,
+            playerTricks,
+            aiTricks
+          });
         }
 
         // Check if match is over
@@ -1043,10 +1053,105 @@
         }
       }
 
+      renderResultsRuler({ container, playerTricks, aiTricks }) {
+        if (!container) return;
+
+        const clampTricks = (n) => {
+          const v = Number.isFinite(n) ? Math.trunc(n) : 0;
+          return Math.max(0, Math.min(13, v));
+        };
+
+        const pT = clampTricks(playerTricks);
+        const aT = clampTricks(aiTricks);
+
+        container.innerHTML = "";
+        container.className = "results-ruler";
+
+        const rulerArea = document.createElement("div");
+        rulerArea.className = "ruler-area";
+
+        const top = document.createElement("div");
+        top.className = "ruler-grid ruler-top";
+        for (let i = 0; i < 14; i++) {
+          const cell = document.createElement("div");
+          cell.className = "ruler-cell";
+          if (i >= 7) cell.textContent = String(i - 6); // 1..7 for tricks 7..13
+          top.appendChild(cell);
+        }
+
+        const track = document.createElement("div");
+        track.className = "ruler-track";
+        const trackGrid = document.createElement("div");
+        trackGrid.className = "ruler-grid";
+        for (let i = 0; i < 14; i++) {
+          const cell = document.createElement("div");
+          cell.className = "ruler-cell";
+          const tick = document.createElement("div");
+          tick.className = (i === 6) ? "ruler-tick ruler-tick-mid" : "ruler-tick";
+          cell.appendChild(tick);
+          trackGrid.appendChild(cell);
+        }
+        const line = document.createElement("div");
+        line.className = "ruler-line";
+        track.appendChild(line);
+        track.appendChild(trackGrid);
+
+        const bottom = document.createElement("div");
+        bottom.className = "ruler-grid ruler-bottom";
+        for (let i = 0; i < 14; i++) {
+          const cell = document.createElement("div");
+          cell.className = "ruler-cell";
+          cell.textContent = String(i);
+          bottom.appendChild(cell);
+        }
+
+        const rows = document.createElement("div");
+        rows.className = "ruler-rows";
+
+        const makeRow = (labelText, trickIndex) => {
+          const row = document.createElement("div");
+          row.className = "ruler-row";
+
+          const label = document.createElement("div");
+          label.className = "ruler-row-label";
+          label.textContent = labelText;
+
+          const grid = document.createElement("div");
+          grid.className = "ruler-grid ruler-row-grid";
+
+          for (let i = 0; i < 14; i++) {
+            const cell = document.createElement("div");
+            cell.className = "ruler-cell";
+            if (i === trickIndex) {
+              const marker = document.createElement("div");
+              marker.className = "ruler-marker";
+              marker.textContent = "@";
+              cell.appendChild(marker);
+            }
+            grid.appendChild(cell);
+          }
+
+          row.appendChild(label);
+          row.appendChild(grid);
+          return row;
+        };
+
+        rows.appendChild(makeRow("PL", pT));
+        rows.appendChild(makeRow("CPU", aT));
+
+        rulerArea.appendChild(top);
+        rulerArea.appendChild(track);
+        rulerArea.appendChild(bottom);
+
+        container.appendChild(rulerArea);
+        container.appendChild(rows);
+      }
+
       hideGameResults({ hideOverlay } = { hideOverlay: false }) {
         const overlay = document.getElementById("start-overlay");
         const startPanel = document.getElementById("start-panel");
         const resultsPanel = document.getElementById("results-panel");
+        const resultsRuler = document.getElementById("results-ruler");
 
         if (!overlay) return;
 
@@ -1062,6 +1167,7 @@
         if (startButtons) startButtons.style.display = '';
 
         if (resultsPanel) resultsPanel.style.display = 'none';
+        if (resultsRuler) resultsRuler.innerHTML = '';
 
         if (hideOverlay) {
           overlay.style.display = "none";

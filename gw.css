@@ -1456,6 +1456,102 @@ body.overlay-active #player-name {
     background: rgba(0,0,0,0.2);
   }
 
+  /* Results score ruler (tricks + points + markers) */
+  #results-panel #results-ruler.results-ruler {
+    width: min(46em, 95%);
+    margin: 0.25em auto 0;
+  }
+
+  #results-panel .results-ruler .ruler-area {
+    width: 100%;
+  }
+
+  #results-panel .results-ruler .ruler-grid {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 0;
+    width: 100%;
+  }
+
+  #results-panel .results-ruler .ruler-cell {
+    text-align: center;
+    min-width: 0;
+  }
+
+  #results-panel .results-ruler .ruler-top {
+    font-size: 0.95em;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+    margin-bottom: 0.35em;
+  }
+
+  #results-panel .results-ruler .ruler-track {
+    position: relative;
+    padding: 0.25em 0;
+  }
+
+  #results-panel .results-ruler .ruler-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 0;
+    border-top: 2px solid rgba(30,192,0,0.55);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  #results-panel .results-ruler .ruler-tick {
+    width: 0;
+    height: 0.9em;
+    margin: 0 auto;
+    border-left: 2px solid rgba(30,192,0,0.65);
+  }
+
+  #results-panel .results-ruler .ruler-tick-mid {
+    height: 1.15em;
+    border-left-color: rgba(30,192,0,0.95);
+  }
+
+  #results-panel .results-ruler .ruler-bottom {
+    font-size: 0.95em;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    opacity: 0.92;
+    margin-top: 0.35em;
+  }
+
+  #results-panel .results-ruler .ruler-rows {
+    margin-top: 0.65em;
+    display: grid;
+    gap: 0.25em;
+    width: 100%;
+  }
+
+  #results-panel .results-ruler .ruler-row {
+    display: grid;
+    grid-template-columns: 3.2em 1fr;
+    align-items: center;
+    column-gap: 0.6em;
+  }
+
+  #results-panel .results-ruler .ruler-row-label {
+    text-align: right;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    opacity: 0.9;
+  }
+
+  #results-panel .results-ruler .ruler-marker {
+    display: inline-block;
+    font-weight: 900;
+    font-size: 1.25em;
+    line-height: 1;
+    color: #fdf6e3;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.55);
+  }
+
   #results-panel .results-buttons {
     display: flex;
     gap: 1em;
