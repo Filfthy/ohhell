@@ -767,13 +767,22 @@
 
         const kind = (outcome === "lose") ? "lose" : "win";
 
+        const midiToFreq = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
         // Win: upbeat "extra life" arpeggio sequence (Hz)
-        // Lose: slower, lower-octave minor arpeggio (Option A)
+        // Lose: same tempo + timbre, but diminished arpeggios
         const seq = (kind === "lose")
           ? [
-            220.00, 261.63, 329.63, 440.00,
-            329.63, 261.63, 220.00,
-            196.00
+            // 6 diminished-7 arpeggios (4 notes each) stepping down by semitone
+            // C°7, B°7, Bb°7, A°7, Ab°7, G°7
+            ...[
+              60, 63, 66, 69,
+              59, 62, 65, 68,
+              58, 61, 64, 67,
+              57, 60, 63, 66,
+              56, 59, 62, 65,
+              55, 58, 61, 64
+            ].map(midiToFreq)
           ]
           : [
             261.63, 329.63, 392.00, 523.25, 659.25,
@@ -783,14 +792,16 @@
             493.88, 659.25, 392.00, 523.25
           ];
 
-        const noteGap = (kind === "lose") ? 0.14 : 0.1;
-        const noteDur = (kind === "lose") ? 0.12 : 0.09;
+        // Keep loss the same tempo as win
+        const noteGap = 0.1;
+        const noteDur = 0.09;
         const totalTime = seq.length * noteGap;
 
         const gainNode = ctx.createGain();
         gainNode.connect(ctx.destination);
 
-        const peak = (kind === "lose") ? 0.18 : 0.22;
+        // Keep loss the same loudness curve as win
+        const peak = 0.22;
         gainNode.gain.setValueAtTime(0.0001, now);
         gainNode.gain.linearRampToValueAtTime(peak, now + 0.02);
         gainNode.gain.exponentialRampToValueAtTime(0.0001, now + totalTime + 0.12);
@@ -798,7 +809,8 @@
         seq.forEach((freq, index) => {
           const t = now + index * noteGap;
           const osc = ctx.createOscillator();
-          osc.type = (kind === "lose") ? "sine" : "triangle";
+          // Keep loss the same timbre as win
+          osc.type = "triangle";
           osc.frequency.setValueAtTime(freq, t);
           osc.connect(gainNode);
           osc.start(t);
