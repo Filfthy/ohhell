@@ -1694,6 +1694,8 @@
         const result = this.game.playCard("ai", idx);
         this.pendingTrickResolution = !!result.trickComplete;
 
+        this.playSfx(this.sfx?.cardPlace2);
+
         this.animateCardPlay(card, fromPos, toPos, false, () => {
           this.render();
           if (result.trickComplete) setTimeout(() => this.finishTrick(), 650);
