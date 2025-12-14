@@ -61,7 +61,9 @@
       <div id="player-won" class="won-stack"></div>
     </div>
 
-    <div id="controls"></div>
+    <div id="controls">
+      <button id="btn-sound" type="button" class="icon-btn" aria-label="Toggle sound" aria-pressed="true" title="Sound: muted">🔇</button>
+    </div>
   </div>
 
 <!-- START OVERLAY -->
@@ -659,9 +661,16 @@
         this.aiMatchScore = 0;
         this.matchHistory = []; // Array of {playerTricks, aiTricks, playerPoints, aiPoints}
 
+        // Match dealer alternation (set on first game, then flips each game)
+        this._matchDealer = null;
+
         // WebAudio (for win/lose jingle)
         this.audioCtx = null;
         this.playedEndJingle = false;
+
+        // Global sound toggle (SFX + WebAudio)
+        // Default muted unless user has explicitly chosen otherwise.
+        this.soundMuted = true;
 
         // SFX
         this.sfx = {
@@ -675,6 +684,14 @@
         this.sfx.cardShove2.preload = "auto";
         this.sfx.cardShove2.volume = 0.25;
         try { this.sfx.cardShove2.load(); } catch (e) { /* ignore */ }
+
+        // Load saved sound setting if available
+        try {
+          const savedMuted = localStorage.getItem("gw_soundMuted");
+          if (savedMuted != null) this.soundMuted = (savedMuted === "1");
+        } catch (e) { /* ignore */ }
+
+        this.applySoundMuted();
 
         // Load saved settings if available
         try {
@@ -736,7 +753,47 @@
         requestAnimationFrame(() => this.positionTrumpMarker());
       }
 
+      applySoundMuted() {
+        const muted = !!this.soundMuted;
+
+        // HTMLAudioElement SFX
+        try {
+          if (this.sfx) {
+            for (const k of Object.keys(this.sfx)) {
+              const a = this.sfx[k];
+              if (a && typeof a === "object") a.muted = muted;
+            }
+          }
+        } catch (e) { /* ignore */ }
+
+        // UI button state
+        const btn = document.getElementById("btn-sound");
+        if (btn) {
+          btn.textContent = muted ? "🔇" : "🔊";
+          btn.setAttribute("aria-pressed", muted ? "true" : "false");
+          btn.title = muted ? "Sound: muted" : "Sound: on";
+          btn.classList.toggle("muted", muted);
+
+          if (!btn.__gwBound) {
+            btn.__gwBound = true;
+            btn.addEventListener("click", () => {
+              this.setSoundMuted(!this.soundMuted);
+              // On unmute, attempt to unlock/resume WebAudio in the same gesture.
+              if (!this.soundMuted) this.ensureAudioContext();
+            });
+          }
+        }
+
+        try { localStorage.setItem("gw_soundMuted", muted ? "1" : "0"); } catch (e) { /* ignore */ }
+      }
+
+      setSoundMuted(muted) {
+        this.soundMuted = !!muted;
+        this.applySoundMuted();
+      }
+
       playSfx(audio) {
+        if (this.soundMuted) return;
         if (!audio) return;
         try {
           audio.currentTime = 0;
@@ -760,6 +817,7 @@
       }
 
       playEndArpeggio({ outcome } = {}) {
+        if (this.soundMuted) return;
         const ctx = this.ensureAudioContext();
         if (!ctx) return;
 
@@ -1038,9 +1096,17 @@
       }
 
       cheatEndGameRandom() {
-        const total = 13;
-        const playerTricks = Math.floor(Math.random() * (total + 1));
-        const aiTricks = total - playerTricks;
+        // Cheat key: produce a realistic close scoreline.
+        // Only allow 7–6 or 8–5, and randomly assign who gets the higher tricks.
+        const options = [
+          [7, 6],
+          [8, 5]
+        ];
+
+        const pick = options[(Math.random() * options.length) | 0];
+        const swap = Math.random() < 0.5;
+        const playerTricks = swap ? pick[1] : pick[0];
+        const aiTricks = swap ? pick[0] : pick[1];
 
         // Force the score-phase counters used by the results overlay.
         if (!this.game.scoreScorePhase) this.game.scoreScorePhase = { player: 0, ai: 0 };
@@ -1150,10 +1216,20 @@
             this.matchHistory.forEach((round, idx) => {
               table += `<tr><td>${idx + 1}</td><td>${round.playerPoints}</td><td>${round.aiPoints}</td></tr>`;
             });
-            table += `<tr style="font-weight:700;"><td>Total</td><td>${this.playerMatchScore}</td><td>${this.aiMatchScore}</td></tr>`;
-            table += '</tbody></table>';
+            table += '</tbody>';
+            table += `<tfoot><tr><td>Total</td><td>${this.playerMatchScore}</td><td>${this.aiMatchScore}</td></tr></tfoot>`;
+            table += '</table>';
             resultsMatchTable.innerHTML = table;
             resultsMatchTable.style.display = 'block';
+
+            // When the table becomes scrollable, keep the newest round visible.
+            requestAnimationFrame(() => {
+              const tbody = resultsMatchTable.querySelector('tbody');
+              if (tbody) {
+                tbody.scrollTop = tbody.scrollHeight;
+                requestAnimationFrame(() => { tbody.scrollTop = tbody.scrollHeight; });
+              }
+            });
           } else {
             resultsMatchTable.style.display = 'none';
           }
@@ -1200,7 +1276,12 @@
             this.playerMatchScore = 0;
             this.aiMatchScore = 0;
             this.matchHistory = [];
+            this._matchDealer = null;
             this.hideGameResults({ hideOverlay: false });
+
+            // Clear the old board state (won-trick tokens, played cards, etc)
+            // while the start overlay is visible.
+            this.startNewGame();
           };
         }
       }
@@ -1331,14 +1412,32 @@
         this.game.startNewGame();
         this.playedEndJingle = false;
 
-        // Apply first-deal preference (who deals first). In Whist, non-dealer leads.
-        const pickInitialDealer = () => {
+        // Dealer selection:
+        // - Quick games: respect the first-deal preference each time.
+        // - Matches: first-deal preference applies only to the first game;
+        //   then dealer alternates every game.
+        const isMatch = this.matchMode === "match";
+        const gamesPlayedInMatch = (isMatch && Array.isArray(this.matchHistory)) ? this.matchHistory.length : 0;
+
+        const pickDealerFromPreference = () => {
           if (this.firstDealMode === "player") return "player";
           if (this.firstDealMode === "opponent") return "ai";
           return Math.random() < 0.5 ? "player" : "ai";
         };
 
-        const dealer = pickInitialDealer();
+        let dealer;
+        if (isMatch) {
+          if (gamesPlayedInMatch === 0 || !this._matchDealer) {
+            dealer = pickDealerFromPreference();
+          } else {
+            dealer = (this._matchDealer === "player") ? "ai" : "player";
+          }
+          this._matchDealer = dealer;
+        } else {
+          dealer = pickDealerFromPreference();
+          this._matchDealer = null;
+        }
+
         const leader = dealer === "player" ? "ai" : "player"; // non-dealer leads first trick
 
         this.game.leader = leader;
