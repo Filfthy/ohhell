@@ -759,31 +759,38 @@
         return this.audioCtx;
       }
 
-      playEndArpeggio({ reverse }) {
+      playEndArpeggio({ outcome } = {}) {
         const ctx = this.ensureAudioContext();
         if (!ctx) return;
 
         const now = ctx.currentTime;
 
-        // "Extra life" arpeggio sequence (Hz)
-        const notes = [
-          261.63, 329.63, 392.00, 523.25, 659.25,
-          440.00, 523.25, 698.46, 587.33, 349.23,
-          698.46, 587.33, 349.23, 698.46, 493.88,
-          587.33, 783.99, 493.88, 659.25, 392.00,
-          493.88, 659.25, 392.00, 523.25
-        ];
+        const kind = (outcome === "lose") ? "lose" : "win";
 
-        const seq = reverse ? [...notes].reverse() : notes;
+        // Win: upbeat "extra life" arpeggio sequence (Hz)
+        // Lose: slower, lower-octave minor arpeggio (Option A)
+        const seq = (kind === "lose")
+          ? [
+            220.00, 261.63, 329.63, 440.00,
+            329.63, 261.63, 220.00,
+            196.00
+          ]
+          : [
+            261.63, 329.63, 392.00, 523.25, 659.25,
+            440.00, 523.25, 698.46, 587.33, 349.23,
+            698.46, 587.33, 349.23, 698.46, 493.88,
+            587.33, 783.99, 493.88, 659.25, 392.00,
+            493.88, 659.25, 392.00, 523.25
+          ];
 
-        const noteGap = 0.1;
-        const noteDur = 0.09;
+        const noteGap = (kind === "lose") ? 0.14 : 0.1;
+        const noteDur = (kind === "lose") ? 0.12 : 0.09;
         const totalTime = seq.length * noteGap;
 
         const gainNode = ctx.createGain();
         gainNode.connect(ctx.destination);
 
-        const peak = 0.22;
+        const peak = (kind === "lose") ? 0.18 : 0.22;
         gainNode.gain.setValueAtTime(0.0001, now);
         gainNode.gain.linearRampToValueAtTime(peak, now + 0.02);
         gainNode.gain.exponentialRampToValueAtTime(0.0001, now + totalTime + 0.12);
@@ -791,7 +798,7 @@
         seq.forEach((freq, index) => {
           const t = now + index * noteGap;
           const osc = ctx.createOscillator();
-          osc.type = "triangle";
+          osc.type = (kind === "lose") ? "sine" : "triangle";
           osc.frequency.setValueAtTime(freq, t);
           osc.connect(gainNode);
           osc.start(t);
@@ -1092,7 +1099,7 @@
 
         if (!this.playedEndJingle) {
           this.playedEndJingle = true;
-          this.playEndArpeggio({ reverse: !winnerIsPlayer });
+          this.playEndArpeggio({ outcome: winnerIsPlayer ? "win" : "lose" });
         }
 
         const scopeWord = (isMatch && matchOver) ? "match" : "game";
