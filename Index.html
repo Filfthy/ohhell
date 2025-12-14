@@ -661,11 +661,16 @@
 
         // SFX
         this.sfx = {
-          cardPlace2: new Audio("card-place-2.ogg")
+          cardPlace2: new Audio("card-place-2.ogg"),
+          cardShove2: new Audio("card-shove-2.ogg")
         };
         this.sfx.cardPlace2.preload = "auto";
         this.sfx.cardPlace2.volume = 0.8;
         try { this.sfx.cardPlace2.load(); } catch (e) { /* ignore */ }
+
+        this.sfx.cardShove2.preload = "auto";
+        this.sfx.cardShove2.volume = 0.25;
+        try { this.sfx.cardShove2.load(); } catch (e) { /* ignore */ }
 
         // Load saved settings if available
         try {
@@ -2007,6 +2012,7 @@
             if (nowPhaseIsDraw && this.game.prizeCard) {
               this.animatePrizeToSlot(() => {
                 window.__delayPrizeReveal = false;
+                this.playSfx(this.sfx?.cardShove2);
                 afterAllAnimations();
               });
             } else {
