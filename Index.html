@@ -1090,8 +1090,7 @@
         const winnerIsPlayer = playerTricks > aiTricks;
         const winnerIsAi = aiTricks > playerTricks;
 
-        const shouldPlayEndJingle = !isMatch || matchOver;
-        if (shouldPlayEndJingle && !this.playedEndJingle) {
+        if (!this.playedEndJingle) {
           this.playedEndJingle = true;
           this.playEndArpeggio({ reverse: !winnerIsPlayer });
         }
