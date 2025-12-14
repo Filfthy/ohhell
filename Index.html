@@ -1082,17 +1082,6 @@
           }
         });
 
-        // Cheat key for testing: press 'p' to force game over with a random
-        // split of 13 scoring-phase tricks, then show the results overlay.
-        document.addEventListener("keydown", (ev) => {
-          if (ev.key !== "p" && ev.key !== "P") return;
-          if (ev.defaultPrevented) return;
-          if (this.overlayActive) return;
-          if (this.animating) return;
-
-          ev.preventDefault();
-          this.cheatEndGameRandom();
-        });
       }
 
       cheatEndGameRandom() {
