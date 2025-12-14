@@ -659,6 +659,10 @@
         this.aiMatchScore = 0;
         this.matchHistory = []; // Array of {playerTricks, aiTricks, playerPoints, aiPoints}
 
+        // WebAudio (for win/lose jingle)
+        this.audioCtx = null;
+        this.playedEndJingle = false;
+
         // SFX
         this.sfx = {
           cardPlace2: new Audio("card-place-2.ogg"),
@@ -739,6 +743,64 @@
           const p = audio.play();
           if (p && typeof p.catch === "function") p.catch(() => {});
         } catch (e) { /* ignore */ }
+      }
+
+      ensureAudioContext() {
+        if (!this.audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.audioCtx = new AC();
+        }
+
+        if (this.audioCtx && this.audioCtx.state === "suspended") {
+          try {
+            this.audioCtx.resume().catch(() => {});
+          } catch (e) { /* ignore */ }
+        }
+        return this.audioCtx;
+      }
+
+      playEndArpeggio({ reverse }) {
+        const ctx = this.ensureAudioContext();
+        if (!ctx) return;
+
+        const now = ctx.currentTime;
+
+        // "Extra life" arpeggio sequence (Hz)
+        const notes = [
+          261.63, 329.63, 392.00, 523.25, 659.25,
+          440.00, 523.25, 698.46, 587.33, 349.23,
+          698.46, 587.33, 349.23, 698.46, 493.88,
+          587.33, 783.99, 493.88, 659.25, 392.00,
+          493.88, 659.25, 392.00, 523.25
+        ];
+
+        const seq = reverse ? [...notes].reverse() : notes;
+
+        const noteGap = 0.1;
+        const noteDur = 0.09;
+        const totalTime = seq.length * noteGap;
+
+        const gainNode = ctx.createGain();
+        gainNode.connect(ctx.destination);
+
+        const peak = 0.22;
+        gainNode.gain.setValueAtTime(0.0001, now);
+        gainNode.gain.linearRampToValueAtTime(peak, now + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + totalTime + 0.12);
+
+        seq.forEach((freq, index) => {
+          const t = now + index * noteGap;
+          const osc = ctx.createOscillator();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, t);
+          osc.connect(gainNode);
+          osc.start(t);
+          osc.stop(t + noteDur);
+        });
+
+        setTimeout(() => {
+          try { gainNode.disconnect(); } catch (_) {}
+        }, (totalTime + 0.25) * 1000);
       }
 
       bindStartOverlay() {
@@ -1028,6 +1090,12 @@
         const winnerIsPlayer = playerTricks > aiTricks;
         const winnerIsAi = aiTricks > playerTricks;
 
+        const shouldPlayEndJingle = !isMatch || matchOver;
+        if (shouldPlayEndJingle && !this.playedEndJingle) {
+          this.playedEndJingle = true;
+          this.playEndArpeggio({ reverse: !winnerIsPlayer });
+        }
+
         const scopeWord = (isMatch && matchOver) ? "match" : "game";
 
         let winnerText = "";
@@ -1243,6 +1311,7 @@
 
       startNewGame() {
         this.game.startNewGame();
+        this.playedEndJingle = false;
 
         // Apply first-deal preference (who deals first). In Whist, non-dealer leads.
         const pickInitialDealer = () => {
@@ -1598,6 +1667,9 @@
         if (this.overlayActive) return;
         if (this.game.turn !== "player") return;
         if (this.animating) return;
+
+        // Unlock WebAudio on first player interaction so win/lose jingle can play later.
+        this.ensureAudioContext();
 
         const legal = this.game.getLegalMovesFor("player");
         if (!legal.includes(idx)) {
