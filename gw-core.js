@@ -414,7 +414,15 @@ class CardView {
         center.style.display = "block";
 
         if (card.rank === "A" && card.suit === "♠") {
-          center.classList.add("ace-spades");
+          const img = document.createElement("img");
+          img.src = "spade.svg";
+          img.alt = "A♠";
+          img.className = "ace-spade-svg";
+          img.draggable = false;
+          img.style.pointerEvents = "none";
+          center.appendChild(img);
+          div.appendChild(center);
+          return div;
         }
 
         const leftX  = 32;
