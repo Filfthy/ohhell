@@ -659,6 +659,14 @@
         this.aiMatchScore = 0;
         this.matchHistory = []; // Array of {playerTricks, aiTricks, playerPoints, aiPoints}
 
+        // SFX
+        this.sfx = {
+          cardPlace2: new Audio("card-place-2.ogg")
+        };
+        this.sfx.cardPlace2.preload = "auto";
+        this.sfx.cardPlace2.volume = 0.8;
+        try { this.sfx.cardPlace2.load(); } catch (e) { /* ignore */ }
+
         // Load saved settings if available
         try {
           const savedName = localStorage.getItem("gw_playerName");
@@ -717,6 +725,15 @@
         this.updateTurnHighlight();
 
         requestAnimationFrame(() => this.positionTrumpMarker());
+      }
+
+      playSfx(audio) {
+        if (!audio) return;
+        try {
+          audio.currentTime = 0;
+          const p = audio.play();
+          if (p && typeof p.catch === "function") p.catch(() => {});
+        } catch (e) { /* ignore */ }
       }
 
       bindStartOverlay() {
@@ -1597,6 +1614,8 @@
 
         const result = this.game.playCard("player", idx);
         this.pendingTrickResolution = !!result.trickComplete;
+
+        this.playSfx(this.sfx?.cardPlace2);
 
         this.animateCardPlay(card, fromPos, toPos, false, () => {
           this.render();
