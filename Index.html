@@ -2010,9 +2010,9 @@
 
           const startPrizeSlide = () => {
             if (nowPhaseIsDraw && this.game.prizeCard) {
+              this.playSfx(this.sfx?.cardShove2);
               this.animatePrizeToSlot(() => {
                 window.__delayPrizeReveal = false;
-                this.playSfx(this.sfx?.cardShove2);
                 afterAllAnimations();
               });
             } else {
