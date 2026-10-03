@@ -162,24 +162,15 @@ class GameController {
     return this.opponentNames[(seat - 1) % this.opponentNames.length];
   }
 
-  // New line-up each game: whoever sat out last game comes in first, the
-  // rest are shuffled, and seats are shuffled too.
+  // Each game: opponents drawn at random from the whole pool, seated in
+  // random order.
   pickOpponents() {
-    let last = [];
-    try { last = JSON.parse(localStorage.getItem("oh_lastOpponents") || "[]"); } catch (e) { /* ignore */ }
-    const rested = OPPONENT_POOL.filter(n => !last.includes(n));
-    const played = OPPONENT_POOL.filter(n => last.includes(n));
-    shuffle(rested);
-    shuffle(played);
-    this.opponentNames = rested.concat(played);
-  }
-
-  rememberOpponents() {
-    const used = this.opponentNames.slice(0, Math.max(0, this.game.numPlayers - 1));
-    // Shuffle the seats of this game's line-up.
-    shuffle(used);
-    this.opponentNames = used.concat(this.opponentNames.slice(used.length));
-    try { localStorage.setItem("oh_lastOpponents", JSON.stringify(used)); } catch (e) { /* ignore */ }
+    const pool = OPPONENT_POOL.slice();
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    this.opponentNames = pool;
   }
 
   seatPos(seat) {
@@ -758,7 +749,6 @@ class GameController {
     this.aiEngine.resetMemory();
     this.aiEngine.setDifficulty(this.difficulty);
 
-    this.rememberOpponents();
     this.buildSeats();
     this.runRound(this.epoch);
   }
