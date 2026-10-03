@@ -344,10 +344,9 @@ class GameController {
       div.style.zIndex = String(slot + 100);
 
       if (legal.includes(obj.idx)) div.classList.add("legal-move");
-      if (obj.idx === this.pickedIdx && legal.includes(obj.idx)) {
-        div.classList.add("picked");
-        div.style.zIndex = "300";   // in front of its neighbours
-      }
+      // The picked card lifts but keeps its place in the fan, so the cards
+      // either side of it can still be tapped.
+      if (obj.idx === this.pickedIdx && legal.includes(obj.idx)) div.classList.add("picked");
 
       div.addEventListener("click", (e) => this.handlePlayerCardClick(obj.idx, e.currentTarget));
       handDiv.appendChild(div);
