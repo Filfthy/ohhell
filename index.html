@@ -16,8 +16,8 @@
   <meta property="og:image" content="share.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="share.jpg" as="image" fetchpriority="low">
-  <link rel="stylesheet" href="./gw.css?v=132">
-  <link rel="stylesheet" href="./oh.css?v=132">
+  <link rel="stylesheet" href="./gw.css?v=134">
+  <link rel="stylesheet" href="./oh.css?v=134">
 </head>
 <body>
   <div id="game-area">
@@ -84,7 +84,7 @@
 
 <!-- SPLASH -->
 <div id="splash" role="button" tabindex="0" aria-label="Click to start">
-  <img src="logo-ohhell.webp?v=132" alt="Oh Hell! Extended" class="splash-title">
+  <img src="logo-ohhell.webp?v=134" alt="Oh Hell! Extended" class="splash-title">
   <div class="logo-subtitle splash-subtitle">Oh Hell! with a trick up its sleeve</div>
   <img src="bugvictim.svg" alt="BugVictim" class="splash-logo">
   <div class="splash-credit">© BugVictim 2026</div>
@@ -137,7 +137,7 @@
 
     <div class="start-panel-header">
       <div class="start-header">
-        <img src="logo-ohhell.webp?v=132" alt="Oh Hell! Extended" class="start-title-img">
+        <img src="logo-ohhell.webp?v=134" alt="Oh Hell! Extended" class="start-title-img">
       </div>
 
       <div class="start-logo-row start-credit-line">© BugVictim 2026</div>
@@ -174,6 +174,10 @@
           <div class="seg" role="radiogroup"><label><input type="radio" name="players" value="2"><span>2</span></label><label><input type="radio" name="players" value="3"><span>3</span></label><label><input type="radio" name="players" value="4" checked><span>4</span></label><label><input type="radio" name="players" value="5"><span>5</span></label><label title="Random number of players (2–5)"><input type="radio" name="players" value="random"><span>🎲</span></label></div>
         </div>
         <div class="opt-row">
+          <div class="opt-label">Deck</div>
+          <div class="seg" role="radiogroup"><label title="The normal 52 card deck"><input type="radio" name="deck" value="standard" checked><span>Standard 52</span></label><label title="Adds 2 Jokers, 4 Dragons, the Sun and the Moon"><input type="radio" name="deck" value="extended"><span>Extended</span></label></div>
+        </div>
+        <div class="opt-row">
           <div class="opt-label">Opponents</div>
           <div class="seg" role="radiogroup"><label title="Easy"><input type="radio" name="opponent" value="easy" id=opp-easy checked><span>Lost souls</span></label><label title="Medium"><input type="radio" name="opponent" value="medium" id=opp-medium><span>Imps</span></label><label title="Hard: they think ahead"><input type="radio" name="opponent" value="hard" id=opp-hard><span>Hellhounds</span></label></div>
         </div>
@@ -202,10 +206,6 @@
         <div class="opt-row">
           <div class="opt-label">Trumps</div>
           <div class="seg" role="radiogroup"><label title="A five-sided coin: a suit, or no trump"><input type="radio" name="trumpmode" value="coin" checked><span>Coin</span></label><label title="The next card after the deal is turned up for trump"><input type="radio" name="trumpmode" value="card"><span>Turned card</span></label></div>
-        </div>
-        <div class="opt-row">
-          <div class="opt-label">Deck</div>
-          <div class="seg" role="radiogroup"><label title="The normal 52 card deck"><input type="radio" name="deck" value="standard" checked><span>Standard</span></label><label title="Adds 2 Jokers, 4 Dragons, the Sun and the Moon"><input type="radio" name="deck" value="extended"><span>Extended</span></label></div>
         </div>
         <div class="opt-row">
           <div class="opt-label">First deal</div>
@@ -404,9 +404,9 @@
   </div>
 </div>
 
-  <script src="./oh-core.js?v=132"></script>
-  <script src="./oh-tutorial.js?v=132"></script>
-  <script src="./oh-ai.js?v=132"></script>
-  <script src="./oh-app.js?v=132"></script>
+  <script src="./oh-core.js?v=134"></script>
+  <script src="./oh-tutorial.js?v=134"></script>
+  <script src="./oh-ai.js?v=134"></script>
+  <script src="./oh-app.js?v=134"></script>
 </body>
 </html>
