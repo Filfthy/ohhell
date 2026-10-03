@@ -18,7 +18,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\build-zip.ps1 -Entry i
   - HTML: `src=`, `href=`, and inline `url(...)`
   - CSS: `url(...)`
   - JS: `new Audio('...')`, `fetch('...')`, and `img.src = '...'/"..."`
-- Special-case: includes all `J/Q/K` card art like `JH.png`, `QS.png`, etc. when the template `` `${card.rank}${s}.png` `` is detected.
+- Always includes the card art folders `court/` and `special/` (top-level `.svg/.png/.webp` only; `special/art/` source images are skipped), since those paths are built at runtime.
 
 ## Notes
 

@@ -208,6 +208,7 @@ while ($queue.Count -gt 0) {
     $cand = if ([string]::IsNullOrWhiteSpace($baseDir)) { $r2 } else { (Join-Path $baseDir $r2) }
     $cand = Normalize-Slash $cand
     $candDest = To-DestRel $cand $pkgRootRel
+    if ($files.ContainsKey((Normalize-Slash $candDest))) { continue }   # referenced more than once
 
     $added = Add-File $files $cand $candDest $rootDir
     if ($added) {
@@ -240,9 +241,22 @@ while ($queue.Count -gt 0) {
   }
 }
 
-# Always include common JS/CSS if present.
-# Prefer the variant copy under PackageRoot (e.g. newgrounds/AI3.js) when building a variant.
-foreach ($maybe in @("AI3.js", "gw-core.js", "gw.css")) {
+# Card art loaded through runtime-built paths (court/KH.svg, special/SUN.svg,
+# special/icon-SUN.svg): include those folders' top-level files. Source art
+# under special/art/ is not needed at runtime.
+foreach ($dir in @("court", "special")) {
+  $dirFull = Join-Path $rootDir $dir
+  if (Test-Path -LiteralPath $dirFull) {
+    Get-ChildItem -LiteralPath $dirFull -File | Where-Object { $_.Extension -in @(".svg", ".png", ".webp") } | ForEach-Object {
+      $rel = "$dir/" + $_.Name
+      [void](Add-File $files $rel (To-DestRel $rel $pkgRootRel) $rootDir)
+    }
+  }
+}
+
+# Always include common CSS if present.
+# Prefer the variant copy under PackageRoot when building a variant.
+foreach ($maybe in @("gw.css")) {
   $tryRel = if ([string]::IsNullOrWhiteSpace($pkgRootRel)) { $maybe } else { (Normalize-Slash (Join-Path $pkgRootRel $maybe)) }
   $tryDest = To-DestRel $tryRel $pkgRootRel
   if (-not (Add-File $files $tryRel $tryDest $rootDir)) {
@@ -263,7 +277,19 @@ foreach ($destRel in ($files.Keys | Sort-Object)) {
 
 # Build zip
 if (Test-Path -LiteralPath $outZipFull) { Remove-Item -LiteralPath $outZipFull -Force }
-Compress-Archive -Path (Join-Path $stageDir "*") -DestinationPath $outZipFull -Force
+# Write entries with forward slashes (Compress-Archive on Windows PowerShell 5
+# uses backslashes, which break folder paths when unzipped on Linux hosts).
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
+$zip = [System.IO.Compression.ZipFile]::Open($outZipFull, [System.IO.Compression.ZipArchiveMode]::Create)
+try {
+  foreach ($destRel in ($files.Keys | Sort-Object)) {
+    $src = Join-Path $stageDir $destRel
+    $entryName = Normalize-Slash $destRel
+    [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $src, $entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+  }
+} finally {
+  $zip.Dispose()
+}
 
 # Cleanup staging
 Remove-Item -LiteralPath $stageDir -Recurse -Force
