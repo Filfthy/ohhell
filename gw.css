@@ -1,0 +1,1719 @@
+/* gw.css */
+
+/* gw.css */
+
+.suitcolors-block { margin-top: 10px; }
+.firstdeal-block  { margin-top: 10px; }
+
+/* --- 4-column settings row (label + 3 options) --- */
+.settings4{
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: fixed;        /* stable columns */
+  margin: 0;
+}
+
+.settings4 th,
+.settings4 td{
+  padding: 0;
+  vertical-align: middle;
+}
+
+/* match opponent header vibe + keep left indent consistent */
+.settings4-label{
+  width: clamp(60px, 12vw, 90px);               /* reduced to give pills more space */
+  padding-left: clamp(8px, 3vw, 52px);         /* matches .start-field-row indent */
+  font-size: 1em;
+  font-weight: 700;
+  opacity: 0.85;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.settings4-opt{
+  width: calc((100% - clamp(60px, 12vw, 90px)) / 3);
+  text-align: left;
+  padding-right: clamp(8px, 2vw, 12px);        /* increased gap between pills */
+  white-space: nowrap;
+}
+
+ .suit-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  cursor: pointer;
+
+  /* cream/parchment pill */
+  padding: 0.2em 0.7em;
+  border-radius: 999px;
+  background: rgba(245, 236, 210, 0.807);
+  box-shadow:
+    inset 0 0 0 1px rgba(245, 236, 210, 0.35),
+    0 2px 6px rgba(0,0,0,0.25);
+
+  user-select: none;
+  white-space: nowrap;
+ }
+
+ .suit-pill input[type="radio"] {
+   margin: 0;
+   flex: 0 0 auto;
+   transform: scale(0.92);    /* tiny shave */
+   transform-origin: center;
+ }
+
+ .pill-suits {
+   display: inline-flex;
+   gap: 4px;                 /* tighter suit spacing */
+   padding: 0;               /* no “pill inside pill” padding */
+   border-radius: 0;
+   background: transparent;  /* kill inner pill */
+   box-shadow: none;         /* kill inner pill */
+   font-weight: 800;
+ }
+
+ .pill-suits span {
+   font-size: 1em;
+   line-height: 1;
+ }
+
+/* remove any layout influence from the old flex wrapper if still present */
+.suitcolors-line,
+.suitcolors-row{
+  display: contents;
+}
+
+ /* Colour sets */
+ .pill-suits.classic span:nth-child(1),
+ .pill-suits.classic span:nth-child(3) { color: #dc322f; }
+ .pill-suits.classic span:nth-child(2),
+ .pill-suits.classic span:nth-child(4) { color: #111; }
+
+ .pill-suits.rbbg span:nth-child(1) { color: #dc322f; }
+ .pill-suits.rbbg span:nth-child(2) { color: #111; }
+ .pill-suits.rbbg span:nth-child(3) { color: #1f6feb; }
+ .pill-suits.rbbg span:nth-child(4) { color: #2ea043; }
+
+ .pill-suits.rbbo span:nth-child(1) { color: #dc322f; }
+ .pill-suits.rbbo span:nth-child(2) { color: #111; }
+ .pill-suits.rbbo span:nth-child(3) { color: #1b4fbf; }
+ .pill-suits.rbbo span:nth-child(4) { color: #f08c00; }
+
+ /* Optional: clearer selected state without changing layout */
+ .suit-pill input[type="radio"]:checked + .pill-suits {
+   filter: drop-shadow(0 0 6px rgba(120, 255, 120, 0.35));
+ }
+
+/* =========================
+   FIRST DEAL TABLE LAYOUT
+   ========================= */
+
+.firstdeal-block{
+  margin-top: 12px;
+}
+
+.firstdeal-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.firstdeal-cell{
+  padding: 0 0.6em 0 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.firstdeal-label{
+  font-size: 1em;
+  font-weight: 700;
+  opacity: 0.85;
+  padding-right: 0px;
+  padding-left: 0px; /* align with other left-indented overlay fields */
+}
+
+.firstdeal-option{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.01em;
+  font-size: 1em;
+  white-space: nowrap;
+}
+
+.firstdeal-option input[type="radio"]{
+  margin: 0;
+  transform: scale(0.92);
+  transform-origin: center;
+}
+
+.firstdeal-actions{
+  padding-right: 0;
+}
+
+.firstdeal-actions #btn-instructions{
+  margin-left: 0;
+}
+
+:root {
+    --card-scale: 1;
+    --index-size: 16px;
+    --pip-size: 10px;
+
+    /* small hand cards */
+    --small-card-width:  calc(60px * var(--card-scale));
+    --small-card-height: calc(90px * var(--card-scale));
+    --hand-inset-v:      calc(18px * var(--card-scale));
+
+    /* base gap for inner rectangles (Deck–Prize, AI–Player) */
+    --table-gap:         calc(24px * var(--card-scale));
+    /* slightly bigger gap between the two sections (Prize group ↔ AI play) */
+    --table-section-gap: calc(var(--table-gap) * 1.5);
+  }
+
+/* === Instructions scrollbar styling (casino / baize look) === */
+
+/* Prevent native scrollbars on outer containers */
+#instructions-panel {
+  overflow: hidden;
+}
+
+/* The actual scrolling happens here */
+#instructions-panel .instructions-content {
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color:
+    rgba(30,192,0,0.9)
+    rgba(6,47,26,0.85);
+}
+
+/* WebKit browsers (Chrome, Edge, Safari) */
+#instructions-panel .instructions-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+#instructions-panel .instructions-content::-webkit-scrollbar-track {
+  background: rgba(6,47,26,0.85); /* baize shadow */
+  border-radius: 8px;
+}
+
+#instructions-panel .instructions-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(30,192,0,1),
+    rgba(20,140,0,1)
+  );
+  border-radius: 8px;
+  border: 2px solid rgba(0,0,0,0.35);
+}
+
+#instructions-panel .instructions-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    to bottom,
+    rgba(50,220,50,1),
+    rgba(30,180,30,1)
+  );
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  color: #eee;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "Verdana", sans-serif;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+
+  /* default suit colour vars (classic) */
+  --sc-heart:   #dc322f;
+  --sc-diamond: #268bd2;
+  --sc-spade:   #002b36;
+  --sc-club:    #228B22;
+
+  /* --- smoky falloff / vignette over baize --- */
+  background-image:
+    radial-gradient(ellipse at 50% 46%,
+      rgba(0, 0, 0, 0.00) 0%,
+      rgba(0, 0, 0, 0.18) 42%,
+      rgba(0, 0, 0, 0.72) 78%,
+      rgba(0, 0, 0, 0.88) 100%
+    ),
+    url("baize.jpg");
+
+  background-repeat: no-repeat, repeat;
+  background-size: 100% 100%, auto;
+  background-color: #062f1a;
+}
+
+html {
+  background-color: #062f1a;
+}
+
+/* Suit colour themes driven by body class */
+body.suitcolors-classic {
+  --sc-heart:   #dc322f;
+  --sc-spade:   #111111;
+  --sc-diamond: #dc322f; /* classic: red diamonds */
+  --sc-club:    #111111;
+}
+
+body.suitcolors-rbbg {
+  --sc-heart:   #dc322f; /* red */
+  --sc-spade:   #111111; /* black */
+  --sc-diamond: #1f6feb; /* blue */
+  --sc-club:    #2ea043; /* green */
+}
+
+body.suitcolors-rbbo {
+  --sc-heart:   #dc322f; /* red */
+  --sc-spade:   #111111; /* black */
+  --sc-diamond: #1b4fbf; /* deep blue */
+  --sc-club:    #f08c00; /* orange */
+}
+
+  #game-area {
+    flex: 1;
+    display: block;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .row {
+    position: static;
+    width: 100%;
+    height: 0;
+  }
+
+  #top-row {
+    position: static;
+    width: 100%;
+    height: 0;
+  }
+
+  /* === Card base styles === */
+  .card {
+    width: calc(80px * var(--card-scale));
+    height: calc(120px * var(--card-scale));
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fdf6e3;
+    color: #000;
+    box-sizing: border-box;
+    padding: 4px;
+    cursor: default;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    font-size: calc(20px * var(--card-scale));
+    transform-origin: bottom center; /* overridden for AI hand */
+  }
+
+  .card.small {
+    width:  var(--small-card-width);
+    height: var(--small-card-height);
+    font-size: calc(16px * var(--card-scale));
+  }
+
+  .card.back {
+    background-color: #fdf6e3;
+    border-color: #fdf6e3;
+    color: transparent;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    background-image: url("back.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 92% 92%;
+  }
+
+  .card.clickable {
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      box-shadow 0.12s ease,
+      filter 0.12s ease,
+      opacity 0.12s ease;
+  }
+
+  /* CORNER INDICES */
+
+  .card .corner {
+    position: absolute;
+    top: calc(2px * var(--card-scale));
+    left: calc(2px * var(--card-scale));
+    font-weight: 600;
+    text-align: center;
+    font-size: var(--index-size);
+    line-height: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0;
+    z-index: 10;
+    text-shadow:
+      -1px -1px 0 #fdf6e3,
+      1px -1px 0 #fdf6e3,
+      -1px 1px 0 #fdf6e3,
+      1px 1px 0 #fdf6e3,
+      -2px 0 0 #fdf6e3,
+      2px 0 0 #fdf6e3,
+      0 -2px 0 #fdf6e3,
+      0 2px 0 #fdf6e3;
+  }
+
+  .card .corner.bottom {
+    top: auto;
+    bottom: calc(2px * var(--card-scale));
+    left: auto;
+    right: calc(2px * var(--card-scale));
+    transform: rotate(180deg);
+  }
+
+  .card .corner .rank,
+  .card .corner .suit {
+    display: block;
+  }
+
+  .card .corner .suit {
+    margin-top: -0.25em;
+  }
+
+  .card .face-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    font-size: var(--pip-size);
+    text-align: center;
+    pointer-events: none;
+    display: block;
+  }
+
+  .card .face-icon.ace-spades {
+    font-size: calc(var(--pip-size) * 5.6);
+  }
+
+  .card .face-icon .ace-spade-svg {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 72%;
+    height: 72%;
+    object-fit: contain;
+  }
+
+  /* Kings/Queens inset art layer */
+  .card .royal-inset {
+    position: absolute;
+    /* Use equal pixel inset on a 2:3 card: 8% of width => (8% * 2/3) of height */
+    inset: calc(8% * 2 / 3) 8%;
+    border-radius: 6px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .card .royal-inset-img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: fill; /* intentionally squish/stretch */
+  }
+
+  .face-icon span {
+    display: block;
+  }
+
+  .s-spade  { color: var(--sc-spade); }
+  .s-heart  { color: var(--sc-heart); }
+  .s-diamond{ color: var(--sc-diamond); }
+  .s-club   { color: var(--sc-club); }
+
+  .card-highlight {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 0, 1),
+      0 0 12px rgba(255, 255, 0, 0.9);
+    animation: cardGlow 1s ease-out forwards;
+  }
+
+  @keyframes cardGlow {
+    0% {
+      box-shadow:
+        0 0 0 3px rgba(255, 255, 0, 1),
+        0 0 16px rgba(255, 255, 0, 1);
+    }
+    100% {
+      box-shadow:
+        0 0 0 0 rgba(255, 255, 0, 0),
+        0 0 0 0 rgba(255, 255, 0, 0);
+    }
+  }
+
+  .card-incoming-player {
+    box-shadow:
+      0 0 0 3px rgba(255, 0, 0, 1),
+      0 0 14px rgba(255, 0, 0, 0.95);
+  }
+
+  /* === Hands === */
+
+  #ai-hand,
+  #player-hand {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    transform: none;
+  }
+
+  #ai-hand {
+    top: 5vh;
+    height: calc(var(--small-card-height) + 2 * var(--hand-inset-v));
+  }
+
+  #player-hand {
+    bottom: 5vh;
+    height: calc(var(--small-card-height) + 2 * var(--hand-inset-v));
+  }
+
+  #player-hand .card,
+  #ai-hand .card {
+    position: absolute;
+    left: 50%;
+    /* fan-position variables + hover scale */
+    --fan-x: 0px;
+    --fan-y: 0px;
+    --fan-angle: 0deg;
+    --hover-scale: 1;
+    transform:
+      translateX(-50%)
+      translateX(var(--fan-x))
+      translateY(var(--fan-y))
+      rotate(var(--fan-angle))
+      scale(var(--hover-scale));
+  }
+
+  #player-hand .card {
+    transform-origin: 50% 100%; /* grow upwards from bottom */
+  }
+
+  #ai-hand .card {
+    transform-origin: 50% 0%;   /* AI fan stays the same */
+  }
+
+  /* default subtle shadow */
+  #player-hand .card.clickable {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.45);
+  }
+
+  body.player-turn #player-hand .card.clickable.legal-move:hover {
+    --hover-scale: 1.12;
+    box-shadow:
+      0 10px 18px rgba(0,0,0,0.85),
+      0 0 0 3px rgba(255,255,255,0.45);
+  }
+
+  /* === Central table === */
+
+  #table {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 0;
+    min-height: calc(96px * var(--card-scale));
+  }
+
+  .table-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative; /* for absolute captions */
+  }
+
+  /* central round label: painted on baize, no glow */
+  #round-label {
+    position: absolute;
+    left: 50%;
+    /* closer to the card boxes, still proportional */
+    top: calc(50% - 0.88 * var(--small-card-height));
+    transform: translateX(-50%);
+    font-size: calc(18px * var(--card-scale));   /* smaller */
+    font-weight: 600;
+    letter-spacing: 0.03em;                      /* much tighter */
+    color: rgba(250, 244, 224, 0.96);
+    text-shadow: none;
+    text-transform: none;
+    pointer-events: none;
+    opacity: 0.70;
+  }
+
+  /* Per-slot captions UNDER boxes, centred, painted look, no layout shift */
+  #deck-area .deck-col > div:first-child,
+  #ai-play-area > div:first-child,
+  #player-play-area > div:first-child {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    /* slightly closer to box, considerably smaller text */
+    top: calc(100% + 0.10 * var(--small-card-height));
+    font-size: calc(12px * var(--card-scale));
+    font-weight: 500;
+    letter-spacing: 0.03em;                      /* calmer spacing */
+    color: rgba(250, 244, 224, 0.96);
+    text-shadow: none;
+    text-transform: none;
+    pointer-events: none;
+    white-space: nowrap;
+    opacity: 0.70;
+  }
+
+  #deck-area .deck-col {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* card slot elements participate in layout via their container rules above */
+
+  #deck-area {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--table-gap);
+    margin-right: var(--table-section-gap);
+  }
+
+  #ai-play-area {
+    margin-right: var(--table-gap);
+  }
+
+  #deck-slot,
+  #prize-slot,
+  #ai-play-slot,
+  #player-play-slot {
+    min-width:  calc(64px * var(--card-scale));
+    min-height: calc(96px * var(--card-scale));
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #deck-slot::before,
+  #prize-slot::before,
+  #ai-play-slot::before,
+  #player-play-slot::before {
+    content: "";
+    position: absolute;
+    inset: calc(-6px * var(--card-scale));
+    border-radius: calc(10px * var(--card-scale));
+    border: calc(1px * var(--card-scale)) solid rgba(255, 255, 255, 0.9);
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  #deck-slot > .card,
+  #prize-slot > .card,
+  #ai-play-slot > .card,
+  #player-play-slot > .card {
+    position: relative;
+    z-index: 1;
+  }
+
+  #info-bar {
+    display: none;
+  }
+
+  #controls {
+    position: fixed;
+    top: 4px;
+    right: 8px;
+    margin: 0;
+    text-align: right;
+    z-index: 10002;
+  }
+
+  #controls .icon-btn {
+    width: calc(34px * var(--card-scale));
+    height: calc(28px * var(--card-scale));
+    padding: 0;
+    margin: 0 0 0 calc(4px * var(--card-scale));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: calc(16px * var(--card-scale));
+    line-height: 1;
+
+    /* override global button styling */
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid #00ff00;
+    color: #ffffff;
+  }
+
+  #controls .icon-btn:hover {
+    background: rgba(0, 0, 0, 0.5);
+    filter: drop-shadow(0 0 6px rgba(0, 255, 0, 0.22));
+  }
+
+  #controls .icon-btn:focus-visible {
+    outline: 1px solid #00ff00;
+    outline-offset: 2px;
+  }
+
+  #controls .icon-btn.muted {
+    opacity: 0.75;
+  }
+
+  button {
+    background: #268bd2;
+    color: #fdf6e3;
+    border: none;
+    border-radius: 4px;
+    padding: calc(6px * var(--card-scale)) calc(12px * var(--card-scale));
+    margin: 0 4px;
+    cursor: pointer;
+    font-size: calc(14px * var(--card-scale));
+  }
+
+  button:hover {
+    background: #2aa198;
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  /* Won tricks */
+
+  .won-stack {
+    position: absolute;
+    left: 50%;
+    margin-left: calc(180px * var(--card-scale));
+    width: calc(24px * var(--card-scale));
+  }
+
+  .won-trick {
+    position: absolute;
+    width: calc(22px * var(--card-scale));
+    height: calc(22px * var(--card-scale));
+    object-fit: contain;
+    pointer-events: none;
+  }
+
+  #ai-won {
+    top: calc(2px * var(--card-scale));
+  }
+
+  #player-won {
+    bottom: calc(32px * var(--card-scale));
+  }
+
+  .won-stack .won-card {
+    position: absolute;
+    width: calc(14px * var(--card-scale));
+    height: calc(9px * var(--card-scale));
+    border-radius: 2px;
+    background-color: #cb4b16;
+    border: 1px solid #fdf6e3;
+    box-sizing: border-box;
+  }
+
+  .won-stack .won-count {
+    display: none;
+  }
+
+/* === CENTRE TRUMP MARKER (painted on baize, JS-positioned) === */
+#trump-marker{
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.8;
+
+  max-width: 1px;   /* JS overwrites */
+  overflow: hidden;
+}
+
+#trump-marker .trump-suit{
+  font-size: calc(28px * var(--card-scale));
+  font-weight: 900;
+  line-height: 1;
+  margin: 0.20em 0;
+  -webkit-text-stroke: 0.8px rgba(255,255,255,0.95);
+  text-shadow: none;
+  opacity: 0.70;
+}
+
+/* B: stack letters as spans so we control spacing */
+#trump-marker .trump-word{
+  margin: 0;
+  padding: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: calc(0px * var(--card-scale)); /* <-- THIS is the spacing knob */
+
+  font-size: calc(12px * var(--card-scale)); /* JS may adjust */
+  font-weight: 700;
+  text-transform: none;
+
+  color: rgba(250,244,224,0.92);
+  text-shadow: none;
+  opacity: 0.80;
+}
+
+#trump-marker .trump-word span{
+  line-height: 0.82;
+}
+
+  body[data-phase="draw"] #deck-area {
+    display: flex;
+  }
+
+  body[data-phase="score"] #deck-area {
+    display: none;
+  }
+
+  body[data-phase="score"] #table {
+    justify-content: center;
+  }
+
+  body[data-phase="score"] #ai-play-area {
+    margin-right: var(--table-section-gap);
+  }
+
+  /* === Name labels === */
+
+  .name-label {
+    position: absolute;
+    font-size: calc(18px * var(--card-scale));
+    font-weight: 700;
+    color: #fdf6e3;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.7);
+    pointer-events: none;
+  }
+
+  #ai-name,
+  #player-name {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-block;
+    font-size: calc(22px * var(--card-scale));
+    line-height: 0.5;
+    font-weight: 700;
+    font-style: italic;
+    color: lab(19.34% 17.6 -42.6);
+    -webkit-text-stroke: 0.02em #ffffff;
+    text-shadow: none;
+    pointer-events: none;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 0.15em 0.7em;
+    border-radius: 9999px;
+  }
+
+  #ai-name {
+    top: 4vh;
+  }
+
+  #player-name {
+    bottom: 4vh;
+  }
+
+  @keyframes turnPulse {
+    0% {
+      text-shadow:
+        0 0 4px  rgba(255, 255, 160, 0.6),
+        0 0 10px rgba(255, 255, 200, 0.7),
+        0 0 16px rgba(255, 255, 220, 0.8);
+    }
+    50% {
+      text-shadow:
+        0 0 6px  rgba(255, 255, 200, 1),
+        0 0 18px rgba(255, 255, 255, 1),
+        0 0 32px rgba(255, 255, 220, 1),
+        0 0 46px rgba(255, 255, 200, 0.9);
+    }
+    100% {
+      text-shadow:
+        0 0 4px  rgba(255, 255, 160, 0.6),
+        0 0 10px rgba(255, 255, 200, 0.7),
+        0 0 16px rgba(255, 255, 220, 0.8);
+    }
+  }
+
+  #ai-name.turn-glow,
+  #player-name.turn-glow,
+  #ai-name.active-turn,
+  #player-name.active-turn {
+    animation: turnPulse 0.9s ease-in-out infinite;
+    will-change: text-shadow;
+  }
+
+  /* hide names while start overlay is active */
+body.overlay-active #ai-name,
+body.overlay-active #player-name {
+  display: none;
+}
+
+/* === END OVERLAY (game / match summary) === */
+#end-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+
+#end-panel{
+  min-width: min(420px, 62vw);
+  max-width: 520px;
+  max-height: 92vh;
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.96);
+  border-radius: 16px;
+  border: 2px solid var(--ui-accent, #1EC000);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+  padding: 22px 26px 18px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.end-header{
+  text-align: center;
+}
+
+.end-title-logo{
+  width: 78%;
+  max-width: 580px;
+  height: auto;
+  display: inline-block;
+  filter:
+    drop-shadow(1px 0 0 #ffffff)
+    drop-shadow(-1px 0 0 #ffffff)
+    drop-shadow(0 1px 0 #ffffff)
+    drop-shadow(0 -1px 0 #ffffff);
+}
+
+.end-sub{
+  margin-top: 6px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: #1EC000;
+  opacity: 0.95;
+}
+
+.end-body{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.end-result{
+  font-size: 22px;
+  font-weight: 800;
+  color: #fdf6e3;
+  text-align: center;
+}
+
+.end-scoreline{
+  font-size: 14px;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.end-section-title{
+  margin-top: 4px;
+  font-weight: 700;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.end-table{
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: radial-gradient(circle at 10% 0%,
+              rgba(30,192,0,0.20) 0,
+              rgba(4,27,16,0.95) 55%);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.end-table th,
+.end-table td{
+  padding: 8px 10px;
+  font-size: 13px;
+  text-align: left;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  white-space: nowrap;
+}
+
+.end-table tr:first-child th{
+  border-top: none;
+}
+
+.end-table th{
+  opacity: 0.9;
+  font-weight: 800;
+}
+
+.end-totals{
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+.end-buttons{
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+#btn-end-close{
+  background: transparent;
+  border: 1px solid #1EC000;
+  color: #1EC000;
+  font-size: 14px;
+  padding-inline: 14px;
+}
+
+#btn-end-close:hover{
+  background: rgba(30,192,0,0.16);
+}
+
+#btn-end-next{
+  background: #1EC000;
+  color: #021408;
+  font-weight: 700;
+  font-size: 14px;
+  padding-inline: 14px;
+}
+
+#btn-end-next:hover{
+  background: #23e000;
+}
+  /* === START OVERLAY === */
+
+  #start-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.30);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  }
+
+  #start-panel {
+    --panel-height: 92vh;
+    --scale-factor: calc(var(--panel-height) / 100);
+    
+    width: calc(var(--scale-factor) * 70);
+    min-width: calc(var(--scale-factor) * 60);
+    max-width: min(95vw, calc(var(--scale-factor) * 75));
+    height: var(--panel-height);
+    max-height: var(--panel-height);
+    background: rgba(var(--ui-rgb, 3, 32, 18), 0.96);
+    border-radius: 16px;
+    border: 2px solid var(--ui-accent, #1EC000);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+    padding: calc(var(--scale-factor) * 2.5) calc(var(--scale-factor) * 3) calc(var(--scale-factor) * 2);
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    
+    display: flex;
+    flex-direction: column;
+    
+    font-size: calc(var(--scale-factor) * 2.2);
+  }
+
+  /* When instructions are open, use a simple column flex layout so
+     header -> content -> footer sizing is natural and predictable. */
+  #start-panel.instructions-open {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: 92vh;
+  }
+
+  /* Results should not force a full-height panel */
+  #start-panel.results-open {
+    height: auto;
+    max-height: 92vh;
+  }
+
+  #start-panel.results-open .start-panel-content,
+  #start-panel.results-open .start-panel-footer {
+    display: none;
+  }
+
+  #start-panel.instructions-open .start-header {
+    flex: 0 0 auto;
+  }
+
+  /* Fixed header at top */
+  .start-panel-header {
+    flex: 0 0 auto;
+  }
+
+  /* Scrollable content in middle */
+  .start-panel-content {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    margin-top: 0.3em;
+    padding-right: 0.3em;
+  }
+
+  /* Custom scrollbar for content */
+  .start-panel-content::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .start-panel-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+
+  .start-panel-content::-webkit-scrollbar-thumb {
+    background: rgba(30, 192, 0, 0.5);
+    border-radius: 4px;
+  }
+
+  .start-panel-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 192, 0, 0.7);
+  }
+
+  /* Firefox scrollbar */
+  .start-panel-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(30, 192, 0, 0.5) rgba(0, 0, 0, 0.3);
+  }
+
+  /* Fixed footer at bottom */
+  .start-panel-footer {
+    flex: 0 0 auto;
+    margin-top: 0.8em;
+  }
+
+  .start-header {
+    text-align: center;
+    margin-bottom: 0.8em;
+  }
+
+  .start-title-logo {
+    max-width: 100%;
+    width: 100%;
+    max-height: 6em;
+    height: auto;
+    display: inline-block;
+    filter:
+      drop-shadow(1px 0 0 #ffffff)
+      drop-shadow(-1px 0 0 #ffffff)
+      drop-shadow(0 1px 0 #ffffff)
+      drop-shadow(0 -1px 0 #ffffff);
+  }
+
+  .start-logo-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.2em;
+    gap: 0.5em;
+  }
+
+  .start-logo {
+    max-width: 7em;
+    height: auto;
+    display: block;
+  }
+
+  .start-copyright {
+    font-size: 1em;
+    letter-spacing: 0.08em;
+    color: #1EC000;
+  }
+
+  .start-copyright-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.2;
+  }
+
+  .start-artwork-credit {
+    font-size: 1em;
+    letter-spacing: 0.05em;
+    color: #1EC000;
+    opacity: 0.85;
+  }
+
+  .start-body {
+    margin-bottom: 0.8em;
+  }
+
+  .start-field-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    margin-bottom: 1em;
+    padding-left: clamp(8px, 3vw, 52px);
+    padding-right: clamp(8px, 3vw, 8px);
+  }
+
+  .start-field-row label {
+    flex: 0 0 auto;
+    min-width: clamp(70px, 15vw, 110px);
+    font-size: 1em;
+    text-align: left;
+    opacity: 0.9;
+    font-weight: 700;
+  }
+
+  #player-name-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0.43em 0.57em;
+    border-radius: 4px;
+    border: 1px solid #1EC000;
+    background: rgba(0, 0, 0, 0.4);
+    color: #fdf6e3;
+    font-size: 1em;
+  }
+
+  #player-name-input:focus {
+    outline: none;
+    border-color: #1EC000;
+    background: rgba(0, 0, 0, 0.55);
+    box-shadow: 0 0 0 0.12em rgba(30, 192, 0, 0.35);
+  }
+
+  #player-name-input:focus-visible {
+    outline: none;
+  }
+
+  #player-name-input::placeholder {
+    color: #9fbfa0;
+  }
+
+  .opponent-block {
+    margin-top: 0.5em;
+  }
+
+  .opponent-title-row {
+    display: grid;
+    grid-template-columns: clamp(25px, 8vw, 40px) 1fr clamp(60px, 15vw, 80px);
+    column-gap: 0.6em;
+    font-size: 1em;
+    margin-bottom: 0.3em;
+    padding-inline: 0.3em;
+    opacity: 0.85;
+    font-weight: 700;
+  }
+
+  .opponent-rows {
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 0.3em 0.3em 0.15em;
+    background: radial-gradient(circle at 10% 0%,
+                rgba(30,192,0,0.20) 0,
+                rgba(4,27,16,0.95) 55%);
+  }
+
+  .opponent-row {
+    display: grid;
+    grid-template-columns: clamp(25px, 8vw, 40px) 1fr clamp(60px, 15vw, 80px);
+    column-gap: 0.6em;
+    align-items: center;
+    font-size: 1em;
+    padding: 0.35em 0.2em;
+  }
+
+  .opponent-row + .opponent-row {
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .opponent-row label {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    cursor: pointer;
+    font-size: 1em;
+  }
+
+  .opponent-row input[type="radio"] {
+    accent-color: #1EC000;
+    cursor: pointer;
+  }
+
+  .opponent-name {
+    white-space: nowrap;
+  }
+
+  .opponent-rating {
+    font-size: 1em;
+    letter-spacing: 0.08em;
+    text-align: left;
+    color: #ffffff;
+  }
+
+  .opponent-rating .pip {
+    color: #ffffff;
+    font-size: 1.2em;
+    margin-right: 0.3em;
+  }
+
+  .firstdeal-block {
+    margin-top: 0.8em;
+  }
+
+  .firstdeal-title {
+    font-size: 1em;
+    margin-bottom: 0.3em;
+    padding-inline: 0.3em;
+    margin-left: 40px;
+    opacity: 0.9;
+    font-weight: 700;
+  }
+
+  .firstdeal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px 0;
+    gap: 12px;
+  }
+
+  .firstdeal-rows {
+    display: flex;
+    gap: 14px;
+  }
+
+  .firstdeal-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 1em;
+  }
+
+  .firstdeal-option input[type="radio"] {
+    accent-color: #1EC000;
+    cursor: pointer;
+  }
+
+  .start-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.7em;
+  }
+
+  .start-buttons-main {
+    display: flex;
+    gap: 0.6em;
+  }
+
+  /* Instructions panel sits over the inner start-panel content without changing layout
+     It uses the same padding as the panel and scrolls if content overflows. */
+  /* Normal (non-absolute) instructions panel used when #start-panel has .instructions-open */
+  #instructions-panel,
+  #results-panel {
+    position: relative;
+    display: none;
+    z-index: 20;
+    background: transparent;
+    color: #eee;
+    flex-direction: column;
+    margin: 0; /* fill the available panel area when shown */
+  }
+
+  /* When the start panel is in instructions mode, let the instructions panel
+     become the flexible child that fills the remaining panel height. */
+  #start-panel.instructions-open #instructions-panel {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0; /* allow flex child to shrink/scroll correctly */
+  }
+
+  #start-panel.results-open #results-panel {
+    display: flex;
+    flex: 0 0 auto; /* size to content, don't fill height */
+  }
+
+  /* Make the instructions content inside the panel take the available space and scroll;
+     keep the footer (Done button) fixed to the bottom of the overlay panel. */
+  #instructions-panel .instructions-content {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding-right: 18px; /* more space so text and button don't crowd scrollbar */
+    min-height: 0; /* allow flex child to shrink and overflow correctly */
+  }
+
+  #instructions-panel .instructions-footer {
+    flex: 0 0 auto;
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end; /* bottom-right */
+    margin-bottom: 8px;
+    padding-right: 18px; /* keep Done away from scrollbar */
+    padding-bottom: 2px;
+  }
+
+  /* reduce default margins so content uses more vertical space */
+  #instructions-panel .instructions-content h3 {
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: #8be08b;
+    font-size: 18px;
+    letter-spacing: 0.04em;
+  }
+
+  #instructions-panel .instructions-content ul {
+    margin: 6px 0 0 18px;
+    padding-right: 6px;
+  }
+
+  .start-buttons-main button {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.8em 1.2em;
+    font-size: 1.14em;
+    line-height: 1.3;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  #btn-quick,
+  #btn-match {
+    background: #1EC000;
+    color: #021408;
+    font-weight: 600;
+  }
+
+  #btn-quick:hover,
+  #btn-match:hover {
+    background: #23e000;
+  }
+
+  #btn-instructions {
+    background: transparent;
+    border: 1px solid #1EC000;
+    color: #1EC000;
+    font-size: 1em;
+    padding-inline: 0.7em;
+    padding-block: 0.4em;
+  }
+
+  #btn-instructions:hover {
+    background: rgba(30,192,0,0.16);
+  }
+
+  #btn-instructions-done {
+    background: #1EC000;
+    color: #021408;
+    font-weight: 700;
+    border: 0;
+    padding-inline: 14px;
+    padding-block: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+
+  #btn-instructions-done:hover {
+    background: #23e000;
+  }
+
+  /* Legacy .instructions-panel rules removed. Use the in-panel
+     instructions layout driven by #start-panel.instructions-open. */
+
+  /* Results panel content */
+  #results-panel .results-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55em;
+    padding: 0.95em 1.15em;
+    text-align: center;
+  }
+
+  #results-panel #results-winner {
+    font-size: 2.5em;
+    margin: 0;
+    color: #1EC000;
+    font-weight: 700;
+  }
+
+  #results-panel #results-subtitle {
+    font-size: 1.15em;
+    line-height: 1.2;
+    opacity: 0.92;
+    margin-top: -0.20em;
+  }
+
+  #results-panel #results-breakdown {
+    font-size: 1.2em;
+    line-height: 1.45;
+  }
+
+  #results-panel #results-match-table {
+    margin: 0.55em 0;
+    max-width: 90%;
+    width: min(26em, 90%);
+  }
+
+  #results-panel #results-match-table table {
+    border-collapse: collapse;
+    margin: 0 auto;
+    font-size: 0.95em;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  #results-panel #results-match-table th,
+  #results-panel #results-match-table td {
+    padding: 0.35em 0.75em;
+    border: 1px solid rgba(30,192,0,0.16);
+  }
+
+  #results-panel #results-match-table th {
+    background: rgba(30,192,0,0.2);
+    font-weight: 700;
+  }
+
+  #results-panel #results-match-table td {
+    background: rgba(0,0,0,0.2);
+  }
+
+  /* Fixed header/footer, scroll tbody after ~4 rows */
+  #results-panel #results-match-table thead,
+  #results-panel #results-match-table tbody,
+  #results-panel #results-match-table tfoot {
+    display: block;
+  }
+
+  #results-panel #results-match-table tbody {
+    /* If <=6 rows, this won't scroll; if >6, it becomes a scroller. */
+    max-height: calc(6 * 2.2em);
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* nicer scrollbars (green scheme) */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(30,192,0,0.9) rgba(0,0,0,0.35);
+  }
+
+  #results-panel #results-match-table tbody::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  #results-panel #results-match-table tbody::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.35);
+    border-radius: 8px;
+  }
+
+  #results-panel #results-match-table tbody::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      to bottom,
+      rgba(30,192,0,1),
+      rgba(20,140,0,1)
+    );
+    border-radius: 8px;
+    border: 2px solid rgba(0,0,0,0.35);
+  }
+
+  #results-panel #results-match-table tbody::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      to bottom,
+      rgba(50,220,50,1),
+      rgba(30,180,30,1)
+    );
+  }
+
+  #results-panel #results-match-table tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  #results-panel #results-match-table tfoot td {
+    font-weight: 700;
+  }
+
+  /* Results score ruler (tricks + points + markers) */
+  #results-panel #results-ruler.results-ruler {
+    width: min(46em, 95%);
+    margin: 0.1em auto 0;
+  }
+
+  #results-panel .results-ruler .ruler-layout {
+    display: grid;
+    grid-template-columns: 3.2em 1fr;
+    column-gap: 0.6em;
+    row-gap: 0.10em;
+    align-items: center;
+    width: 100%;
+  }
+
+  #results-panel .results-ruler .ruler-label {
+    text-align: right;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    opacity: 0.9;
+    white-space: nowrap;
+  }
+
+  #results-panel .results-ruler .ruler-grid {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr);
+    gap: 0;
+    width: 100%;
+  }
+
+  #results-panel .results-ruler .ruler-cell {
+    text-align: center;
+    min-width: 0;
+  }
+
+  #results-panel .results-ruler .ruler-top {
+    font-size: 0.95em;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    opacity: 0.95;
+    margin-bottom: 0;
+  }
+
+  #results-panel .results-ruler .ruler-track {
+    position: relative;
+    padding: 0;
+  }
+
+  #results-panel .results-ruler .ruler-track-grid .ruler-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #results-panel .results-ruler .ruler-line {
+    position: absolute;
+    /* start/end at the first/last tick centers (half a cell inset) */
+    left: calc(100% / 28);
+    right: calc(100% / 28);
+    top: 50%;
+    height: 0;
+    border-top: 2px solid rgba(30,192,0,0.55);
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  #results-panel .results-ruler .ruler-tick {
+    width: 0;
+    height: 0.9em;
+    margin: 0 auto;
+    border-left: 2px solid rgba(30,192,0,0.65);
+  }
+
+  #results-panel .results-ruler .ruler-tick-mid {
+    height: 1.15em;
+    border-left-color: rgba(30,192,0,0.95);
+  }
+
+  #results-panel .results-ruler .ruler-bottom {
+    font-size: 0.95em;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    opacity: 0.92;
+    margin-top: -0.10em;
+  }
+
+  #results-panel .results-ruler .ruler-marker-grid {
+    min-height: 1.45em;
+  }
+
+  #results-panel .results-ruler .ruler-token {
+    width: 1.35em;
+    height: 1.35em;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.55));
+    pointer-events: none;
+  }
+
+  #results-panel .results-buttons {
+    display: flex;
+    gap: 1em;
+  }
+
+  #results-panel .results-buttons button {
+    padding: 0.8em 1.5em;
+    font-size: 1.1em;
+    background: rgba(30,192,0,0.2);
+    border: 2px solid #1EC000;
+    color: #1EC000;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  #results-panel .results-buttons button:hover {
+    background: rgba(30,192,0,0.35);
+  }
+
+  /* Hide the logo row when instructions are shown so the title area
+     doesn't compete for vertical space. */
+  #start-panel.instructions-open .start-logo-row,
+  #start-panel.results-open .start-logo-row {
+    display: none;
+  }
+
+  /* When the panel is in instructions mode, pin the footer to the
+     bottom of the panel by allowing the content to take the remaining
+     space. The footer receives `margin-top: auto` in this state. */
+  #start-panel.instructions-open .instructions-footer {
+    margin-top: auto;
+  }

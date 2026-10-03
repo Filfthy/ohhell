@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oh Hell! Extended</title>
+  <meta name="description" content="Oh Hell! Extended: the classic bid-exactly trick-taking card game for 2 to 5 players, with secret bids, a trump coin and an optional deck of Dragons, Jokers, the Sun and the Moon. Play free in your browser.">
+  <meta name="author" content="BugVictim">
+  <meta name="theme-color" content="#0b0505">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="bugvictim.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Oh Hell! Extended">
+  <meta property="og:description" content="Bid exactly how many tricks you'll take. A trick-taking card game with a trick up its sleeve.">
+  <meta property="og:image" content="share.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="share.jpg" as="image" fetchpriority="low">
+  <link rel="stylesheet" href="./gw.css?v=111">
+  <link rel="stylesheet" href="./oh.css?v=111">
+</head>
+<body>
+  <div id="game-area">
+
+    <!-- Opponent seats are built by oh-app.js -->
+    <div id="seats"></div>
+
+    <!-- Deck: shown in the middle only while dealing -->
+    <div id="deck-slot"></div>
+
+    <!-- Trump marker (bottom-left, next to your hand) -->
+    <div id="deck-area">
+      <div class="deck-col">
+        <div>Trump</div>
+        <div id="trump-slot"></div>
+      </div>
+    </div>
+
+    <!-- Scoreboard -->
+    <div id="scoreboard">
+      <div id="round-label"></div>
+      <table id="score-table"></table>
+    </div>
+
+    <!-- Centre: cards played to the current trick -->
+    <div id="trick-area"></div>
+
+    <!-- Bidding -->
+    <div id="bid-panel" style="display:none;">
+      <div id="bid-title"></div>
+      <div id="bid-buttons"></div>
+      <div id="bid-note"></div>
+    </div>
+
+    <!-- Human seat -->
+    <div id="player-hand"></div>
+    <div id="player-seat-info" class="seat-info">
+      <div class="name-label"></div>
+      <div class="seat-stats"></div>
+    </div>
+
+    <div id="controls">
+      <button id="btn-sound" type="button" class="icon-btn" aria-label="Toggle sound" aria-pressed="true" title="Sound: muted">🔇</button>
+      <button id="btn-quit" type="button" class="icon-btn" aria-label="Quit game" title="Quit game">✕</button>
+      <button id="btn-fullscreen" type="button" class="icon-btn" aria-label="Toggle fullscreen" aria-pressed="false" title="Fullscreen">⛶</button>
+    </div>
+  </div>
+
+  <!-- ROUND SUMMARY -->
+  <div id="end-overlay" style="display:none;">
+    <div id="end-panel">
+      <div class="end-header">
+        <div class="end-result" id="round-summary-title"></div>
+        <div class="end-sub" id="round-summary-sub"></div>
+      </div>
+      <div class="end-body">
+        <table class="end-table" id="round-summary-table"></table>
+      </div>
+      <div class="end-buttons">
+        <button id="btn-end-next" type="button">Next round</button>
+      </div>
+    </div>
+  </div>
+
+<!-- SPLASH -->
+<div id="splash" role="button" tabindex="0" aria-label="Click to start">
+  <img src="logo-ohhell.webp?v=111" alt="Oh Hell! Extended" class="splash-title">
+  <div class="logo-subtitle splash-subtitle">Oh Hell! with a trick up its sleeve</div>
+  <img src="bugvictim.svg" alt="BugVictim" class="splash-logo">
+  <div class="splash-credit">© BugVictim 2026</div>
+  <div class="splash-start">Click to start</div>
+</div>
+
+<!-- SCORECARD -->
+<div id="scorecard" style="display:none;">
+  <div class="scorecard-panel">
+    <div class="scorecard-title">Scorecard</div>
+    <div class="scorecard-body"></div>
+    <div class="scorecard-buttons"><button type="button" id="btn-scorecard-close">Close</button></div>
+  </div>
+</div>
+
+<!-- PORTRAIT PHONES: ask to rotate -->
+<div id="rotate-prompt" aria-live="polite">
+  <div class="rotate-phone">📱</div>
+  <div class="rotate-title">Please turn your phone sideways</div>
+  <div class="rotate-text">Oh Hell! Extended is played in landscape.</div>
+</div>
+
+<!-- QUIT CONFIRM -->
+<div id="quit-confirm" class="modal-shade" style="display:none;">
+  <div class="tut-offer-panel">
+    <div class="tut-offer-title">Quit this game?</div>
+    <div class="tut-offer-text">The scores so far will be lost.</div>
+    <div class="tut-offer-buttons">
+      <button type="button" id="btn-quit-no">Keep playing</button>
+      <button type="button" id="btn-quit-yes">Quit</button>
+    </div>
+  </div>
+</div>
+
+<!-- FIRST-TIME TUTORIAL OFFER -->
+<div id="tut-offer" style="display:none;">
+  <div class="tut-offer-panel">
+    <div class="tut-offer-title">New to Oh Hell?</div>
+    <div class="tut-offer-text">Learn the rules in a quick 4-hand tutorial.</div>
+    <div class="tut-offer-buttons">
+      <button type="button" id="btn-offer-skip">No thanks</button>
+      <button type="button" id="btn-offer-tutorial">Play the tutorial</button>
+    </div>
+  </div>
+</div>
+
+<!-- START OVERLAY -->
+<div id="start-overlay">
+  <div id="start-panel">
+
+    <div class="start-panel-header">
+      <div class="start-header">
+        <img src="logo-ohhell.webp?v=111" alt="Oh Hell! Extended" class="start-title-img">
+      </div>
+
+      <div class="start-logo-row start-credit-line">© BugVictim 2026</div>
+    </div>
+
+    <div class="start-panel-content">
+
+    <div class="start-body">
+
+      <div class="start-field-row">
+        <label for="player-name-input">Your name</label>
+        <input id="player-name-input" type="text" value="Player" placeholder="Player" maxlength="20">
+      </div>
+
+      <div class="tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="game">Game</button>
+        <button type="button" class="tab-btn" data-tab="rules">Rules</button>
+        <button type="button" class="tab-btn" data-tab="look">Look &amp; feel</button>
+      </div>
+
+      <!-- GAME TAB -->
+      <div class="tab-pane active" data-pane="game">
+        <div class="opt-row">
+          <div class="opt-label">Quick</div>
+          <div class="preset-row">
+            <button type="button" class="preset-btn" data-preset="quick" title="4 players, 5 → 1 → 5, your house rules">Quick</button>
+            <button type="button" class="preset-btn" data-preset="classic" title="Traditional: bid in turn, turned-up trump, standard deck, 10 → 1 → 10">Classic</button>
+            <button type="button" class="preset-btn" data-preset="house" title="Secret bids, trump coin, standard deck, 7 → 1 → 7">House</button>
+            <button type="button" class="preset-btn" data-preset="extended" title="House rules with the Extended deck, 7 → 1 → 7">Extended</button>
+          </div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Players</div>
+          <div class="seg" role="radiogroup"><label><input type="radio" name="players" value="2"><span>2</span></label><label><input type="radio" name="players" value="3"><span>3</span></label><label><input type="radio" name="players" value="4" checked><span>4</span></label><label><input type="radio" name="players" value="5"><span>5</span></label><label title="Random number of players (2–5)"><input type="radio" name="players" value="random"><span>🎲</span></label></div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Opponents</div>
+          <div class="seg" role="radiogroup"><label title="Easy"><input type="radio" name="opponent" value="easy" id=opp-easy checked><span>Lost souls</span></label><label title="Medium"><input type="radio" name="opponent" value="medium" id=opp-medium><span>Imps</span></label><label title="Hard: they think ahead"><input type="radio" name="opponent" value="hard" id=opp-hard><span>Hellhounds</span></label></div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Cards</div>
+          <div class="cards-control">
+            <button type="button" class="step-btn" data-step="-1" aria-label="Fewer cards">−</button>
+            <span id="max-cards-value">7</span>
+            <button type="button" class="step-btn" data-step="1" aria-label="More cards">+</button>
+            <span class="cards-note">most cards in a hand</span>
+          </div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Hands</div>
+          <div class="seg" role="radiogroup"><label title="Most cards down to 1, then back up"><input type="radio" name="pattern" value="downup" checked><span>Down &amp; up</span></label><label title="1 card up to most, then back down"><input type="radio" name="pattern" value="updown"><span>Up &amp; down</span></label><label title="Most cards down to 1"><input type="radio" name="pattern" value="down"><span>Down</span></label><label title="1 card up to most"><input type="radio" name="pattern" value="up"><span>Up</span></label></div>
+        </div>
+        <div class="round-summary-line" id="round-summary-line"></div>
+      </div>
+
+      <!-- RULES TAB -->
+      <div class="tab-pane" data-pane="rules">
+        <div class="opt-row">
+          <div class="opt-label">Bidding</div>
+          <div class="seg" role="radiogroup"><label title="Everyone bids at once with face-down tokens"><input type="radio" name="bidding" value="simultaneous" checked><span>Secret</span></label><label title="Bid in turn; the dealer can"t make the total equal the tricks"><input type="radio" name="bidding" value="sequential"><span>In turn</span></label></div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Trumps</div>
+          <div class="seg" role="radiogroup"><label title="A five-sided coin: a suit, or no trump"><input type="radio" name="trumpmode" value="coin" checked><span>Coin</span></label><label title="The next card after the deal is turned up for trump"><input type="radio" name="trumpmode" value="card"><span>Turned card</span></label></div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Deck</div>
+          <div class="seg" role="radiogroup"><label title="The normal 52 card deck"><input type="radio" name="deck" value="standard" checked><span>Standard</span></label><label title="Adds 2 Jokers, 4 Dragons, the Sun and the Moon"><input type="radio" name="deck" value="extended"><span>Extended</span></label></div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">First deal</div>
+          <div class="seg" role="radiogroup"><label><input type="radio" name="firstdeal" value="player"><span>You</span></label><label><input type="radio" name="firstdeal" value="random" checked><span>Random</span></label><label><input type="radio" name="firstdeal" value="opponent"><span>Opponent</span></label></div>
+        </div>
+        <div class="opt-row opt-row-end">
+          <button id="btn-instructions" type="button">How to play</button>
+        </div>
+      </div>
+
+      <!-- LOOK TAB -->
+      <div class="tab-pane" data-pane="look">
+        <div class="opt-row">
+          <div class="opt-label">Table</div>
+          <div class="seg seg-tables" role="radiogroup">
+            <label title="Green baize"><input type="radio" name="table" value="green" checked><span class="sw sw-green">Green</span></label>
+            <label title="Hellfire red felt"><input type="radio" name="table" value="red"><span class="sw sw-red">Red</span></label>
+            <label title="Midnight blue felt"><input type="radio" name="table" value="blue"><span class="sw sw-blue">Blue</span></label>
+            <label title="Walnut table"><input type="radio" name="table" value="walnut"><span class="sw sw-walnut">Walnut</span></label>
+            <label title="Mahogany table"><input type="radio" name="table" value="mahogany"><span class="sw sw-mahogany">Mahogany</span></label>
+            <label title="Worn tavern table"><input type="radio" name="table" value="tavern"><span class="sw sw-tavern">Tavern</span></label>
+            <label title="Dark marble"><input type="radio" name="table" value="marble"><span class="sw sw-marble">Marble</span></label>
+          </div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Card back</div>
+          <div class="seg seg-backs" role="radiogroup">
+            <label title="BugVictim"><input type="radio" name="cardback" value="bugvictim" checked><span class="bk bk-bugvictim"></span></label>
+            <label title="Hellfire"><input type="radio" name="cardback" value="hellfire"><span class="bk bk-hellfire"></span></label>
+            <label title="Classic blue"><input type="radio" name="cardback" value="classic-blue"><span class="bk bk-classic-blue"></span></label>
+            <label title="Classic red"><input type="radio" name="cardback" value="classic-red"><span class="bk bk-classic-red"></span></label>
+          </div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label" title="Large index: big corner index and one big pip, for small screens">Card faces</div>
+          <div class="seg" role="radiogroup">
+            <label title="Large index on small screens, full artwork otherwise"><input type="radio" name="faces" value="auto" checked><span>Auto</span></label>
+            <label title="Full artwork always"><input type="radio" name="faces" value="classic"><span>Classic</span></label>
+            <label title="Big corner index and one big pip, always"><input type="radio" name="faces" value="large"><span>Large index</span></label>
+          </div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label">Speed</div>
+          <div class="seg" role="radiogroup"><label><input type="radio" name="speed" value="normal" checked><span>Normal</span></label><label><input type="radio" name="speed" value="fast"><span>Fast</span></label></div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label" title="Suit colours">Colours</div>
+          <div class="seg seg-suits" role="radiogroup">
+            <label><input type="radio" name="suitcolors" value="classic"><span class="pill-suits classic"><span>♥</span><span>♠</span><span>♦</span><span>♣</span></span></label>
+            <label><input type="radio" name="suitcolors" value="rbbg" checked><span class="pill-suits rbbg"><span>♥</span><span>♠</span><span>♦</span><span>♣</span></span></label>
+            <label><input type="radio" name="suitcolors" value="rbbo"><span class="pill-suits rbbo"><span>♥</span><span>♠</span><span>♦</span><span>♣</span></span></label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    </div> <!-- Close start-panel-content -->
+
+    <!-- GAME RESULTS -->
+    <div id="results-panel" style="display:none;">
+      <div class="results-content">
+        <h2 id="results-winner"></h2>
+        <div id="results-subtitle"></div>
+        <div id="results-match-table" style="display:none;"></div>
+        <div class="results-buttons">
+          <button id="btn-close-results">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN BUTTONS -->
+    <div class="start-panel-footer">
+      <div class="start-buttons">
+        <div class="start-buttons-main">
+          <button id="btn-tutorial">Tutorial<br><small>learn in 4 hands</small></button>
+          <button id="btn-play">Play<br><small id="btn-play-sub"></small></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div id="instructions-panel" style="display:none;">
+      <div class="instructions-content">
+
+        <h3>Rules</h3>
+        <ul>
+          <li>A standard 52 card deck is used, with 2 to 5 players.</li>
+
+          <li>
+            The number of cards dealt changes by one every round. You choose the most
+            cards in a hand and the pattern: down to a single card and back up (the
+            classic), up and back down, or just one way.
+          </li>
+
+          <li>
+            <strong>Trumps</strong><br>
+            After the deal the trump coin is flipped. It has five faces: one for each
+            suit and a blank. A blank means the round is played with no trumps.
+          </li>
+
+          <li>
+            <strong>Bidding</strong><br>
+            Everyone looks at their cards and secretly bids exactly how many tricks
+            they think they will win, placing a numbered token face down.
+            All the tokens are revealed at the same time. Zero is a perfectly good bid.
+          </li>
+
+          <li>
+            <strong>Playing</strong><br>
+            The player to the dealer's left leads the first trick.
+            You must follow suit if you can. If you cannot, you may play any card.
+            The highest card of the suit led wins the trick, unless a trump is played,
+            in which case the highest trump wins. The winner leads the next trick.
+          </li>
+
+          <li>
+            <strong>Scoring</strong><br>
+            You score 1 point for every trick you win, plus a 10 point bonus
+            if you win exactly the number of tricks you bid.
+          </li>
+
+          <li>The deal passes to the left each round. Highest total at the end wins.</li>
+        </ul>
+
+        <h3>Options</h3>
+        <ul>
+          <li>
+            <strong>Bidding: In turn (dealer's hook)</strong><br>
+            The traditional way. Players bid one at a time from the dealer's left,
+            and the dealer, bidding last, may not make the bids add up to the number
+            of tricks.
+          </li>
+
+          <li>
+            <strong>Trumps: Turned-up card</strong><br>
+            The traditional way. The next card after the deal is turned face up and
+            its suit is trump. There are no no-trump rounds.
+          </li>
+        </ul>
+
+        <h3>Extended deck</h3>
+        <ul>
+          <li>
+            Eight special cards are added: 2 Jokers 🃏, 4 Dragons 🐉, the Sun ☀️ and the Moon 🌙.
+            A special card may be played at any time, even if you could follow suit.
+            The lead suit is set by the first normal card played.
+          </li>
+          <li>
+            <strong>Who wins the trick</strong>
+            <ol>
+              <li>If the Moon and the Sun are both played, the Moon wins: it <strong>eclipses</strong> the Sun, and its player scores a <strong>+20</strong> eclipse bonus.</li>
+              <li>Otherwise the Sun wins.</li>
+              <li>Otherwise the first Dragon played wins.</li>
+              <li>Otherwise the highest trump wins.</li>
+              <li>Otherwise the highest card of the lead suit wins.</li>
+              <li>If only Jokers and the Moon were played, the first card wins.</li>
+            </ol>
+          </li>
+          <li>Jokers (and the Moon, when the Sun is not played) are perfect cards for losing a trick.</li>
+          <li>With the turned-up card option, a special card turned up means no trump.</li>
+        </ul>
+
+        <h3>Tips</h3>
+        <ul>
+          <li>
+            The 10 point bonus is everything. Taking one trick too many usually
+            costs you far more than it earns.
+          </li>
+
+          <li>
+            Once you have made your bid, get rid of your high cards when it is
+            safe to do so: discard them when you cannot follow suit, or play them
+            under a card that is already winning.
+          </li>
+
+          <li>
+            Watch the other players' bids. If the table has bid more tricks than
+            there are, expect a fight for every trick.
+          </li>
+
+          <li>
+            When it is your turn your name will glow and cards you cannot play
+            are dimmed.
+          </li>
+
+
+        </ul>
+
+      </div>
+
+      <div class="instructions-footer">
+        <button id="btn-instructions-done">Done</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+  <script src="./oh-core.js?v=111"></script>
+  <script src="./oh-tutorial.js?v=111"></script>
+  <script src="./oh-ai.js?v=111"></script>
+  <script src="./oh-app.js?v=111"></script>
+</body>
+</html>
