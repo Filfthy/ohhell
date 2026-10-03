@@ -36,7 +36,7 @@ const TUTORIAL = {
       ],
       coach: {
         start: [
-          { t: "The <b>trump coin</b> is flipped every hand. It landed on <b>♥</b>: " +
+          { t: "The <b>trump coin</b> is flipped every hand. It landed on <b>♥</b>, so " +
                "any heart beats any card of another suit.", spot: "#trump-slot" },
           { t: "Your 3 cards. <b>A♠</b> is the top spade, almost a sure trick. " +
                "<b>2♥</b> is a trump, so it can win when you can't follow a suit.", spot: "#player-hand" }
