@@ -4,8 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oh Hell! Extended</title>
-  <link rel="stylesheet" href="./gw.css?v=91">
-  <link rel="stylesheet" href="./oh.css?v=91">
+  <meta name="description" content="Oh Hell! Extended: the classic bid-exactly trick-taking card game for 2 to 5 players, with secret bids, a trump coin and an optional deck of Dragons, Jokers, the Sun and the Moon. Play free in your browser.">
+  <meta name="author" content="BugVictim">
+  <meta name="theme-color" content="#0b0505">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="bugvictim.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Oh Hell! Extended">
+  <meta property="og:description" content="Bid exactly how many tricks you'll take. A trick-taking card game with a trick up its sleeve.">
+  <meta property="og:image" content="share.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" href="share.jpg" as="image" fetchpriority="low">
+  <link rel="stylesheet" href="./gw.css?v=102">
+  <link rel="stylesheet" href="./oh.css?v=102">
 </head>
 <body>
   <div id="game-area">
@@ -72,7 +84,7 @@
 
 <!-- SPLASH -->
 <div id="splash" role="button" tabindex="0" aria-label="Click to start">
-  <img src="logo-ohhell.webp?v=91" alt="Oh Hell! Extended" class="splash-title">
+  <img src="logo-ohhell.webp?v=102" alt="Oh Hell! Extended" class="splash-title">
   <div class="logo-subtitle splash-subtitle">Oh Hell! with a trick up its sleeve</div>
   <img src="bugvictim.svg" alt="BugVictim" class="splash-logo">
   <div class="splash-credit">© BugVictim 2026</div>
@@ -86,6 +98,13 @@
     <div class="scorecard-body"></div>
     <div class="scorecard-buttons"><button type="button" id="btn-scorecard-close">Close</button></div>
   </div>
+</div>
+
+<!-- PORTRAIT PHONES: ask to rotate -->
+<div id="rotate-prompt" aria-live="polite">
+  <div class="rotate-phone">📱</div>
+  <div class="rotate-title">Please turn your phone sideways</div>
+  <div class="rotate-text">Oh Hell! Extended is played in landscape.</div>
 </div>
 
 <!-- QUIT CONFIRM -->
@@ -118,7 +137,7 @@
 
     <div class="start-panel-header">
       <div class="start-header">
-        <img src="logo-ohhell.webp?v=91" alt="Oh Hell! Extended" class="start-title-img">
+        <img src="logo-ohhell.webp?v=102" alt="Oh Hell! Extended" class="start-title-img">
       </div>
 
       <div class="start-logo-row start-credit-line">© BugVictim 2026</div>
@@ -218,6 +237,14 @@
             <label title="Hellfire"><input type="radio" name="cardback" value="hellfire"><span class="bk bk-hellfire"></span></label>
             <label title="Classic blue"><input type="radio" name="cardback" value="classic-blue"><span class="bk bk-classic-blue"></span></label>
             <label title="Classic red"><input type="radio" name="cardback" value="classic-red"><span class="bk bk-classic-red"></span></label>
+          </div>
+        </div>
+        <div class="opt-row">
+          <div class="opt-label" title="Large index: big corner index and one big pip, for small screens">Card faces</div>
+          <div class="seg" role="radiogroup">
+            <label title="Large index on small screens, full artwork otherwise"><input type="radio" name="faces" value="auto" checked><span>Auto</span></label>
+            <label title="Full artwork always"><input type="radio" name="faces" value="classic"><span>Classic</span></label>
+            <label title="Big corner index and one big pip, always"><input type="radio" name="faces" value="large"><span>Large index</span></label>
           </div>
         </div>
         <div class="opt-row">
@@ -377,9 +404,9 @@
   </div>
 </div>
 
-  <script src="./oh-core.js?v=91"></script>
-  <script src="./oh-tutorial.js?v=91"></script>
-  <script src="./oh-ai.js?v=91"></script>
-  <script src="./oh-app.js?v=91"></script>
+  <script src="./oh-core.js?v=102"></script>
+  <script src="./oh-tutorial.js?v=102"></script>
+  <script src="./oh-ai.js?v=102"></script>
+  <script src="./oh-app.js?v=102"></script>
 </body>
 </html>

@@ -576,6 +576,14 @@ class CardView {
       div.appendChild(ic);
     }
 
+    // Large-index faces: the special's icon as an enlarged centre pip.
+    const jumbo = document.createElement("img");
+    jumbo.className = "jumbo-pip jumbo-icon";
+    jumbo.src = `special/icon-${card.role}.svg`;
+    jumbo.alt = "";
+    jumbo.draggable = false;
+    div.appendChild(jumbo);
+
     // Whole-card art layer (special/ROLE.svg holds the frame line and the
     // figure, which may break out of the frame).
     const img = document.createElement("img");
@@ -627,6 +635,30 @@ class CardView {
 
     div.appendChild(cornerTop);
     div.appendChild(cornerBottom);
+
+    // Large-index faces (small screens / option): one enlarged centre pip
+    // replaces the pips and court artwork.
+    if (card) {
+      let jumbo;
+      if (card.rank === "A" && card.suit === "♠") {
+        // Keep the BugVictim branding on the ace of spades.
+        jumbo = document.createElement("img");
+        jumbo.className = "jumbo-pip jumbo-icon jumbo-ace";
+        jumbo.src = "spade.svg";
+        jumbo.alt = "";
+        jumbo.draggable = false;
+      } else if (card.rank === "J" || card.rank === "Q" || card.rank === "K") {
+        // Court cards: crown (K), coronet (Q) or feathered cap (J).
+        jumbo = document.createElement("img");
+        jumbo.className = "jumbo-pip jumbo-icon jumbo-court";
+        jumbo.src = `special/icon-${card.rank}.svg`; jumbo.alt = ""; jumbo.draggable = false;
+      } else {
+        jumbo = document.createElement("div");
+        jumbo.className = "jumbo-pip " + this.cardColorClass(card);
+        jumbo.textContent = card.suit;
+      }
+      div.appendChild(jumbo);
+    }
 
     if (card) {
       const center = document.createElement("div");

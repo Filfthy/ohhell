@@ -36,6 +36,15 @@ const SPECIAL_SORT = { MOON: 1, JOKER: 2, DRAGON: 3, SUN: 4 };
 
 // Game pace: 1 = normal, 0.5 = fast. Scales pauses and card flights.
 let GAME_SPEED = 1;
+
+// Card faces: "auto" uses large-index faces when cards are drawn small.
+let FACES_MODE = "auto";
+const LARGE_FACES_BELOW_PX = 64;   // card width at which auto switches
+function applyFaces() {
+  const large = FACES_MODE === "large" ||
+    (FACES_MODE === "auto" && layoutMetrics.cardWidth < LARGE_FACES_BELOW_PX);
+  document.body.classList.toggle("faces-large", large);
+}
 const wait = (ms) => new Promise(r => setTimeout(r, ms * GAME_SPEED));
 
 class GameController {
@@ -120,6 +129,8 @@ class GameController {
       if (savedTrump === "coin" || savedTrump === "card") this.trumpMode = savedTrump;
       this.extended = localStorage.getItem("oh_extended") === "1";
       if (localStorage.getItem("oh_speed") === "fast") GAME_SPEED = 0.5;
+      const savedFaces = localStorage.getItem("oh_faces");
+      if (["auto", "classic", "large"].includes(savedFaces)) FACES_MODE = savedFaces;
     } catch (e) { /* ignore */ }
 
     this.aiEngine.setDifficulty(this.difficulty);
@@ -1580,6 +1591,16 @@ class GameController {
       });
     });
 
+    document.querySelectorAll('input[name="faces"]').forEach(r => {
+      r.checked = (r.value === FACES_MODE);
+      r.addEventListener("change", () => {
+        FACES_MODE = r.value;
+        applyFaces();
+        try { localStorage.setItem("oh_faces", r.value); } catch (e) { /* ignore */ }
+      });
+    });
+    applyFaces();
+
     const speedRadios = document.querySelectorAll('input[name="speed"]');
     speedRadios.forEach(r => { r.checked = (r.value === (GAME_SPEED < 1 ? "fast" : "normal")); });
     speedRadios.forEach(r => r.addEventListener("change", () => {
@@ -1997,6 +2018,7 @@ function updateScale() {
   layoutMetrics.scale = scale;
   layoutMetrics.cardWidth = BASE_CARD_WIDTH * scale;
   layoutMetrics.cardHeight = BASE_CARD_HEIGHT * scale;
+  if (document.body) applyFaces();
 }
 
 updateScale();
