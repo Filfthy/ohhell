@@ -1383,3 +1383,65 @@ body.faces-large .card .jumbo-ace { width: 62cqw; height: auto; }
 body.faces-large #player-hand .card:not(:last-child) .jumbo-pip { display: none; }
 /* Court symbols: crown (K), coronet (Q), feathered cap (J) */
 body.faces-large .card .jumbo-court { width: 64cqw; height: auto; }
+
+/* ===== Start panel: two columns on landscape screens =====
+   Logo, credit and the Tutorial/Play buttons on the left; name, tabs and
+   options on the right, so nothing needs scrolling. */
+@media (orientation: landscape) {
+  #start-panel:not(.instructions-open):not(.results-open) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    column-gap: 1.8em;
+    width: min(96vw, calc(var(--scale-factor) * 135));
+    max-width: calc(100vw - 160px);   /* clear the sound/fullscreen buttons */
+    height: auto;                     /* fit the content, not the screen */
+    row-gap: 0;
+  }
+  #start-panel:not(.instructions-open):not(.results-open) .start-panel-header {
+    grid-column: 1; grid-row: 1;
+    align-self: end;
+  }
+  #start-panel:not(.instructions-open):not(.results-open) .start-panel-footer {
+    grid-column: 1; grid-row: 2;
+    align-self: start;
+    margin-top: 1.2em;
+  }
+  #start-panel:not(.instructions-open):not(.results-open) .start-panel-content {
+    grid-column: 2; grid-row: 1 / span 2;
+    margin-top: 0;
+    align-self: center;
+    max-height: 100%;
+  }
+  #start-panel:not(.instructions-open):not(.results-open) .start-title-img {
+    max-height: 20em;
+  }
+  #start-panel:not(.instructions-open):not(.results-open) .start-buttons-main small {
+    white-space: nowrap;
+  }
+  /* Stack the tabs in one cell so the panel keeps the tallest tab's height
+     and doesn't jump when switching tabs. */
+  #start-panel .start-body { display: grid; grid-template-columns: minmax(0, 1fr); }
+  #start-panel .start-body > * { grid-column: 1; }
+  #start-panel .start-body > .tab-pane { display: block; grid-row: 3; visibility: hidden; }
+  #start-panel .start-body > .tab-pane.active { visibility: visible; }
+}
+/* Phones: bigger touch targets in the options column; there's room. */
+@media (orientation: landscape) and (max-height: 500px) {
+  #start-panel:not(.instructions-open):not(.results-open) {
+    width: min(96vw, calc(var(--scale-factor) * 170));
+    height: var(--panel-height);
+  }
+  #start-panel:not(.instructions-open):not(.results-open) .start-panel-content {
+    font-size: 1.25em;
+  }
+}
+
+/* Trump coin spinning mid-table before it slides to the trump slot */
+.coin-flight {
+  position: fixed;
+  z-index: 9000;
+  transform: translate(-50%, -50%) scale(2.2);   /* = COIN_BIG in oh-app.js */
+  pointer-events: none;
+}

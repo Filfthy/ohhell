@@ -45,6 +45,7 @@ function applyFaces() {
     (FACES_MODE === "auto" && layoutMetrics.cardWidth < LARGE_FACES_BELOW_PX);
   document.body.classList.toggle("faces-large", large);
 }
+const COIN_BIG = 2.2;   // trump coin size while it spins mid-table
 const wait = (ms) => new Promise(r => setTimeout(r, ms * GAME_SPEED));
 
 class GameController {
@@ -689,26 +690,56 @@ class GameController {
     this.render();
   }
 
+  // The coin spins big (COIN_BIG) in the middle of the table, lands, then slides into
+  // the trump slot.
   async animateCoinFlip(ep) {
     const faces = TRUMP_COIN_FACES;
-    this.coinSpinning = true;
+    const centre = getRectCenter(this.dom.trickArea);
+    const flight = document.createElement("div");
+    flight.className = "coin-flight";
+    flight.style.left = centre.x + "px";
+    flight.style.top = centre.y + "px";
+    document.body.appendChild(flight);
+    const cleanup = () => flight.remove();
+    this.dom.deckSlot.classList.remove("dealing");   // the deal is done; don't show the deck behind the coin
+
+    const show = (face, spinning) => {
+      flight.innerHTML = "";
+      flight.appendChild(this.makeCoin(face, spinning));
+    };
+
     this.playSfx(this.sfx.cardShove2);
-    const steps = 12;
+    const steps = 14;
     for (let i = 0; i < steps; i++) {
-      this.coinFace = faces[(i + Math.floor(Math.random() * faces.length)) % faces.length];
-      this.renderDeck();
+      show(faces[(i + Math.floor(Math.random() * faces.length)) % faces.length], true);
       this.sfxTick();
-      await wait(55 + i * 9);
-      if (ep !== this.epoch) return;
+      await wait(55 + i * 10);
+      if (ep !== this.epoch) return cleanup();
     }
+
+    // Land on the real result.
+    const result = this.game.trumpSuit;
+    show(result, false);
+    flight.firstChild.classList.add("landed");
+    this.playSfx(this.sfx.cardPlace2);
+    await wait(750);
+    if (ep !== this.epoch) return cleanup();
+
+    // Slide off to the trump slot.
+    const to = getRectCenter(this.dom.trumpSlot);
+    const dur = 550 * GAME_SPEED;
+    const anim = flight.animate([
+      { transform: `translate(-50%, -50%) scale(${COIN_BIG})` },
+      { transform: `translate(calc(-50% + ${to.x - centre.x}px), calc(-50% + ${to.y - centre.y}px)) scale(1)` }
+    ], { duration: dur, easing: "cubic-bezier(.5,0,.3,1)", fill: "forwards" });
+    await anim.finished.catch(() => {});
+    cleanup();
+    if (ep !== this.epoch) return;
+
     this.coinSpinning = false;
     this.coinFace = null;
     this.trumpHidden = false;
     this.renderDeck();
-    const coin = this.dom.trumpSlot.querySelector(".trump-coin");
-    if (coin) coin.classList.add("landed");
-    this.playSfx(this.sfx.cardPlace2);
-    await wait(450);
   }
 
   async animateTrickToWinner(plays, winner) {
