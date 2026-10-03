@@ -1582,3 +1582,20 @@ body.faces-large #player-hand .card.picked .jumbo-pip { display: block; }
     -webkit-text-stroke: 0;
   }
 }
+
+/* Phones: bigger corner controls (quit, sound, fullscreen) for fingers. */
+@media (orientation: landscape) and (max-height: 500px) {
+  #controls { top: 6px; right: 8px; }
+  #controls .icon-btn {
+    width: 46px;
+    height: 40px;
+    margin-left: 8px;
+    font-size: 22px;
+    border-radius: 8px;
+  }
+  /* Keep the scoreboard below them... */
+  #scoreboard { top: 54px; transform: scale(0.85); transform-origin: top right; }
+  /* ...and the start panel to their left. */
+  #start-overlay { justify-content: flex-start; padding-left: 10px; }
+  #start-panel:not(.instructions-open):not(.results-open) { max-width: calc(100vw - 140px); }
+}
