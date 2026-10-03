@@ -45,7 +45,13 @@ function applyFaces() {
     (FACES_MODE === "auto" && layoutMetrics.cardWidth < LARGE_FACES_BELOW_PX);
   document.body.classList.toggle("faces-large", large);
 }
-const COIN_BIG = 2.2;   // trump coin size while it spins mid-table
+const COIN_BIG = 2.2;
+const PHONE_HAND_SCALE = 1.4;   // your hand on phones (see updateScale)
+let IS_PHONE = false;
+let HAND_SCALE = 1;   // trump coin size while it spins mid-table
+// Touch screens get "tap to pick, tap again to play" so a stray tap
+// doesn't play a card.
+const IS_TOUCH = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 const wait = (ms) => new Promise(r => setTimeout(r, ms * GAME_SPEED));
 
 class GameController {
@@ -78,6 +84,7 @@ class GameController {
     this.trumpHidden = false;
     this.coinFace = null;      // face shown while the trump coin spins (undefined = not shown)
     this.coinSpinning = false;
+    this.pickedIdx = null;     // touch screens: card picked by the first tap
     this.bidsRevealed = true;  // simultaneous bids stay face down until everyone has bid
     this.revealing = false;
     this.seatEls = [];
@@ -158,6 +165,10 @@ class GameController {
     this.bindScorecard();
     this.bindQuit();
     this.bindStartOverlay();
+    // A tap anywhere outside your hand puts a picked card back.
+    document.addEventListener("click", (e) => {
+      if (this.pickedIdx != null && !e.composedPath().includes(this.dom.playerHand)) this.clearPick(true);
+    });
 
     // Draw an empty table behind the start overlay.
     this.game.startNewGame({ numPlayers: this.numPlayers, maxCards: 5, firstDealer: 0 });
@@ -198,7 +209,8 @@ class GameController {
     else if (aspect < 1.45) k -= 0.08;     // squarer screens
     if (n <= 3) k += 0.06;                 // only side or top seats
     else if (n === 5) k -= 0.03;           // five seats share the space
-    OPP_CARD_SCALE = Math.max(0.72, Math.min(0.97, k));
+    if (IS_PHONE) k -= 0.17;               // make room for your bigger hand
+    OPP_CARD_SCALE = Math.max(IS_PHONE ? 0.6 : 0.72, Math.min(0.97, k));
     document.documentElement.style.setProperty("--opp-scale", OPP_CARD_SCALE.toFixed(3));
   }
 
@@ -322,7 +334,7 @@ class GameController {
     const total = indexed.length;
 
     indexed.forEach((obj, slot) => {
-      const pos = computePlayerFanSlot(slot, total, scale);
+      const pos = computePlayerFanSlot(slot, total, scale * HAND_SCALE);
       const div = this.cardView.createCardElement(obj.card, { clickable: true });
 
       div.style.top = cardTop + "px";
@@ -332,6 +344,10 @@ class GameController {
       div.style.zIndex = String(slot + 100);
 
       if (legal.includes(obj.idx)) div.classList.add("legal-move");
+      if (obj.idx === this.pickedIdx && legal.includes(obj.idx)) {
+        div.classList.add("picked");
+        div.style.zIndex = "300";   // in front of its neighbours
+      }
 
       div.addEventListener("click", (e) => this.handlePlayerCardClick(obj.idx, e.currentTarget));
       handDiv.appendChild(div);
@@ -692,6 +708,33 @@ class GameController {
 
   // The coin spins big (COIN_BIG) in the middle of the table, lands, then slides into
   // the trump slot.
+  // ----- Touch "pick then play" -----
+  showPlayHint() {
+    // Only the first few times: after that you know, and it would cover the trick.
+    this.playHintsShown = (this.playHintsShown || 0) + 1;
+    if (this.playHintsShown > 3) return;
+    let hint = document.getElementById("play-hint");
+    if (!hint) {
+      hint = document.createElement("div");
+      hint.id = "play-hint";
+      hint.textContent = "Tap again to play";
+      document.body.appendChild(hint);
+    }
+    const picked = this.dom.playerHand.querySelector(".card.picked");
+    const r = (picked || this.dom.playerHand).getBoundingClientRect();
+    hint.style.top = Math.max(4, r.top - 34) + "px";
+    hint.style.left = (r.left + r.width / 2) + "px";
+    hint.style.display = "block";
+  }
+
+  clearPick(rerender = false) {
+    const had = this.pickedIdx != null;
+    this.pickedIdx = null;
+    const hint = document.getElementById("play-hint");
+    if (hint) hint.style.display = "none";
+    if (had && rerender) this.renderPlayerHand();
+  }
+
   async animateCoinFlip(ep) {
     const faces = TRUMP_COIN_FACES;
     const centre = getRectCenter(this.dom.trickArea);
@@ -762,6 +805,7 @@ class GameController {
 
   startGame() {
     this.epoch++;
+    this.clearPick();
     this.busy = false;
     this.dealVisible = null;
     this.hiddenTrickSeat = null;
@@ -796,6 +840,7 @@ class GameController {
   }
 
   async runRound(ep) {
+    this.clearPick();
     this.game.startRound();
     this.bidsRevealed = !this.game.simultaneous;
     this.revealing = false;
@@ -1041,6 +1086,15 @@ class GameController {
     if (!legal.includes(idx)) return;
     const tutIdx = this.tutCardIdx(0);
     if (tutIdx != null && idx !== tutIdx) return;
+
+    // Touch screens: the first tap picks the card, a second tap plays it.
+    if (IS_TOUCH && this.pickedIdx !== idx) {
+      this.pickedIdx = idx;
+      this.renderPlayerHand();
+      this.showPlayHint();
+      return;
+    }
+    this.clearPick();
     if (this.tut) this.hideCoach();
 
     const from = cardElement ? getRectCenter(cardElement) : getRectCenter(this.dom.playerHand);
@@ -1107,6 +1161,7 @@ class GameController {
   startTutorial() {
     const T = TUTORIAL;
     this.epoch++;
+    this.clearPick();
     this.busy = false;
     this.dealVisible = null;
     this.hiddenTrickSeat = null;
@@ -1272,6 +1327,7 @@ class GameController {
   exitTutorial() {
     this.tut = null;
     this.epoch++;
+    this.clearPick();
     this.busy = false;
     this.dealVisible = null;
     this.hideCoach();
@@ -1314,8 +1370,13 @@ class GameController {
     this.dom.bidTitle.innerHTML = g.simultaneous
       ? `Your secret bid · ${cardsTxt} · ${trumpTxt}`
       : `Your bid · ${cardsTxt} · ${trumpTxt}`;
+    if (IS_TOUCH) this.dom.bidTitle.innerHTML = `${g.simultaneous ? "Secret bid" : "Your bid"} · ${cardsTxt}`;
 
     this.dom.bidButtons.innerHTML = "";
+    this.dom.bidPanel.classList.toggle("touch", IS_TOUCH);
+    if (IS_TOUCH) {
+      this.buildBidPicker(legal);
+    } else {
     // Even rows: at most 7 per row, spread so rows differ by at most one.
     const nBtns = g.handSize + 1;
     const rows = Math.ceil(nBtns / 7);
@@ -1343,6 +1404,7 @@ class GameController {
       }
       rowEls[Math.floor(b / perRow)].appendChild(btn);
     }
+    }
 
     let note;
     if (g.simultaneous) {
@@ -1354,9 +1416,40 @@ class GameController {
         : "You bid first.";
       if (forbidden != null) note += ` You're the dealer, so you can't bid ${forbidden}.`;
     }
+    // The compact touch picker only keeps the dealer's warning.
+    if (IS_TOUCH) note = forbidden != null && !g.simultaneous ? `Dealer: you can't bid ${forbidden}.` : "";
     this.dom.bidNote.textContent = note;
 
     this.dom.bidPanel.style.display = "flex";
+  }
+
+  // Touch screens: a slider along the numbers 0..cards (drag it, or tap a
+  // number) and a confirm button, so a finger can't hit the wrong bid.
+  // Bids you may not make (dealer's hook, tutorial) are struck out.
+  buildBidPicker(legal) {
+    const n = this.game.handSize;
+    const ok = b => (this.tut ? b === this.tutRound().bids[0] : legal.includes(b));
+    const box = this.dom.bidButtons;
+    let ticks = "";
+    for (let b = 0; b <= n; b++) ticks += `<span class="bid-tick${ok(b) ? "" : " no"}" data-b="${b}">${b}</span>`;
+    box.innerHTML =
+      `<div class="bid-slider">` +
+      `<input type="range" class="bid-range" min="0" max="${n}" step="1" aria-label="Bid">` +
+      `<div class="bid-ticks">${ticks}</div></div>` +
+      `<button type="button" class="bid-confirm"></button>`;
+    const range = box.querySelector(".bid-range");
+    const confirm = box.querySelector(".bid-confirm");
+    const show = () => {
+      const b = Number(range.value);
+      box.querySelectorAll(".bid-tick").forEach(t => t.classList.toggle("on", Number(t.dataset.b) === b));
+      confirm.disabled = !ok(b);
+      confirm.innerHTML = ok(b) ? `Bid <b>${b}</b>` : `Can't bid ${b}`;
+    };
+    range.value = String([...Array(n + 1).keys()].find(ok) ?? 0);
+    range.addEventListener("input", show);
+    box.querySelectorAll(".bid-tick").forEach(t => t.addEventListener("click", () => { range.value = t.dataset.b; show(); }));
+    confirm.addEventListener("click", () => { if (ok(Number(range.value))) this.onPlayerBid(Number(range.value)); });
+    show();
   }
 
   hideBidPanel() {
@@ -2045,6 +2138,12 @@ function updateScale() {
   root.style.setProperty("--card-scale", scale.toString());
   root.style.setProperty("--index-size", Math.max(MIN_INDEX_PX, BASE_INDEX_PX * scale) + "px");
   root.style.setProperty("--pip-size", Math.max(MIN_PIP_PX, BASE_PIP_PX * scale) + "px");
+
+  // Phones in landscape: your own hand is drawn bigger (it grows up from the
+  // bottom edge) and the opponents' fans a little smaller.
+  IS_PHONE = window.innerHeight <= 500 && window.innerWidth > window.innerHeight;
+  HAND_SCALE = IS_PHONE ? PHONE_HAND_SCALE : 1;
+  root.style.setProperty("--hand-scale", String(HAND_SCALE));
 
   layoutMetrics.scale = scale;
   layoutMetrics.cardWidth = BASE_CARD_WIDTH * scale;
