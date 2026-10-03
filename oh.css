@@ -255,8 +255,8 @@ body[data-phase] #deck-area { display: flex; }
   right: 8px;
   min-width: calc(120px * var(--card-scale));
   padding: calc(6px * var(--card-scale)) calc(10px * var(--card-scale));
-  background: rgba(3, 32, 18, 0.72);
-  border: 1px solid rgba(30, 192, 0, 0.55);
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.72);
+  border: 1px solid var(--ui-accent, #1EC000);
   border-radius: 8px;
   font-size: calc(12.5px * var(--card-scale));
   color: #fdf6e3;
@@ -317,8 +317,8 @@ body[data-phase] #deck-area { display: flex; }
   gap: calc(8px * var(--card-scale));
   max-width: 92vw;
   padding: calc(12px * var(--card-scale)) calc(18px * var(--card-scale));
-  background: rgba(3, 32, 18, 0.94);
-  border: 2px solid #1EC000;
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.94);
+  border: 2px solid var(--ui-accent, #1EC000);
   border-radius: 14px;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75);
   font-size: calc(15px * var(--card-scale));
@@ -730,7 +730,7 @@ body[data-players="5"] .seat-right { top: 62%; }
   flex-direction: column;
   gap: 0.6em;
   padding: 0.9em 1.1em 0.8em;
-  background: rgba(3, 32, 18, 0.96);
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.96);
   border: 2px solid #ffd54a;
   border-radius: 14px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.75);
@@ -903,7 +903,7 @@ body[data-players="5"] .seat-right { top: 62%; }
   background: rgba(0, 0, 0, 0.5);
 }
 #tut-offer .tut-offer-panel {
-  background: rgba(3, 32, 18, 0.97);
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.97);
   border: 2px solid #ffd54a;
   border-radius: 16px;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
@@ -972,8 +972,8 @@ body[data-players="5"] .seat-right { top: 62%; }
   background: rgba(0, 0, 0, 0.5);
 }
 #scorecard .scorecard-panel {
-  background: rgba(3, 32, 18, 0.97);
-  border: 2px solid #1EC000;
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.97);
+  border: 2px solid var(--ui-accent, #1EC000);
   border-radius: 14px;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
   padding: 1em 1.2em;
@@ -989,7 +989,7 @@ body[data-players="5"] .seat-right { top: 62%; }
   padding: 0.25em 0.7em; text-align: center; white-space: nowrap;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.scorecard-table th { position: sticky; top: 0; background: rgba(3, 32, 18, 1); }
+.scorecard-table th { position: sticky; top: 0; background: rgba(var(--ui-rgb, 3, 32, 18), 1); }
 .scorecard-table td.exact { color: #8dff7a; }
 .scorecard-table .sc-bw { opacity: 0.7; font-size: 0.85em; }
 .scorecard-key { font-size: 0.8em; opacity: 0.7; text-align: center; }
@@ -1262,3 +1262,51 @@ body[data-players="5"] #bid-panel { top: 58.5%; }
   justify-content: center;
   gap: calc(6px * var(--card-scale));
 }
+
+/* Trick area sits a little lower so played cards clear the top seats' labels */
+#trick-area { top: 52%; }
+
+/* ===== Panels take their tint from the chosen table ===== */
+body               { --ui-rgb: 3, 32, 18;   --ui-accent: #1EC000; }
+body.table-red     { --ui-rgb: 36, 6, 8;    --ui-accent: #d8452e; }
+body.table-blue    { --ui-rgb: 6, 14, 38;   --ui-accent: #4f7fe0; }
+body.table-walnut  { --ui-rgb: 34, 18, 9;   --ui-accent: #c08a4a; }
+body.table-mahogany{ --ui-rgb: 36, 12, 7;   --ui-accent: #c86a3c; }
+body.table-tavern  { --ui-rgb: 33, 21, 10;  --ui-accent: #b98a4e; }
+body.table-marble  { --ui-rgb: 22, 22, 25;  --ui-accent: #a8a8b4; }
+
+/* Trump marker: no frame, just the coin / card */
+#trump-slot::before { display: none; }
+body[data-phase="idle"] #deck-area { display: none; }
+
+/* Quit button only during a game; confirm dialog */
+body.overlay-active #btn-quit { display: none; }
+.modal-shade {
+  position: fixed; inset: 0; z-index: 15000;
+  align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+.modal-shade .tut-offer-panel {
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.97);
+  border: 2px solid var(--ui-accent, #1EC000);
+  border-radius: 16px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+  padding: 1.4em 1.8em 1.2em;
+  text-align: center;
+  color: #fdf6e3;
+  font-size: clamp(15px, 2.2vh, 22px);
+}
+.modal-shade .tut-offer-title { font-size: 1.4em; font-weight: 800; margin-bottom: 0.3em; }
+.modal-shade .tut-offer-text { opacity: 0.85; margin-bottom: 1.1em; }
+.modal-shade .tut-offer-buttons { display: flex; gap: 0.8em; justify-content: center; }
+.modal-shade button { margin: 0; font-size: 1em; padding: 0.55em 1.2em; border-radius: 8px; font-weight: 700; }
+#btn-quit-no { background: #1EC000; color: #021408; }
+#btn-quit-yes { background: transparent; border: 1px solid #e05a4a; color: #ff9c8c; }
+#btn-quit-yes:hover { background: rgba(224, 90, 74, 0.18); }
+
+/* No table furniture before a game starts: the start panel sits on an
+   empty table (no preview seats, names or scoreboard). */
+body[data-phase="idle"] #seats,
+body[data-phase="idle"] #player-seat-info,
+body[data-phase="idle"] #player-hand,
+body[data-phase="idle"] #scoreboard { display: none; }

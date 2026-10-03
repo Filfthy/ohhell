@@ -904,9 +904,9 @@ body.overlay-active #player-name {
   min-width: min(420px, 62vw);
   max-width: 520px;
   max-height: 92vh;
-  background: rgba(3, 32, 18, 0.96);
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.96);
   border-radius: 16px;
-  border: 2px solid #1EC000;
+  border: 2px solid var(--ui-accent, #1EC000);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
   padding: 22px 26px 18px;
   box-sizing: border-box;
@@ -1052,9 +1052,9 @@ body.overlay-active #player-name {
     max-width: min(95vw, calc(var(--scale-factor) * 75));
     height: var(--panel-height);
     max-height: var(--panel-height);
-    background: rgba(3, 32, 18, 0.96);
+    background: rgba(var(--ui-rgb, 3, 32, 18), 0.96);
     border-radius: 16px;
-    border: 2px solid #1EC000;
+    border: 2px solid var(--ui-accent, #1EC000);
     box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
     padding: calc(var(--scale-factor) * 2.5) calc(var(--scale-factor) * 3) calc(var(--scale-factor) * 2);
     box-sizing: border-box;

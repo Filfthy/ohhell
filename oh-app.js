@@ -11,19 +11,21 @@ const SEAT_LAYOUTS = {
 
 // Where each seat's card lands in the centre, in card widths / heights, plus a slight tilt.
 const TRICK_OFFSETS = {
-  bottom:   { x:  0.00, y:  0.42, rot:  0 },
-  top:      { x:  0.00, y: -0.42, rot:  0 },
-  left:     { x: -0.95, y:  0.00, rot: -8 },
-  right:    { x:  0.95, y:  0.00, rot:  8 },
-  topleft:  { x: -0.58, y: -0.40, rot: -5 },
-  topright: { x:  0.58, y: -0.40, rot:  5 }
+  bottom:   { x:  0.00, y:  0.36, rot:  0 },
+  top:      { x:  0.00, y: -0.22, rot:  0 },
+  left:     { x: -0.90, y:  0.00, rot: -8 },
+  right:    { x:  0.90, y:  0.00, rot:  8 },
+  topleft:  { x: -0.50, y: -0.32, rot: -5 },
+  topright: { x:  0.50, y: -0.32, rot:  5 }
 };
 
 // Each opponent's hand is turned to face the middle of the table.
 const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135, right: -90 };
 
 // Opponents are drawn at random from this pool for each game.
-const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub"];
+const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub",
+  "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Banshee",
+  "Morgana", "Jezebel"];
 // Opponent card size relative to yours; recalculated for screen shape and
 // player count (see updateOppScale).
 let OPP_CARD_SCALE = 0.85;
@@ -85,7 +87,7 @@ class GameController {
     this.sfx.cardPlace2.volume = 0.8;
     try { this.sfx.cardPlace2.load(); } catch (e) { /* ignore */ }
     this.sfx.cardShove2.preload = "auto";
-    this.sfx.cardShove2.volume = 0.25;
+    this.sfx.cardShove2.volume = 0.4;
     try { this.sfx.cardShove2.load(); } catch (e) { /* ignore */ }
 
     try {
@@ -142,6 +144,7 @@ class GameController {
     this.applyFullscreenUi();
     this.bindBidKeys();
     this.bindScorecard();
+    this.bindQuit();
     this.bindStartOverlay();
 
     // Draw an empty table behind the start overlay.
@@ -159,10 +162,24 @@ class GameController {
     return this.opponentNames[(seat - 1) % this.opponentNames.length];
   }
 
+  // New line-up each game: whoever sat out last game comes in first, the
+  // rest are shuffled, and seats are shuffled too.
   pickOpponents() {
-    const pool = OPPONENT_POOL.slice();
-    shuffle(pool);
-    this.opponentNames = pool;
+    let last = [];
+    try { last = JSON.parse(localStorage.getItem("oh_lastOpponents") || "[]"); } catch (e) { /* ignore */ }
+    const rested = OPPONENT_POOL.filter(n => !last.includes(n));
+    const played = OPPONENT_POOL.filter(n => last.includes(n));
+    shuffle(rested);
+    shuffle(played);
+    this.opponentNames = rested.concat(played);
+  }
+
+  rememberOpponents() {
+    const used = this.opponentNames.slice(0, Math.max(0, this.game.numPlayers - 1));
+    // Shuffle the seats of this game's line-up.
+    shuffle(used);
+    this.opponentNames = used.concat(this.opponentNames.slice(used.length));
+    try { localStorage.setItem("oh_lastOpponents", JSON.stringify(used)); } catch (e) { /* ignore */ }
   }
 
   seatPos(seat) {
@@ -242,7 +259,7 @@ class GameController {
       const pos = this.seatPos(seat);
       const o = TRICK_OFFSETS[pos];
       // With five players the side seats sit a little lower to make room.
-      const y = (n === 5 && (pos === "left" || pos === "right")) ? 0.12 : o.y;
+      const y = (n === 5 && (pos === "left" || pos === "right")) ? 0.18 : o.y;
       els.slot.style.left = (o.x * W - W / 2) + "px";
       els.slot.style.top = (y * H - H / 2) + "px";
       els.slot.style.transform = `rotate(${o.rot}deg)`;
@@ -741,6 +758,7 @@ class GameController {
     this.aiEngine.resetMemory();
     this.aiEngine.setDifficulty(this.difficulty);
 
+    this.rememberOpponents();
     this.buildSeats();
     this.runRound(this.epoch);
   }
@@ -1195,6 +1213,28 @@ class GameController {
     await this.coachSteps(this.tut.outro);
     if (ep !== this.epoch) return;
     this.exitTutorial();
+  }
+
+  // Quit button: confirm, then back to the start screen.
+  bindQuit() {
+    const btn = document.getElementById("btn-quit");
+    const box = document.getElementById("quit-confirm");
+    if (!btn || !box) return;
+    const close = () => { box.style.display = "none"; };
+    btn.addEventListener("click", () => {
+      if (this.game.phase === "idle" || document.getElementById("start-overlay").style.display !== "none") return;
+      box.style.display = "flex";
+      setTimeout(() => document.getElementById("btn-quit-no").focus(), 30);
+    });
+    document.getElementById("btn-quit-no").addEventListener("click", close);
+    document.getElementById("btn-quit-yes").addEventListener("click", () => {
+      close();
+      const sc = document.getElementById("scorecard");
+      if (sc) sc.style.display = "none";
+      this.exitTutorial(); // returns to the start screen (works for any game)
+    });
+    box.addEventListener("click", (e) => { if (e.target === box) close(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && box.style.display !== "none") close(); });
   }
 
   exitTutorial() {
@@ -1844,8 +1884,11 @@ class GameController {
   playSfx(audio) {
     if (this.soundMuted || !audio) return;
     try {
-      audio.currentTime = 0;
-      const p = audio.play();
+      // Play a fresh copy so rapid repeats overlap instead of cutting each
+      // other off (restarting one element makes quick sounds thin and quiet).
+      const a = audio.cloneNode();
+      a.volume = audio.volume;
+      const p = a.play();
       if (p && typeof p.catch === "function") p.catch(() => {});
     } catch (e) { /* ignore */ }
   }
@@ -1881,13 +1924,13 @@ class GameController {
     }
   }
 
-  sfxTick()        { this.playTones([[1800, 0, 0.03]], { type: "square", gain: 0.025 }); }
-  sfxTrickMine()   { this.playTones([[784, 0, 0.12], [1175, 0.08, 0.2]], { gain: 0.09 }); }
-  sfxTrickOther()  { this.playTones([[330, 0, 0.14]], { gain: 0.05 }); }
-  sfxExact()       { this.playTones([[523, 0, 0.12], [659, 0.09, 0.12], [784, 0.18, 0.12], [1047, 0.27, 0.3]], { gain: 0.1 }); }
+  sfxTick()        { this.playTones([[1800, 0, 0.03]], { type: "square", gain: 0.035 }); }
+  sfxTrickMine()   { this.playTones([[784, 0, 0.12], [1175, 0.08, 0.2]], { gain: 0.13 }); }
+  sfxTrickOther()  { this.playTones([[330, 0, 0.14]], { gain: 0.08 }); }
+  sfxExact()       { this.playTones([[523, 0, 0.12], [659, 0.09, 0.12], [784, 0.18, 0.12], [1047, 0.27, 0.3]], { gain: 0.14 }); }
   sfxMoonCapture() {
     this.playTones([[392, 0, 0.18], [523, 0.12, 0.18], [659, 0.24, 0.18], [784, 0.36, 0.18], [1047, 0.48, 0.45]],
-      { type: "sine", gain: 0.13 });
+      { type: "sine", gain: 0.17 });
   }
 
   playEndArpeggio({ outcome } = {}) {
