@@ -30,7 +30,9 @@ const OPP_CARD_SCALE = 0.72;
 const PLAYER_SUIT_ORDER = { "♠": 0, "♦": 1, "♣": 2, "♥": 3, "Special": 4 };
 const SPECIAL_SORT = { MOON: 1, JOKER: 2, DRAGON: 3, SUN: 4 };
 
-const wait = (ms) => new Promise(r => setTimeout(r, ms));
+// Game pace: 1 = normal, 0.5 = fast. Scales pauses and card flights.
+let GAME_SPEED = 1;
+const wait = (ms) => new Promise(r => setTimeout(r, ms * GAME_SPEED));
 
 class GameController {
   constructor() {
@@ -106,6 +108,7 @@ class GameController {
       const savedTrump = localStorage.getItem("oh_trumpMode");
       if (savedTrump === "coin" || savedTrump === "card") this.trumpMode = savedTrump;
       this.extended = localStorage.getItem("oh_extended") === "1";
+      if (localStorage.getItem("oh_speed") === "fast") GAME_SPEED = 0.5;
     } catch (e) { /* ignore */ }
 
     this.aiEngine.setDifficulty(this.difficulty);
@@ -128,6 +131,8 @@ class GameController {
 
     this.applySoundMuted();
     this.applyFullscreenUi();
+    this.bindBidKeys();
+    this.bindScorecard();
     this.bindStartOverlay();
 
     // Draw an empty table behind the start overlay.
@@ -340,8 +345,20 @@ class GameController {
         if (won === bid) cls = "on-target";
         else if (won > bid) cls = "over";
         const flip = this.flipTokens ? " flipping" : "";
+        const mark = won === bid ? " ✓" : won > bid ? " ✗" : "";
         html += `<span class="bid-token revealed ${cls}${flip}" title="Bid ${bid}">${bid}</span>` +
-          `<span class="stat ${cls}">Won <b>${won}</b></span>`;
+          `<span class="stat ${cls}">Won <b>${won}</b>${mark}</span>`;
+        // Your own status during play: what you still need to do.
+        if (seat === 0 && g.phase === "play") {
+          const left = g.handSize - g.tricksPlayed;
+          const need = bid - won;
+          let hint = "";
+          if (need < 0) hint = "over: take what you can";
+          else if (need === 0) hint = left ? "on target: duck the rest" : "";
+          else if (need > left) hint = "can't make it now";
+          else hint = `need ${need} more`;
+          if (hint) html += `<span class="stat-hint">${hint}</span>`;
+        }
       }
       els.stats.innerHTML = html;
 
@@ -508,6 +525,7 @@ class GameController {
 
   // Fly a card (face or back) between two viewport-centre points.
   flyCard({ card = null, from, to, dur = 500, scaleFrom = 1, scaleTo = 1, rotFrom = 0, rotTo = 0, z = 9999 }) {
+    dur *= GAME_SPEED;
     const W = layoutMetrics.cardWidth;
     const H = layoutMetrics.cardHeight;
 
@@ -641,6 +659,7 @@ class GameController {
     for (let i = 0; i < steps; i++) {
       this.coinFace = faces[(i + Math.floor(Math.random() * faces.length)) % faces.length];
       this.renderDeck();
+      this.sfxTick();
       await wait(55 + i * 9);
       if (ep !== this.epoch) return;
     }
@@ -974,7 +993,9 @@ class GameController {
     if (ep !== this.epoch) return;
 
     const res = this.game.resolveCompletedTrick();
-    if (res.moonCapture) this.showCaptureToast(res.moonCapture);
+    if (res.moonCapture) { this.showCaptureToast(res.moonCapture); this.sfxMoonCapture(); }
+    else if (res.winner === 0) this.sfxTrickMine();
+    else this.sfxTrickOther();
     await this.animateTrickToWinner(res.plays, res.winner);
     if (ep !== this.epoch) return;
 
@@ -1186,7 +1207,7 @@ class GameController {
 
     let note;
     if (g.simultaneous) {
-      note = "Bids are revealed together.";
+      note = "Bids are revealed together. Tip: number keys bid.";
     } else {
       const made = g.bids.filter(b => b != null).length;
       note = made
@@ -1201,6 +1222,50 @@ class GameController {
 
   hideBidPanel() {
     this.dom.bidPanel.style.display = "none";
+  }
+
+  // Round-by-round scorecard (click the scoreboard).
+  bindScorecard() {
+    const sb = document.getElementById("scoreboard");
+    const box = document.getElementById("scorecard");
+    if (!sb || !box) return;
+    sb.title = "Show scorecard";
+    sb.addEventListener("click", () => this.showScorecard());
+    const close = () => { box.style.display = "none"; };
+    document.getElementById("btn-scorecard-close").addEventListener("click", close);
+    box.addEventListener("click", (e) => { if (e.target === box) close(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  }
+
+  showScorecard() {
+    const g = this.game;
+    if (!g.history || g.phase === "idle") return;
+    const n = g.numPlayers;
+    let html = `<table class="scorecard-table"><thead><tr><th>Cards</th><th>Trump</th>`;
+    for (let s = 0; s < n; s++) html += `<th>${this.escape(this.seatName(s))}</th>`;
+    html += `</tr></thead><tbody>`;
+    g.history.forEach(r => {
+      html += `<tr><td>${r.cards}</td><td>${r.trumpSuit || "–"}</td>`;
+      for (let s = 0; s < n; s++) {
+        const exact = r.bids[s] === r.won[s];
+        html += `<td class="${exact ? "exact" : ""}"><span class="sc-bw">${r.bids[s]}/${r.won[s]}</span> <b>${r.totals[s]}</b></td>`;
+      }
+      html += `</tr>`;
+    });
+    if (!g.history.length) html += `<tr><td colspan="${n + 2}">No rounds finished yet.</td></tr>`;
+    html += `</tbody></table><div class="scorecard-key">bid/won · <b>running total</b> · green = exact bid</div>`;
+    document.querySelector("#scorecard .scorecard-body").innerHTML = html;
+    document.getElementById("scorecard").style.display = "flex";
+  }
+
+  // Number keys bid while the bid panel is open (0-9).
+  bindBidKeys() {
+    document.addEventListener("keydown", (e) => {
+      if (this.dom.bidPanel.style.display === "none" || e.ctrlKey || e.altKey || e.metaKey) return;
+      if (!/^[0-9]$/.test(e.key)) return;
+      const btn = [...this.dom.bidButtons.querySelectorAll(".bid-btn")].find(b => b.textContent === e.key);
+      if (btn && !btn.disabled) { e.preventDefault(); btn.click(); }
+    });
   }
 
   // =====================================================
@@ -1258,6 +1323,7 @@ class GameController {
     overlay.style.display = "flex";
     this.overlayActive = true;
     this.updateTurnHighlight();
+    if (r.bids[0] === r.won[0] && !gameOver) this.sfxExact();
     setTimeout(() => btn.focus(), 50);
   }
 
@@ -1382,6 +1448,12 @@ class GameController {
     const biddingRadios = document.querySelectorAll('input[name="bidding"]');
     const trumpRadios = document.querySelectorAll('input[name="trumpmode"]');
     const deckRadios = document.querySelectorAll('input[name="deck"]');
+    const speedRadios = document.querySelectorAll('input[name="speed"]');
+    speedRadios.forEach(r => { r.checked = (r.value === (GAME_SPEED < 1 ? "fast" : "normal")); });
+    speedRadios.forEach(r => r.addEventListener("change", () => {
+      GAME_SPEED = r.value === "fast" ? 0.5 : 1;
+      try { localStorage.setItem("oh_speed", r.value); } catch (e) { /* ignore */ }
+    }));
     deckRadios.forEach(r => { r.checked = (r.value === (this.extended ? "extended" : "standard")); });
     biddingRadios.forEach(r => { r.checked = (r.value === this.bidding); });
     trumpRadios.forEach(r => { r.checked = (r.value === this.trumpMode); });
@@ -1626,6 +1698,35 @@ class GameController {
       try { this.audioCtx.resume().catch(() => {}); } catch (e) { /* ignore */ }
     }
     return this.audioCtx;
+  }
+
+  // Short synthesised effects. notes: [[freqHz, startSec, durSec], ...]
+  playTones(notes, { type = "triangle", gain = 0.12 } = {}) {
+    if (this.soundMuted) return;
+    const ctx = this.ensureAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    for (const [f, t0, d] of notes) {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(f, now + t0);
+      g.gain.setValueAtTime(0.0001, now + t0);
+      g.gain.exponentialRampToValueAtTime(gain, now + t0 + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + d);
+      osc.connect(g).connect(ctx.destination);
+      osc.start(now + t0);
+      osc.stop(now + t0 + d + 0.02);
+    }
+  }
+
+  sfxTick()        { this.playTones([[1800, 0, 0.03]], { type: "square", gain: 0.025 }); }
+  sfxTrickMine()   { this.playTones([[784, 0, 0.12], [1175, 0.08, 0.2]], { gain: 0.09 }); }
+  sfxTrickOther()  { this.playTones([[330, 0, 0.14]], { gain: 0.05 }); }
+  sfxExact()       { this.playTones([[523, 0, 0.12], [659, 0.09, 0.12], [784, 0.18, 0.12], [1047, 0.27, 0.3]], { gain: 0.1 }); }
+  sfxMoonCapture() {
+    this.playTones([[392, 0, 0.18], [523, 0.12, 0.18], [659, 0.24, 0.18], [784, 0.36, 0.18], [1047, 0.48, 0.45]],
+      { type: "sine", gain: 0.13 });
   }
 
   playEndArpeggio({ outcome } = {}) {

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Oh Hell! Extended</title>
-  <link rel="stylesheet" href="./gw.css?v=55">
-  <link rel="stylesheet" href="./oh.css?v=55">
+  <link rel="stylesheet" href="./gw.css?v=60">
+  <link rel="stylesheet" href="./oh.css?v=60">
 </head>
 <body>
   <div id="game-area">
@@ -73,10 +73,19 @@
 
 <!-- SPLASH -->
 <div id="splash" role="button" tabindex="0" aria-label="Click to start">
-  <img src="logo-ohhell.webp?v=55" alt="Oh Hell! Extended" class="splash-title">
+  <img src="logo-ohhell.webp?v=60" alt="Oh Hell! Extended" class="splash-title">
   <div class="logo-subtitle splash-subtitle">Oh Hell! with a trick up its sleeve</div>
   <img src="bugvictim.svg" alt="BugVictim" class="splash-logo">
   <div class="splash-start">Click to start</div>
+</div>
+
+<!-- SCORECARD -->
+<div id="scorecard" style="display:none;">
+  <div class="scorecard-panel">
+    <div class="scorecard-title">Scorecard</div>
+    <div class="scorecard-body"></div>
+    <div class="scorecard-buttons"><button type="button" id="btn-scorecard-close">Close</button></div>
+  </div>
 </div>
 
 <!-- FIRST-TIME TUTORIAL OFFER -->
@@ -97,7 +106,7 @@
 
     <div class="start-panel-header">
       <div class="start-header">
-        <img src="logo-ohhell.webp?v=55" alt="Oh Hell! Extended" class="start-title-img">
+        <img src="logo-ohhell.webp?v=60" alt="Oh Hell! Extended" class="start-title-img">
         <div class="logo-subtitle">Oh Hell! with a trick up its sleeve</div>
       </div>
 
@@ -152,7 +161,7 @@
             <div>
               <input type="radio" name="opponent" id="opp-easy" value="easy" checked>
             </div>
-            <label for="opp-easy" class="opponent-name">Beer-garden regulars</label>
+            <label for="opp-easy" class="opponent-name">Lost souls</label>
             <div class="opponent-rating"><span class="pip">♠</span></div>
           </div>
 
@@ -160,7 +169,7 @@
             <div>
               <input type="radio" name="opponent" id="opp-medium" value="medium">
             </div>
-            <label for="opp-medium" class="opponent-name">Card-club members</label>
+            <label for="opp-medium" class="opponent-name">Imps</label>
             <div class="opponent-rating">
               <span class="pip">♠</span><span class="pip">♠</span>
             </div>
@@ -170,7 +179,7 @@
             <div>
               <input type="radio" name="opponent" id="opp-hard" value="hard">
             </div>
-            <label for="opp-hard" class="opponent-name">Tournament sharks</label>
+            <label for="opp-hard" class="opponent-name">Hellhounds</label>
             <div class="opponent-rating">
               <span class="pip">♠</span><span class="pip">♠</span><span class="pip">♠</span>
             </div>
@@ -226,6 +235,15 @@
               </label>
             </td>
           </tr>
+          <tr>
+            <td class="firstdeal-cell firstdeal-label">Speed</td>
+            <td class="firstdeal-cell">
+              <label class="firstdeal-option"><input type="radio" name="speed" value="normal" checked><span>Normal</span></label>
+            </td>
+            <td class="firstdeal-cell">
+              <label class="firstdeal-option"><input type="radio" name="speed" value="fast"><span>Fast</span></label>
+            </td>
+          </tr>
         </table>
       </div>
 
@@ -233,7 +251,7 @@
       <div class="suitcolors-block">
         <table class="settings4" id="suitcolors-table" role="presentation">
           <tr>
-            <th class="settings4-label">Suit colours</th>
+            <th class="settings4-label" title="Suit colours">Colours</th>
             <td class="settings4-opt">
               <label class="suit-pill">
                 <input type="radio" name="suitcolors" value="classic">
@@ -446,9 +464,9 @@
   </div>
 </div>
 
-  <script src="./oh-core.js?v=55"></script>
-  <script src="./oh-tutorial.js?v=55"></script>
-  <script src="./oh-ai.js?v=55"></script>
-  <script src="./oh-app.js?v=55"></script>
+  <script src="./oh-core.js?v=60"></script>
+  <script src="./oh-tutorial.js?v=60"></script>
+  <script src="./oh-ai.js?v=60"></script>
+  <script src="./oh-app.js?v=60"></script>
 </body>
 </html>
