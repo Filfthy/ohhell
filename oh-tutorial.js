@@ -119,7 +119,7 @@ const TUTORIAL = {
           "The <b>Extended deck is optional</b>: choose <b>Standard</b> or <b>Extended</b> on the start screen.",
           "It adds 8 special cards: the <b>Sun</b>, the <b>Moon</b>, 4 <b>Dragons</b> and 2 <b>Jokers</b>. " +
           "You can play a special card <b>at any time</b>, even if you could follow suit.",
-          "<b>Who wins:</b> the Sun beats everything, except the Moon, which <b>captures the Sun for +20</b>. " +
+          "<b>Who wins:</b> the Sun beats everything, except the Moon, which <b>eclipses the Sun for +20</b>. " +
           "Otherwise the first Dragon wins. Jokers never win.",
           { t: "Trumps are ♠. You hold a Dragon, a 4♦ and the Moon.", spot: "#player-hand" }
         ],
@@ -135,9 +135,9 @@ const TUTORIAL = {
         trick1: [
           "Persephone played a <b>Joker</b>. Jokers never win, which makes them perfect for losing a trick. Loki's 9♦ won."
         ],
-        play2: { prompt: "Loki leads the <b>Sun</b>! Play the <b>Moon</b> to capture it." },
+        play2: { prompt: "Loki leads the <b>Sun</b>! Play the <b>Moon</b> to eclipse it." },
         trick2: [
-          "The Moon captures the Sun: you win the trick <b>and +20</b>, and you made your bid of 2."
+          "<b>Eclipse!</b> The Moon eclipses the Sun: you win the trick <b>and +20</b>, and you made your bid of 2."
         ],
         end: { prompt: "One more extended hand: how to <b>lose</b> tricks on purpose." }
       }
@@ -176,7 +176,7 @@ const TUTORIAL = {
         ],
         play2: { prompt: "Persephone leads 8♣. Play the <b>Moon</b>: without the Sun in the trick, it can't win." },
         trick2: [
-          "The Moon only wins by capturing the Sun. Otherwise it's a safe card to lose with, like a Joker. You made exactly 1."
+          "The Moon only wins by eclipsing the Sun. Otherwise it's a safe card to lose with, like a Joker. You made exactly 1."
         ],
         end: { prompt: "That's the whole game: <b>bid exactly</b>, <b>follow suit</b>, <b>trumps beat suits</b>. With the Extended deck, specials can be played at any time." }
       }

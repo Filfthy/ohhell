@@ -1,0 +1,4 @@
+Classic card backs (back-classic-blue.svg, back-classic-red.svg) and the files in pack/:
+by Bas de Reuver (bdr1976@gmail.com), Aug 2025. CC0 public domain.
+
+back-hellfire: artwork made for Oh Hell! Extended by BugVictim.

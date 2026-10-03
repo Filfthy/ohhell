@@ -245,12 +245,19 @@ function getRectCenter(el) {
   return { x: r.left + r.width / 2, y: r.top + r.height / 2, rect: r };
 }
 
-// Hand sizes for a whole game: max down to 1, then back up to max.
-function buildRoundSchedule(maxCards) {
-  const rounds = [];
-  for (let n = maxCards; n >= 1; n--) rounds.push(n);
-  for (let n = 2; n <= maxCards; n++) rounds.push(n);
-  return rounds;
+// Hand sizes for a whole game.
+//   downup: max … 1 … max   updown: 1 … max … 1
+//   down:   max … 1         up:     1 … max
+function buildRoundSchedule(maxCards, pattern = "downup") {
+  const down = [], up = [];
+  for (let n = maxCards; n >= 1; n--) down.push(n);
+  for (let n = 1; n <= maxCards; n++) up.push(n);
+  switch (pattern) {
+    case "updown": return up.concat(down.slice(1));
+    case "down":   return down;
+    case "up":     return up;
+    default:       return down.concat(up.slice(1));
+  }
 }
 
 // Scoring: 1 point per trick, +10 bonus for making the bid exactly.
@@ -293,7 +300,7 @@ class OhHellGame {
     this.leader = 0;
   }
 
-  startNewGame({ numPlayers = 4, maxCards = 10, firstDealer = 0,
+  startNewGame({ numPlayers = 4, maxCards = 10, firstDealer = 0, pattern = "downup",
                   bidding = "simultaneous", trumpMode = "coin", extended = false,
                   presetRounds = null } = {}) {
     this.numPlayers = numPlayers;
@@ -306,7 +313,7 @@ class OhHellGame {
     const cap = Math.floor((extended ? 59 : 51) / numPlayers);
     this.schedule = presetRounds
       ? presetRounds.map(r => r.hands[0].length)
-      : buildRoundSchedule(Math.min(maxCards, cap));
+      : buildRoundSchedule(Math.max(1, Math.min(maxCards, cap)), pattern);
     this.roundIndex = -1;
     this.scores = new Array(numPlayers).fill(0);
     this.history = [];
@@ -538,7 +545,7 @@ const SPECIAL_LOOK = {
   JOKER:  { name: "Joker",  rule: "never wins (unless only Jokers/Moon are played)" },
   DRAGON: { name: "Dragon", rule: "the first Dragon played wins, unless the Sun is played" },
   SUN:    { name: "Sun",    rule: "beats everything except the Moon" },
-  MOON:   { name: "Moon",   rule: "captures the Sun (+20 bonus); otherwise never wins" }
+  MOON:   { name: "Moon",   rule: "eclipses the Sun (+20 bonus); otherwise never wins" }
 };
 
 class CardView {
@@ -581,7 +588,7 @@ class CardView {
   }
 
   pipPositionToPercent(col, row) {
-    const colMap = { L: 30, C: 50, R: 70 };
+    const colMap = { L: 33, C: 50, R: 67 };
     const rowMap = { T: 25, TM: 38, M: 50, BM: 62, B: 75 };
     return { x: colMap[col] ?? 50, y: rowMap[row] ?? 50 };
   }
@@ -631,8 +638,8 @@ class CardView {
       center.style.height = "100%";
 
       if (card.rank === "J" || card.rank === "Q" || card.rank === "K") {
-        // Traditional double-headed court art (court/KH.svg etc.), with the
-        // frame's corner pips drawn on top so they follow the suit colours.
+        // Traditional double-headed court art (court/KH.svg etc.). The suit is
+        // shown by the corner indices only, so nothing covers the figures.
         const img = document.createElement("img");
         const suitMap = { "♠": "S", "♥": "H", "♦": "D", "♣": "C" };
         const s = suitMap[card.suit] || "";
@@ -645,12 +652,6 @@ class CardView {
         inset.className = "royal-inset";
         img.className = "royal-inset-img";
         inset.appendChild(img);
-        for (const cls of ["court-pip", "court-pip flipped"]) {
-          const pip = document.createElement("span");
-          pip.className = cls + " " + this.cardColorClass(card);
-          pip.textContent = card.suit;
-          inset.appendChild(pip);
-        }
         center.appendChild(inset);
       } else {
         center.style.display = "block";
@@ -667,8 +668,8 @@ class CardView {
           return div;
         }
 
-        const leftX  = 32;
-        const rightX = 68;
+        const leftX  = 34;
+        const rightX = 66;
         const y1 = 25;
         const y2 = 42;
         const y3 = 58;

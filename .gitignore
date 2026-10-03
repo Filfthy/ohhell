@@ -19,3 +19,6 @@ build/
 
 # Local deploy artifacts
 *.zip
+
+# Large source texture maps (processed copies live in the root)
+art/tables/

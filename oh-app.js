@@ -24,7 +24,9 @@ const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135
 
 // Opponents are drawn at random from this pool for each game.
 const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub"];
-const OPP_CARD_SCALE = 0.72;
+// Opponent card size relative to yours; recalculated for screen shape and
+// player count (see updateOppScale).
+let OPP_CARD_SCALE = 0.85;
 
 // Player hand suit order: Spades, Diamonds, Clubs, Hearts (L→R), then specials.
 const PLAYER_SUIT_ORDER = { "♠": 0, "♦": 1, "♣": 2, "♥": 3, "Special": 4 };
@@ -47,7 +49,9 @@ class GameController {
     this.playerName = "Player";
     this.numPlayers = 4;
     this.firstDealMode = "random";
-    this.gameLength = "short";       // 'short' (5) | 'full' (10)
+    this.maxCards = 7;               // most cards in a hand (1-10)
+    this.pattern = "downup";         // 'downup' | 'updown' | 'down' | 'up'
+    this.playersChoice = "4";        // "2".."5" or "random"
     this.bidding = "simultaneous";   // 'simultaneous' (secret tokens) | 'sequential' (dealer's hook)
     this.trumpMode = "coin";         // 'coin' (5-sided coin) | 'card' (turned-up card)
     this.extended = false;           // extended deck: + 2 Jokers, 4 Dragons, Sun, Moon
@@ -94,8 +98,13 @@ class GameController {
       const savedDiff = localStorage.getItem("oh_difficulty");
       if (savedDiff) this.difficulty = savedDiff;
 
-      const savedPlayers = parseInt(localStorage.getItem("oh_numPlayers"), 10);
-      if (savedPlayers >= 2 && savedPlayers <= 5) this.numPlayers = savedPlayers;
+      const savedPlayers = localStorage.getItem("oh_players") || localStorage.getItem("oh_numPlayers");
+      if (savedPlayers === "random") this.playersChoice = "random";
+      else if (+savedPlayers >= 2 && +savedPlayers <= 5) { this.playersChoice = String(+savedPlayers); this.numPlayers = +savedPlayers; }
+      const savedMax = parseInt(localStorage.getItem("oh_maxCards"), 10);
+      if (savedMax >= 1 && savedMax <= 10) this.maxCards = savedMax;
+      const savedPattern = localStorage.getItem("oh_pattern");
+      if (["downup", "updown", "down", "up"].includes(savedPattern)) this.pattern = savedPattern;
 
       const savedFirst = localStorage.getItem("oh_firstDeal");
       if (savedFirst) this.firstDealMode = savedFirst;
@@ -160,7 +169,21 @@ class GameController {
     return SEAT_LAYOUTS[this.game.numPlayers][seat];
   }
 
+  // Bigger opponent cards when there's room: wide screens and fewer players.
+  updateOppScale() {
+    const n = this.game.numPlayers || 4;
+    const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+    let k = 0.85;
+    if (aspect >= 1.7) k += 0.05;          // wide (16:9 and wider)
+    else if (aspect < 1.45) k -= 0.08;     // squarer screens
+    if (n <= 3) k += 0.06;                 // only side or top seats
+    else if (n === 5) k -= 0.03;           // five seats share the space
+    OPP_CARD_SCALE = Math.max(0.72, Math.min(0.97, k));
+    document.documentElement.style.setProperty("--opp-scale", OPP_CARD_SCALE.toFixed(3));
+  }
+
   buildSeats() {
+    this.updateOppScale();
     const n = this.game.numPlayers;
     this.dom.seats.innerHTML = "";
     this.dom.trickArea.innerHTML = "";
@@ -187,7 +210,7 @@ class GameController {
         infoEl = document.createElement("div");
         infoEl.className = "seat-info";
         infoEl.innerHTML =
-          `<div class="name-label"></div><div class="seat-stats"></div><div class="seat-tokens"></div>`;
+          `<div class="name-label"></div><div class="seat-stats"></div>`;
 
         seatEl.appendChild(handEl);
         seatEl.appendChild(infoEl);
@@ -203,7 +226,6 @@ class GameController {
         info: infoEl,
         name: infoEl.querySelector(".name-label"),
         stats: infoEl.querySelector(".seat-stats"),
-        tokens: infoEl.querySelector(".seat-tokens"),
         slot
       });
     }
@@ -361,17 +383,6 @@ class GameController {
         }
       }
       els.stats.innerHTML = html;
-
-      els.tokens.innerHTML = "";
-      if (inRound) {
-        for (let i = 0; i < won; i++) {
-          const img = document.createElement("img");
-          img.src = "trick.png";
-          img.alt = "";
-          img.className = "token";
-          els.tokens.appendChild(img);
-        }
-      }
     }
   }
 
@@ -397,6 +408,13 @@ class GameController {
 
     if (g.phase === "idle") return;
 
+    // The deck only appears in the middle of the table while dealing
+    // (and, with a turned-up trump card, until that card is turned).
+    deckSlot.classList.toggle("dealing", !!(this.dealVisible || this.trumpHidden));
+    if (!this.dealVisible && !this.trumpHidden) {
+      deckSlot.innerHTML = "";
+    }
+
     // Stock pile: everything not dealt (shrinks visibly while dealing).
     let stock = g.stockCount;
     if (this.dealVisible) {
@@ -417,6 +435,7 @@ class GameController {
     else if (stock > 0) layers = 1;
 
     const scale = layoutMetrics.scale;
+    if (!this.dealVisible && !this.trumpHidden) layers = 0;
     for (let i = 0; i < layers; i++) {
       const backCard = this.cardView.createCardElement(null, { back: true });
       backCard.style.position = "absolute";
@@ -702,6 +721,7 @@ class GameController {
     this.hideRoundSummary();
 
     this.pickOpponents();
+    if (this.playersChoice === "random") this.numPlayers = 2 + Math.floor(Math.random() * 4);
     const n = this.numPlayers;
     let firstDealer;
     if (this.firstDealMode === "player") firstDealer = 0;
@@ -710,7 +730,8 @@ class GameController {
 
     this.game.startNewGame({
       numPlayers: n,
-      maxCards: this.gameLength === "full" ? 10 : 5,
+      maxCards: this.maxCards,
+      pattern: this.pattern,
       firstDealer,
       bidding: this.bidding,
       trumpMode: this.trumpMode,
@@ -1115,10 +1136,12 @@ class GameController {
     }
     const text = typeof msg === "string" ? msg : msg.t;
     const spot = typeof msg === "string" ? null : msg.spot;
-    el.querySelector(".coach-text").innerHTML = text;
+    // Suit symbols in the deck's suit colours.
+    const suitCls = { "♠": "s-spade", "♥": "s-heart", "♦": "s-diamond", "♣": "s-club" };
+    el.querySelector(".coach-text").innerHTML =
+      text.replace(/[♠♥♦♣]/g, ch => `<span class="coach-suit ${suitCls[ch]}">${ch}</span>`);
 
-    document.querySelectorAll(".tut-spot").forEach(n => n.classList.remove("tut-spot"));
-    if (spot) document.querySelectorAll(spot).forEach(n => n.classList.add("tut-spot"));
+    this.placeSpot(spot);
 
     const next = el.querySelector(".coach-next");
     next.style.display = onNext ? "" : "none";
@@ -1128,10 +1151,43 @@ class GameController {
     if (onNext) setTimeout(() => next.focus(), 30);
   }
 
+  // Highlight box drawn around what's actually visible: for a hand, the union
+  // of its cards (the hand container itself spans the full width).
+  placeSpot(selector) {
+    let box = document.getElementById("tut-spot");
+    if (!selector) {
+      if (box) box.style.display = "none";
+      window.removeEventListener("resize", this._spotResize || (() => {}));
+      return;
+    }
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "tut-spot";
+      document.body.appendChild(box);
+    }
+    const measure = () => {
+      const els = [...document.querySelectorAll(selector)];
+      const rects = [];
+      els.forEach(el => {
+        const cards = el.querySelectorAll(".card");
+        (cards.length ? [...cards] : [el]).forEach(c => rects.push(c.getBoundingClientRect()));
+      });
+      if (!rects.length) { box.style.display = "none"; return; }
+      const pad = 8;
+      const l = Math.min(...rects.map(r => r.left)) - pad, t = Math.min(...rects.map(r => r.top)) - pad;
+      const r = Math.max(...rects.map(r => r.right)) + pad, b = Math.max(...rects.map(r => r.bottom)) + pad;
+      Object.assign(box.style, { display: "block", left: l + "px", top: t + "px", width: (r - l) + "px", height: (b - t) + "px" });
+    };
+    measure();
+    window.removeEventListener("resize", this._spotResize || (() => {}));
+    this._spotResize = measure;
+    window.addEventListener("resize", measure);
+  }
+
   hideCoach() {
     const el = document.getElementById("coach");
     if (el) el.style.display = "none";
-    document.querySelectorAll(".tut-spot").forEach(n => n.classList.remove("tut-spot"));
+    this.placeSpot(null);
   }
 
   async finishTutorial() {
@@ -1164,7 +1220,7 @@ class GameController {
   showCaptureToast({ seat, bonus }) {
     const t = document.createElement("div");
     t.className = "capture-toast";
-    t.textContent = `🌙 ${this.seatName(seat)}'s Moon captures the Sun!  +${bonus}`;
+    t.textContent = `🌙 Eclipse! ${this.seatName(seat)}'s Moon eclipses the Sun  +${bonus}`;
     document.body.appendChild(t);
     this.playSfx(this.sfx.cardShove2);
     setTimeout(() => t.remove(), 1900);
@@ -1188,6 +1244,17 @@ class GameController {
       : `Your bid · ${cardsTxt} · ${trumpTxt}`;
 
     this.dom.bidButtons.innerHTML = "";
+    // Even rows: at most 7 per row, spread so rows differ by at most one.
+    const nBtns = g.handSize + 1;
+    const rows = Math.ceil(nBtns / 7);
+    const perRow = Math.ceil(nBtns / rows);
+    const rowEls = [];
+    for (let r = 0; r < rows; r++) {
+      const row = document.createElement("div");
+      row.className = "bid-row";
+      this.dom.bidButtons.appendChild(row);
+      rowEls.push(row);
+    }
     for (let b = 0; b <= g.handSize; b++) {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -1202,12 +1269,12 @@ class GameController {
       } else {
         btn.addEventListener("click", () => this.onPlayerBid(b));
       }
-      this.dom.bidButtons.appendChild(btn);
+      rowEls[Math.floor(b / perRow)].appendChild(btn);
     }
 
     let note;
     if (g.simultaneous) {
-      note = "Bids are revealed together. Tip: number keys bid.";
+      note = "Bids are revealed together.";
     } else {
       const made = g.bids.filter(b => b != null).length;
       note = made
@@ -1301,7 +1368,7 @@ class GameController {
         `<td>${this.escape(this.seatName(seat))}</td>` +
         `<td>${r.bids[seat]}</td><td>${r.won[seat]}</td>` +
         `<td>+${r.points[seat]}${exact ? " ✓" : ""}` +
-        `${r.bonus && r.bonus[seat] ? ` <span class="bonus-tag" title="Moon captured the Sun">🌙+${r.bonus[seat]}</span>` : ""}</td>` +
+        `${r.bonus && r.bonus[seat] ? ` <span class="bonus-tag" title="Eclipse: the Moon eclipsed the Sun">🌙+${r.bonus[seat]}</span>` : ""}</td>` +
         `<td>${r.totals[seat]}</td></tr>`;
     }
     html += "</tbody>";
@@ -1430,8 +1497,8 @@ class GameController {
     const playerRadios = document.querySelectorAll('input[name="players"]');
     const firstDealRadios = document.querySelectorAll('input[name="firstdeal"]');
     const suitRadios = document.querySelectorAll('input[name="suitcolors"]');
-    const quickBtn = document.getElementById("btn-quick");
-    const matchBtn = document.getElementById("btn-match");
+    const playBtn = document.getElementById("btn-play");
+    const patternRadios = document.querySelectorAll('input[name="pattern"]');
     const instrBtn = document.getElementById("btn-instructions");
     const instrPanel = document.getElementById("instructions-panel");
     const instrDone = document.getElementById("btn-instructions-done");
@@ -1442,12 +1509,47 @@ class GameController {
 
     if (nameInput) nameInput.value = this.playerName || "Player";
     opponentRadios.forEach(r => { r.checked = (r.value === this.difficulty); });
-    playerRadios.forEach(r => { r.checked = (parseInt(r.value, 10) === this.numPlayers); });
+    playerRadios.forEach(r => { r.checked = (r.value === this.playersChoice); });
+    patternRadios.forEach(r => { r.checked = (r.value === this.pattern); });
     firstDealRadios.forEach(r => { r.checked = (r.value === this.firstDealMode); });
     suitRadios.forEach(r => { r.checked = (r.value === this.suitColors); });
     const biddingRadios = document.querySelectorAll('input[name="bidding"]');
     const trumpRadios = document.querySelectorAll('input[name="trumpmode"]');
     const deckRadios = document.querySelectorAll('input[name="deck"]');
+    // Table surface (applied immediately, remembered).
+    const TABLES = ["green", "red", "blue", "walnut", "mahogany", "tavern", "marble"];
+    const applyTable = (t) => {
+      TABLES.forEach(x => document.body.classList.remove("table-" + x));
+      document.body.classList.add("table-" + t);
+    };
+    let table = "green";
+    try { const t = localStorage.getItem("oh_table"); if (TABLES.includes(t)) table = t; } catch (e) { /* ignore */ }
+    applyTable(table);
+    document.querySelectorAll('input[name="table"]').forEach(r => {
+      r.checked = (r.value === table);
+      r.addEventListener("change", () => {
+        applyTable(r.value);
+        try { localStorage.setItem("oh_table", r.value); } catch (e) { /* ignore */ }
+      });
+    });
+
+    // Card back (applied immediately, remembered).
+    const BACKS = ["bugvictim", "hellfire", "classic-blue", "classic-red"];
+    const applyBack = (k) => {
+      BACKS.forEach(x => document.body.classList.remove("back-" + x));
+      document.body.classList.add("back-" + k);
+    };
+    let back = "bugvictim";
+    try { const k = localStorage.getItem("oh_cardback"); if (BACKS.includes(k)) back = k; } catch (e) { /* ignore */ }
+    applyBack(back);
+    document.querySelectorAll('input[name="cardback"]').forEach(r => {
+      r.checked = (r.value === back);
+      r.addEventListener("change", () => {
+        applyBack(r.value);
+        try { localStorage.setItem("oh_cardback", r.value); } catch (e) { /* ignore */ }
+      });
+    });
+
     const speedRadios = document.querySelectorAll('input[name="speed"]');
     speedRadios.forEach(r => { r.checked = (r.value === (GAME_SPEED < 1 ? "fast" : "normal")); });
     speedRadios.forEach(r => r.addEventListener("change", () => {
@@ -1463,7 +1565,12 @@ class GameController {
       trumpRadios.forEach(r => { if (r.checked) this.trumpMode = r.value; });
       deckRadios.forEach(r => { if (r.checked) this.extended = (r.value === "extended"); });
       opponentRadios.forEach(r => { if (r.checked) this.difficulty = r.value; });
-      playerRadios.forEach(r => { if (r.checked) this.numPlayers = parseInt(r.value, 10); });
+      playerRadios.forEach(r => {
+        if (!r.checked) return;
+        this.playersChoice = r.value;
+        if (r.value !== "random") this.numPlayers = parseInt(r.value, 10);
+      });
+      patternRadios.forEach(r => { if (r.checked) this.pattern = r.value; });
       firstDealRadios.forEach(r => { if (r.checked) this.firstDealMode = r.value; });
       this.aiEngine.setDifficulty(this.difficulty);
     };
@@ -1485,6 +1592,59 @@ class GameController {
     chooseSuitColors();
     suitRadios.forEach(r => r.addEventListener("change", chooseSuitColors));
 
+    // ---- tabs ----
+    const tabBtns = overlay.querySelectorAll(".tab-btn");
+    const showTab = (name) => {
+      tabBtns.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+      overlay.querySelectorAll(".tab-pane").forEach(p => p.classList.toggle("active", p.dataset.pane === name));
+    };
+    tabBtns.forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+    // ---- hand sizes ----
+    const maxEl = document.getElementById("max-cards-value");
+    const summaryEl = document.getElementById("round-summary-line");
+    const playSub = document.getElementById("btn-play-sub");
+    const updateSummary = () => {
+      readSettings();
+      maxEl.textContent = String(this.maxCards);
+      const sched = buildRoundSchedule(this.maxCards, this.pattern);
+      const path = sched.length > 2
+        ? { downup: `${this.maxCards} → 1 → ${this.maxCards}`, updown: `1 → ${this.maxCards} → 1`,
+            down: `${this.maxCards} → 1`, up: `1 → ${this.maxCards}` }[this.pattern]
+        : sched.join(" → ");
+      const hands = `${sched.length} hand${sched.length === 1 ? "" : "s"}`;
+      const who = this.playersChoice === "random" ? "2–5 players" : `${this.numPlayers} players`;
+      summaryEl.textContent = `${path} cards · ${hands}`;
+      if (playSub) playSub.textContent = `${who} · ${hands}`;
+    };
+    overlay.querySelectorAll(".step-btn").forEach(b => b.addEventListener("click", () => {
+      this.maxCards = Math.max(1, Math.min(10, this.maxCards + parseInt(b.dataset.step, 10)));
+      updateSummary();
+    }));
+    [...patternRadios, ...playerRadios].forEach(r => r.addEventListener("change", updateSummary));
+
+    // ---- presets ----
+    const setRadio = (name, value) => {
+      const r = overlay.querySelector(`input[name="${name}"][value="${value}"]`);
+      if (r) r.checked = true;
+    };
+    const PRESETS = {
+      quick:    { players: "4", maxCards: 5,  pattern: "downup", bidding: "simultaneous", trumpmode: "coin", deck: "standard" },
+      classic:  { players: "4", maxCards: 10, pattern: "downup", bidding: "sequential",   trumpmode: "card", deck: "standard" },
+      house:    { maxCards: 7,  pattern: "downup", bidding: "simultaneous", trumpmode: "coin", deck: "standard" },
+      extended: { maxCards: 7,  pattern: "downup", bidding: "simultaneous", trumpmode: "coin", deck: "extended" }
+    };
+    overlay.querySelectorAll(".preset-btn").forEach(b => b.addEventListener("click", () => {
+      const p = PRESETS[b.dataset.preset];
+      if (p.players) setRadio("players", p.players);
+      ["pattern", "bidding", "trumpmode", "deck"].forEach(k => setRadio(k, p[k]));
+      this.maxCards = p.maxCards;
+      overlay.querySelectorAll(".preset-btn").forEach(x => x.classList.toggle("active", x === b));
+      updateSummary();
+      playerRadios.forEach(r => { if (r.checked) r.dispatchEvent(new Event("change")); });
+    }));
+    updateSummary();
+
     // Preview the seat layout behind the overlay when the player count changes.
     playerRadios.forEach(r => r.addEventListener("change", () => {
       readSettings();
@@ -1493,16 +1653,17 @@ class GameController {
       this.render();
     }));
 
-    const startHandler = (length) => {
+    const startHandler = () => {
       const rawName = nameInput && nameInput.value ? nameInput.value.trim() : "";
       this.playerName = rawName || "Player";
       readSettings();
-      this.gameLength = length;
 
       try {
         localStorage.setItem("oh_playerName", this.playerName);
         localStorage.setItem("oh_difficulty", this.difficulty);
-        localStorage.setItem("oh_numPlayers", String(this.numPlayers));
+        localStorage.setItem("oh_players", this.playersChoice);
+        localStorage.setItem("oh_maxCards", String(this.maxCards));
+        localStorage.setItem("oh_pattern", this.pattern);
         localStorage.setItem("oh_firstDeal", this.firstDealMode);
         localStorage.setItem("oh_suitcolors", this.suitColors);
         localStorage.setItem("oh_bidding", this.bidding);
@@ -1518,7 +1679,7 @@ class GameController {
       this.startGame();
     };
 
-    if (quickBtn) quickBtn.addEventListener("click", () => startHandler("short"));
+    if (playBtn) playBtn.addEventListener("click", () => startHandler());
 
     // Splash: BugVictim logo, any click or key goes to the start panel.
     const splash = document.getElementById("splash");
@@ -1555,7 +1716,7 @@ class GameController {
       this.ensureAudioContext();
       this.startTutorial();
     });
-    if (matchBtn) matchBtn.addEventListener("click", () => startHandler("full"));
+
 
     const closeInstructions = () => {
       const startPanelEl = document.getElementById("start-panel");
@@ -1810,5 +1971,6 @@ const controller = new GameController();
 
 window.addEventListener("resize", () => {
   updateScale();
+  controller.updateOppScale();
   controller.render();
 });
