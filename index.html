@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oh Hell!</title>
-  <link rel="stylesheet" href="./gw.css?v=49">
-  <link rel="stylesheet" href="./oh.css?v=49">
+  <title>Oh Hell! Extended</title>
+  <link rel="stylesheet" href="./gw.css?v=55">
+  <link rel="stylesheet" href="./oh.css?v=55">
 </head>
 <body>
   <div id="game-area">
@@ -71,22 +71,37 @@
     </div>
   </div>
 
+<!-- SPLASH -->
+<div id="splash" role="button" tabindex="0" aria-label="Click to start">
+  <img src="logo-ohhell.webp?v=55" alt="Oh Hell! Extended" class="splash-title">
+  <div class="logo-subtitle splash-subtitle">Oh Hell! with a trick up its sleeve</div>
+  <img src="bugvictim.svg" alt="BugVictim" class="splash-logo">
+  <div class="splash-start">Click to start</div>
+</div>
+
+<!-- FIRST-TIME TUTORIAL OFFER -->
+<div id="tut-offer" style="display:none;">
+  <div class="tut-offer-panel">
+    <div class="tut-offer-title">New to Oh Hell?</div>
+    <div class="tut-offer-text">Learn the rules in a quick 4-hand tutorial.</div>
+    <div class="tut-offer-buttons">
+      <button type="button" id="btn-offer-skip">No thanks</button>
+      <button type="button" id="btn-offer-tutorial">Play the tutorial</button>
+    </div>
+  </div>
+</div>
+
 <!-- START OVERLAY -->
 <div id="start-overlay">
   <div id="start-panel">
 
     <div class="start-panel-header">
       <div class="start-header">
-        <div class="start-title-text">Oh Hell!</div>
+        <img src="logo-ohhell.webp?v=55" alt="Oh Hell! Extended" class="start-title-img">
+        <div class="logo-subtitle">Oh Hell! with a trick up its sleeve</div>
       </div>
 
-      <div class="start-logo-row">
-        <img src="logo.svg" alt="BugVictim logo" class="start-logo">
-        <div class="start-copyright-group">
-          <div class="start-copyright">© BugVictim 2025</div>
-          <div class="start-artwork-credit">with artwork by Pucky</div>
-        </div>
-      </div>
+      <div class="start-logo-row start-credit-line">© BugVictim 2026</div>
     </div>
 
     <div class="start-panel-content">
@@ -431,9 +446,9 @@
   </div>
 </div>
 
-  <script src="./oh-core.js?v=49"></script>
-  <script src="./oh-tutorial.js?v=49"></script>
-  <script src="./oh-ai.js?v=49"></script>
-  <script src="./oh-app.js?v=49"></script>
+  <script src="./oh-core.js?v=55"></script>
+  <script src="./oh-tutorial.js?v=55"></script>
+  <script src="./oh-ai.js?v=55"></script>
+  <script src="./oh-app.js?v=55"></script>
 </body>
 </html>

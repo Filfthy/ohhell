@@ -992,6 +992,26 @@ class GameController {
   // ====================== Tutorial =====================
   // =====================================================
 
+  // First-time players are offered the tutorial once.
+  offerTutorialIfNew() {
+    let seen = false;
+    try { seen = localStorage.getItem("oh_tutorialSeen") === "1"; } catch (e) { /* ignore */ }
+    const offer = document.getElementById("tut-offer");
+    if (seen || !offer) return;
+    offer.style.display = "flex";
+    const close = () => { offer.style.display = "none"; this.markTutorialSeen(); };
+    document.getElementById("btn-offer-skip").onclick = close;
+    document.getElementById("btn-offer-tutorial").onclick = () => {
+      close();
+      document.getElementById("btn-tutorial").click();
+    };
+    setTimeout(() => document.getElementById("btn-offer-tutorial").focus(), 50);
+  }
+
+  markTutorialSeen() {
+    try { localStorage.setItem("oh_tutorialSeen", "1"); } catch (e) { /* ignore */ }
+  }
+
   startTutorial() {
     const T = TUTORIAL;
     this.epoch++;
@@ -1427,8 +1447,36 @@ class GameController {
     };
 
     if (quickBtn) quickBtn.addEventListener("click", () => startHandler("short"));
+
+    // Splash: BugVictim logo, any click or key goes to the start panel.
+    const splash = document.getElementById("splash");
+    if (splash) {
+      // The click is the user gesture browsers require for fullscreen and audio.
+      const dismiss = () => {
+        if (splash.classList.contains("gone")) return;
+        splash.classList.add("gone");
+        try {
+          const root = document.documentElement;
+          const fs = root.requestFullscreen || root.webkitRequestFullscreen;
+          const p = fs && !this.getFullscreenElement() ? fs.call(root) : null;
+          if (p && typeof p.catch === "function") p.catch(() => {});
+        } catch (e) { /* ignore */ }
+        this.setSoundMuted(false);
+        this.ensureAudioContext();
+        setTimeout(() => {
+          splash.remove();
+          this.offerTutorialIfNew();
+        }, 600);
+      };
+      splash.addEventListener("click", dismiss);
+      splash.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); dismiss(); }
+      });
+      setTimeout(() => splash.focus(), 50);
+    }
     const tutBtn = document.getElementById("btn-tutorial");
     if (tutBtn) tutBtn.addEventListener("click", () => {
+      this.markTutorialSeen();
       overlay.style.display = "none";
       this.overlayActive = false;
       document.body.classList.remove("overlay-active");

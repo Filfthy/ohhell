@@ -824,3 +824,130 @@ body[data-players="5"] .seat-right { top: 62%; }
 }
 #bid-panel { top: 55%; gap: calc(6px * var(--card-scale)); padding: calc(9px * var(--card-scale)) calc(14px * var(--card-scale)); }
 #bid-panel { max-width: min(92vw, calc(4.9 * var(--small-card-width))); }
+
+/* Start screen logo */
+.start-header { margin-bottom: 0.3em; }
+.start-title-img {
+  display: block;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 26em;
+  max-height: 11em;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.55));
+}
+
+/* ===== Splash (BugVictim) ===== */
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4vh;
+  cursor: pointer;
+  outline: none;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(40, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.92) 70%),
+    #050302;
+  transition: opacity 0.55s ease;
+}
+#splash.gone { opacity: 0; pointer-events: none; }
+
+#splash .splash-logo {
+  width: min(52vh, 70vw);
+  height: auto;
+  filter: drop-shadow(0 0 28px rgba(200, 0, 0, 0.35));
+  animation: splashIn 0.9s ease-out both;
+}
+
+#splash .splash-start {
+  color: #f2d7c9;
+  font-size: clamp(16px, 2.6vh, 28px);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  animation: splashPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes splashIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes splashPulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+
+/* Start panel credit: plain text, no logo */
+.start-logo-row.start-credit-line {
+  display: block;
+  text-align: center;
+  color: #1EC000;
+  letter-spacing: 0.06em;
+  font-size: 0.95em;
+  margin: 0.2em 0 0.8em;
+}
+
+/* ===== First-time tutorial offer ===== */
+#tut-offer {
+  position: fixed;
+  inset: 0;
+  z-index: 15000;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+#tut-offer .tut-offer-panel {
+  background: rgba(3, 32, 18, 0.97);
+  border: 2px solid #ffd54a;
+  border-radius: 16px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
+  padding: 1.4em 1.8em 1.2em;
+  text-align: center;
+  color: #fdf6e3;
+  font-size: clamp(15px, 2.2vh, 22px);
+  max-width: min(90vw, 28em);
+}
+#tut-offer .tut-offer-title { font-size: 1.5em; font-weight: 800; color: #ffd54a; margin-bottom: 0.3em; }
+#tut-offer .tut-offer-text { opacity: 0.9; margin-bottom: 1.1em; }
+#tut-offer .tut-offer-buttons { display: flex; gap: 0.8em; justify-content: center; }
+#tut-offer button { margin: 0; font-size: 1em; padding: 0.55em 1.2em; border-radius: 8px; font-weight: 700; }
+#btn-offer-tutorial { background: #1EC000; color: #021408; }
+#btn-offer-tutorial:hover { background: #23e000; }
+#btn-offer-skip { background: transparent; border: 1px solid rgba(253, 246, 227, 0.4); color: #fdf6e3; }
+
+/* Splash: main logo large, BugVictim smaller below */
+#splash { gap: 3vh; }
+#splash .splash-title {
+  width: min(110vh, 82vw);
+  height: auto;
+  filter: drop-shadow(0 10px 30px rgba(200, 0, 0, 0.35));
+  animation: splashIn 0.9s ease-out both;
+}
+#splash .splash-logo {
+  width: min(16vh, 22vw);
+  filter: drop-shadow(0 0 14px rgba(200, 0, 0, 0.3));
+  animation: splashIn 0.9s 0.25s ease-out both;
+}
+
+/* Tagline under the main logo */
+.logo-subtitle {
+  text-align: center;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 700;
+  color: #ffcf6b;
+  letter-spacing: 0.03em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  font-size: 1.1em;
+  margin-top: 0.15em;
+}
+#splash .splash-subtitle {
+  font-size: clamp(18px, 3.4vh, 38px);
+  margin-top: -2.2vh;
+  animation: splashIn 0.9s 0.15s ease-out both;
+}
+#splash .splash-title { width: auto; max-width: 82vw; max-height: 58vh; }
+#splash .splash-logo { width: auto; height: min(13vh, 22vw); }
