@@ -498,6 +498,8 @@ body.suitcolors-rbbo {
       translateX(var(--fan-x))
       translateY(var(--fan-y))
       rotate(var(--fan-angle))
+      translateY(var(--sel-lift, 0px))
+      scale(var(--hand-scale, 1))
       scale(var(--hover-scale));
   }
 
