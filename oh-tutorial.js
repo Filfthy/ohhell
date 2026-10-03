@@ -116,7 +116,7 @@ const TUTORIAL = {
       ],
       coach: {
         start: [
-          "The <b>Extended deck is optional</b>: choose <b>Standard</b> or <b>Extended</b> on the start screen.",
+          "The <b>Extended deck is optional</b>: choose <b>Standard 52</b> or <b>Extended</b> on the start screen.",
           "It adds 8 special cards: the <b>Sun</b>, the <b>Moon</b>, 4 <b>Dragons</b> and 2 <b>Jokers</b>. " +
           "You can play a special card <b>at any time</b>, even if you could follow suit.",
           "<b>Who wins:</b> the Sun beats everything, except the Moon, which <b>eclipses the Sun for +20</b>. " +
@@ -185,6 +185,6 @@ const TUTORIAL = {
 
   outro: [
     "You're ready! A real game deals more cards and the hand sizes go down, then back up. " +
-    "Choose your players, <b>Standard</b> or <b>Extended</b> deck, and other options on the start screen. Have fun!"
+    "Choose your players, <b>Standard 52</b> or <b>Extended</b> deck, and other options on the start screen. Have fun!"
   ]
 };
