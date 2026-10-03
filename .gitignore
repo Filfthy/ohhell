@@ -16,3 +16,6 @@ Thumbs.db
 # Build outputs
 dist/
 build/
+
+# Local deploy artifacts
+*.zip

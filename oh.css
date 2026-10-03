@@ -1,0 +1,826 @@
+/* oh.css — Oh Hell table layout (loaded after gw.css, which supplies cards,
+   baize, start overlay and shared styling). */
+
+/* ===== Start screen title ===== */
+
+.start-title-text {
+  font-size: 4.4em;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  line-height: 1.05;
+  color: #1EC000;
+  text-shadow:
+    1px 0 0 #fff, -1px 0 0 #fff, 0 1px 0 #fff, 0 -1px 0 #fff,
+    0 6px 14px rgba(0, 0, 0, 0.6);
+}
+
+.players-block { margin-top: 0.2em; margin-bottom: 0.6em; }
+
+.start-buttons-main button small {
+  font-weight: 500;
+  opacity: 0.8;
+  font-size: 0.78em;
+}
+
+/* ===== Opponent seats ===== */
+
+.seat {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(3px * var(--card-scale));
+  z-index: 50;
+}
+
+.seat-top      { top: 1.5vh; left: 50%; transform: translateX(-50%); }
+.seat-topleft  { top: 1.5vh; left: 31%; transform: translateX(-50%); }
+.seat-topright { top: 1.5vh; left: 69%; transform: translateX(-50%); }
+/* Side seats sit a little low so they clear the scoreboard (top-right). */
+.seat-left     { top: 57%;   left: 2.5vw;  transform: translateY(-50%); }
+.seat-right    { top: 57%;   right: 2.5vw; transform: translateY(-50%); }
+
+.seat-hand {
+  position: relative;
+  width: calc(var(--small-card-width) * 1.6);
+  height: calc(var(--small-card-height) * 0.72 + 8px * var(--card-scale));
+  /* turned to face the middle of the table (set per seat in oh-app.js) */
+  transform: rotate(var(--seat-rot, 0deg));
+}
+
+/* Rotated hands need extra room so they don't overlap their name labels. */
+.seat-left .seat-hand,
+.seat-right .seat-hand    { margin: calc(16px * var(--card-scale)) 0; }
+.seat-topleft .seat-hand,
+.seat-topright .seat-hand { margin: calc(18px * var(--card-scale)) calc(10px * var(--card-scale)) calc(22px * var(--card-scale)); }
+
+.seat-hand .card {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  --fan-x: 0px;
+  --fan-y: 0px;
+  --fan-angle: 0deg;
+  transform:
+    translateX(-50%)
+    translateX(var(--fan-x))
+    translateY(var(--fan-y))
+    rotate(var(--fan-angle))
+    scale(0.72);
+  transform-origin: 50% 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
+}
+
+/* ===== Seat labels (name / bid / tokens) ===== */
+
+.seat-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(3px * var(--card-scale));
+  pointer-events: none;
+}
+
+.seat-info .name-label {
+  position: static;
+  display: inline-block;
+  font-size: calc(18px * var(--card-scale));
+  line-height: 1.15;
+  font-weight: 700;
+  font-style: italic;
+  color: lab(19.34% 17.6 -42.6);
+  -webkit-text-stroke: 0.02em #ffffff;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.05em 0.7em 0.1em;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.seat-info .name-label.turn-glow {
+  animation: turnPulse 0.9s ease-in-out infinite;
+  will-change: text-shadow;
+}
+
+.seat-stats {
+  font-size: calc(12.5px * var(--card-scale));
+  color: #fdf6e3;
+  white-space: nowrap;
+  min-height: 1.3em;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.seat-stats .stat,
+.seat-stats .stat-muted {
+  background: rgba(0, 0, 0, 0.38);
+  border-radius: 999px;
+  padding: 0.1em 0.65em;
+}
+
+.seat-stats .stat-muted { opacity: 0.7; font-style: italic; }
+.seat-stats .stat.on-target { color: #8dff7a; box-shadow: inset 0 0 0 1px rgba(141, 255, 122, 0.55); }
+.seat-stats .stat.over      { color: #ff8a7a; box-shadow: inset 0 0 0 1px rgba(255, 138, 122, 0.55); }
+
+.dealer-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45em;
+  height: 1.45em;
+  border-radius: 50%;
+  background: #fdf6e3;
+  color: #062f1a;
+  font-weight: 900;
+  font-style: normal;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.seat-stats.just-bid { animation: bidPop 0.45s ease-out; }
+
+@keyframes bidPop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.seat-tokens {
+  display: flex;
+  gap: calc(1px * var(--card-scale));
+  min-height: calc(14px * var(--card-scale));
+}
+
+.seat-tokens .token {
+  width: calc(14px * var(--card-scale));
+  height: calc(14px * var(--card-scale));
+  object-fit: contain;
+}
+
+/* ===== Human seat ===== */
+
+#player-hand {
+  bottom: calc(1.5vh + 26px * var(--card-scale));
+}
+
+#player-seat-info {
+  position: absolute;
+  left: 50%;
+  bottom: 1.2vh;
+  transform: translateX(-50%);
+  flex-direction: row;
+  gap: calc(8px * var(--card-scale));
+  z-index: 300;
+}
+
+/* Cards you can't play are dimmed on your turn. */
+body.player-turn #player-hand .card:not(.legal-move) {
+  filter: brightness(0.6) saturate(0.7);
+  cursor: not-allowed;
+}
+
+body.player-turn #player-hand .card.legal-move {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+/* ===== Centre trick ===== */
+
+#trick-area {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  width: 0;
+  height: 0;
+}
+
+.trick-slot {
+  position: absolute;
+  width: var(--small-card-width);
+  height: var(--small-card-height);
+}
+
+.trick-slot > .card {
+  position: absolute;
+  inset: 0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== Deck + trump (top-left) ===== */
+
+#deck-area {
+  position: absolute;
+  top: calc(1.5vh + 6px * var(--card-scale));
+  left: 2vw;
+  margin: 0;
+  display: flex;
+  gap: var(--table-gap);
+  z-index: 40;
+}
+
+#trump-slot {
+  min-width: calc(64px * var(--card-scale));
+  min-height: calc(96px * var(--card-scale));
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#trump-slot::before {
+  content: "";
+  position: absolute;
+  inset: calc(-6px * var(--card-scale));
+  border-radius: calc(10px * var(--card-scale));
+  border: calc(1px * var(--card-scale)) solid rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+#trump-slot > .card {
+  position: relative;
+  z-index: 1;
+}
+
+#deck-area .deck-col > div:first-child {
+  top: calc(100% + 0.08 * var(--small-card-height));
+}
+
+body[data-phase] #deck-area { display: flex; }
+
+/* ===== Scoreboard (top-right) ===== */
+
+#scoreboard {
+  position: absolute;
+  top: calc(12px + 30px * var(--card-scale));
+  right: 8px;
+  min-width: calc(120px * var(--card-scale));
+  padding: calc(6px * var(--card-scale)) calc(10px * var(--card-scale));
+  background: rgba(3, 32, 18, 0.72);
+  border: 1px solid rgba(30, 192, 0, 0.55);
+  border-radius: 8px;
+  font-size: calc(12.5px * var(--card-scale));
+  color: #fdf6e3;
+  z-index: 60;
+}
+
+#scoreboard #round-label {
+  position: static;
+  transform: none;
+  font-size: 1em;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-bottom: 0.3em;
+  white-space: nowrap;
+}
+
+#scoreboard #round-label:empty { display: none; }
+
+#score-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#score-table td {
+  padding: 0.12em 0;
+  white-space: nowrap;
+}
+
+#score-table td:last-child {
+  text-align: right;
+  padding-left: 1em;
+  font-weight: 700;
+}
+
+#score-table tr.me td:first-child { font-style: italic; }
+#score-table tr.leader td { color: #8dff7a; }
+
+#score-table tfoot td {
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  padding-top: 0.3em;
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+#score-table .over  { color: #ff8a7a; }
+#score-table .under { color: #8ecbff; }
+
+/* ===== Bid panel (centre of table) ===== */
+
+#bid-panel {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  z-index: 9000;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8px * var(--card-scale));
+  max-width: 92vw;
+  padding: calc(12px * var(--card-scale)) calc(18px * var(--card-scale));
+  background: rgba(3, 32, 18, 0.94);
+  border: 2px solid #1EC000;
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.75);
+  font-size: calc(15px * var(--card-scale));
+  color: #fdf6e3;
+}
+
+#bid-title { font-weight: 700; }
+
+#bid-title .suit-inline {
+  font-size: 1.3em;
+  -webkit-text-stroke: 0.6px rgba(255, 255, 255, 0.95);
+}
+
+#bid-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(6px * var(--card-scale));
+}
+
+#bid-buttons .bid-btn {
+  min-width: calc(38px * var(--card-scale));
+  margin: 0;
+  padding: calc(7px * var(--card-scale)) calc(10px * var(--card-scale));
+  font-size: calc(17px * var(--card-scale));
+  font-weight: 800;
+  background: #1EC000;
+  color: #021408;
+  border-radius: 8px;
+}
+
+#bid-buttons .bid-btn:hover:not(:disabled) { background: #23e000; }
+
+#bid-buttons .bid-btn:disabled {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: line-through;
+  opacity: 1;
+}
+
+#bid-note {
+  font-size: 0.85em;
+  opacity: 0.8;
+  text-align: center;
+}
+
+/* ===== Round summary (uses #end-overlay styles from gw.css) ===== */
+
+#end-panel .end-table th:not(:first-child),
+#end-panel .end-table td:not(:first-child) {
+  text-align: center;
+}
+
+#end-panel .end-table tr.exact td   { color: #8dff7a; }
+#end-panel .end-table tr.missed td  { color: #fdf6e3; }
+#end-panel .end-table tr.me td:first-child { font-style: italic; }
+
+#btn-end-next { margin: 0; }
+
+/* ===== Trump coin (five-sided: four suits + blank) ===== */
+
+.trump-coin {
+  position: relative;
+  z-index: 1;
+  width: calc(var(--small-card-width) * 0.95);
+  height: calc(var(--small-card-width) * 0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 35% 30%, #fff9e6 0%, #f1dc9a 45%, #c9a64a 100%);
+  box-shadow:
+    inset 0 0 0 calc(3px * var(--card-scale)) #b48a2c,
+    inset 0 0 0 calc(5px * var(--card-scale)) #f6e7b8,
+    0 calc(4px * var(--card-scale)) calc(8px * var(--card-scale)) rgba(0, 0, 0, 0.55);
+}
+
+.trump-coin .coin-suit {
+  font-size: calc(34px * var(--card-scale));
+  line-height: 1;
+  font-weight: 900;
+  -webkit-text-stroke: 0.5px rgba(255, 255, 255, 0.8);
+}
+
+.trump-coin .coin-blank {
+  font-size: calc(11px * var(--card-scale));
+  font-weight: 800;
+  line-height: 1.05;
+  text-align: center;
+  color: #6b4f12;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trump-coin.spinning { animation: coinSpin 0.18s linear infinite; }
+.trump-coin.landed   { animation: coinLand 0.45s ease-out; }
+
+@keyframes coinSpin {
+  0%   { transform: scaleX(1); }
+  50%  { transform: scaleX(0.08); }
+  100% { transform: scaleX(1); }
+}
+
+@keyframes coinLand {
+  0%   { transform: scale(1.35); }
+  60%  { transform: scale(0.94); }
+  100% { transform: scale(1); }
+}
+
+/* ===== Bid tokens ===== */
+
+.bid-token {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75em;
+  height: 1.75em;
+  border-radius: 50%;
+  font-weight: 900;
+  font-style: normal;
+  font-size: 1.3em;
+  line-height: 1;
+  color: #062f1a;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f3ead0 55%, #d9c98f 100%);
+  box-shadow:
+    inset 0 0 0 2px #b48a2c,
+    0 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.bid-token.empty {
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 2px rgba(253, 246, 227, 0.35);
+  color: rgba(253, 246, 227, 0.7);
+}
+
+.bid-token.face-down {
+  color: #f6e7b8;
+  background: radial-gradient(circle at 35% 30%, #3d7a54 0%, #1d5233 60%, #0f3420 100%);
+  box-shadow:
+    inset 0 0 0 2px #b48a2c,
+    0 2px 4px rgba(0, 0, 0, 0.6);
+  animation: tokenDrop 0.3s ease-out;
+}
+
+.bid-token.revealed.on-target { box-shadow: inset 0 0 0 3px #3fcf2a, 0 0 8px rgba(141, 255, 122, 0.7); }
+.bid-token.revealed.over      { box-shadow: inset 0 0 0 3px #e0503a, 0 0 8px rgba(255, 138, 122, 0.7); }
+
+.bid-token.flipping { animation: tokenFlip 0.6s ease-in-out; }
+
+@keyframes tokenFlip {
+  0%   { transform: scaleX(1);    filter: brightness(0.6); }
+  50%  { transform: scaleX(0.05); filter: brightness(0.6); }
+  100% { transform: scaleX(1);    filter: none; }
+}
+
+@keyframes tokenDrop {
+  0%   { transform: translateY(-0.6em) scale(1.3); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+
+.options-block { margin-top: 0.2em; margin-bottom: 0.6em; }
+
+#scoreboard .sb-nt {
+  font-weight: 700;
+  color: #ffd27a;
+  margin-top: 0.1em;
+}
+
+/* ===== Traditional cards ===== */
+
+/* Classic serif indices. */
+.card .corner {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-weight: 700;
+}
+
+/* Court art fills the framed area edge to edge (no rounded crop). */
+.card .royal-inset {
+  border-radius: 2px;
+}
+
+/* Big suit pip in the frame corner of each court card (both ends). */
+.card .court-pip {
+  position: absolute;
+  left: 19%;
+  top: 11.5%;
+  transform: translate(-50%, -50%);
+  font-size: calc(var(--small-card-width) * 0.23);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.card .court-pip.flipped {
+  left: 81%;
+  top: 88.5%;
+  transform: translate(-50%, -50%) rotate(180deg);
+}
+
+/* Court art sits inside the card like the original Goodall layout,
+   leaving room for the corner indices. */
+.card .royal-inset {
+  inset: 11.2% 15.7%;
+}
+
+/* Traditional single large pip on aces. */
+.card .face-icon .ace-pip {
+  font-size: calc(var(--pip-size) * 4.2);
+  line-height: 1;
+}
+
+/* Five players: angled upper hands need headroom and must clear the
+   deck (left) and scoreboard (right); side seats drop a little lower. */
+body[data-players="5"] .seat-topleft  { left: 35%; }
+body[data-players="5"] .seat-topright { left: 65%; }
+body[data-players="5"] .seat-topleft .seat-hand,
+body[data-players="5"] .seat-topright .seat-hand {
+  margin-top: calc(34px * var(--card-scale));
+}
+body[data-players="5"] .seat-left,
+body[data-players="5"] .seat-right { top: 62%; }
+
+/* ===== Extended deck: special cards (court-card style) ===== */
+
+/* Whole-card art layer for special cards (frame + figure that may overlap it). */
+.card.special .special-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Corner icon sits where a rank + suit would, and is about as big,
+   so a special card is recognisable when fanned in a hand. */
+.card.special .sp-corner {
+  position: absolute;
+  top: 2%;
+  left: 1%;
+  width: 22%;
+  height: auto;
+  z-index: 2;
+  pointer-events: none;
+  filter: drop-shadow(0 0 0.6px rgba(0, 0, 0, 0.5));
+}
+
+.card.special .sp-corner.bottom {
+  top: auto;
+  left: auto;
+  bottom: 2%;
+  right: 1%;
+  transform: rotate(180deg);
+}
+
+/* Moon captures Sun toast */
+.capture-toast {
+  position: fixed;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  z-index: 12000;
+  padding: 0.5em 1.1em;
+  border-radius: 14px;
+  background: rgba(13, 19, 48, 0.94);
+  border: 2px solid #c9d6ff;
+  color: #fdf6e3;
+  font-weight: 800;
+  font-size: calc(18px * var(--card-scale));
+  white-space: nowrap;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  animation: toastPop 1.8s ease-out forwards;
+}
+
+@keyframes toastPop {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  25%  { transform: translate(-50%, -50%) scale(1); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.bonus-tag {
+  display: inline-block;
+  font-size: 0.8em;
+  padding: 0 0.45em;
+  border-radius: 999px;
+  background: rgba(28, 39, 82, 0.9);
+  color: #dfe6ff;
+  vertical-align: middle;
+}
+
+/* =====================================================================
+   Card face grid. Everything below is measured in container units of the
+   card itself (1cqw = 1% of card width; the card is 150cqw tall), so every
+   card has identical proportions at any size, in hand, on the table or in
+   flight.
+     index column ........ x 1 - 17cqw (rank over suit, or special icon)
+     court frame ......... inset 11.2% / 15.7% (from the Goodall layout)
+     court corner pip .... centred 24.3% x, 19% y inside the frame
+     number-card pips .... kept right of x 24cqw
+   ===================================================================== */
+
+.card {
+  container-type: size;
+}
+
+.card .corner {
+  top: 2cqw;
+  left: 1cqw;
+  width: 16cqw;
+  font-size: 17cqw;
+  line-height: 1;
+  align-items: center;
+  gap: 0;
+}
+
+.card .corner.bottom {
+  top: auto;
+  left: auto;
+  bottom: 2cqw;
+  right: 1cqw;
+}
+
+.card .corner .rank {
+  display: block;
+  white-space: nowrap;
+}
+
+/* "10" is squeezed to the width of a single figure, as on printed cards. */
+.card .corner .rank.ten {
+  letter-spacing: -0.1em;
+  transform: scaleX(0.78);
+  margin-left: -0.1em;
+}
+
+.card .corner .suit {
+  font-size: 0.9em;
+  margin-top: 0.08em;
+}
+
+/* Number-card pips and ace pip. */
+.card .face-icon {
+  font-size: 15cqw;
+}
+
+.card .face-icon .ace-pip {
+  font-size: 52cqw;
+}
+
+/* Court corner pip, inside the frame at the Goodall position. */
+.card .court-pip {
+  left: 24.3%;
+  top: 19%;
+  font-size: 19cqw;
+}
+
+.card .court-pip.flipped {
+  left: 75.7%;
+  top: 81%;
+}
+
+/* Special cards: the symbol occupies the same index box as rank + suit,
+   with the same cream halo as the printed indices so artwork behind it
+   never muddles it. */
+.card.special .sp-corner {
+  top: 2.5cqw;
+  left: 0.5cqw;
+  width: 17cqw;
+  filter:
+    drop-shadow(1px 0 0 #fdf6e3) drop-shadow(-1px 0 0 #fdf6e3)
+    drop-shadow(0 1px 0 #fdf6e3) drop-shadow(0 -1px 0 #fdf6e3);
+}
+
+.card.special .sp-corner.bottom {
+  top: auto;
+  left: auto;
+  bottom: 2.5cqw;
+  right: 0.5cqw;
+}
+
+/* Lining numerals (Georgia's old-style 3/4/5/7/9 drop below the line) and a
+   proper-sized suit under the rank. */
+.card .corner {
+  font-family: "Times New Roman", Times, "Liberation Serif", serif;
+  font-variant-numeric: lining-nums;
+  font-size: 19cqw;
+}
+
+.card .corner .suit {
+  font-family: "Segoe UI Symbol", "DejaVu Sans", "Arial Unicode MS", sans-serif;
+  font-size: 0.8em;
+  margin-top: 0.02em;
+}
+
+.card.special .sp-corner { width: 18cqw; }
+
+/* ===== Tutorial coach ===== */
+
+#coach {
+  position: fixed;
+  left: 50%;
+  top: 2vh;
+  transform: translateX(-50%);
+  z-index: 12500;
+  width: min(600px, 58vw);
+  display: none;
+  flex-direction: column;
+  gap: 0.6em;
+  padding: 0.9em 1.1em 0.8em;
+  background: rgba(3, 32, 18, 0.96);
+  border: 2px solid #ffd54a;
+  border-radius: 14px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.75);
+  color: #fdf6e3;
+  font-size: clamp(14px, calc(15px * var(--card-scale)), 22px);
+  line-height: 1.4;
+}
+
+#coach.prompt { border-color: #1EC000; }
+#coach .coach-text b { color: #ffd54a; }
+#coach.prompt .coach-text b { color: #8dff7a; }
+
+#coach .coach-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#coach .coach-next {
+  margin: 0;
+  background: #ffd54a;
+  color: #2a1c00;
+  font-weight: 800;
+  font-size: 1em;
+  padding: 0.35em 1em;
+  border-radius: 8px;
+}
+
+#coach .coach-skip {
+  margin: 0;
+  background: transparent;
+  color: rgba(253, 246, 227, 0.6);
+  font-size: 0.8em;
+  padding: 0.2em 0;
+  text-decoration: underline;
+}
+
+.tut-spot {
+  outline: 3px solid #ffd54a;
+  outline-offset: 6px;
+  border-radius: 10px;
+  animation: tutPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes tutPulse {
+  0%, 100% { outline-color: rgba(255, 213, 74, 1); }
+  50%      { outline-color: rgba(255, 213, 74, 0.25); }
+}
+
+#btn-tutorial {
+  background: transparent;
+  border: 2px solid #1EC000;
+  color: #1EC000;
+  font-weight: 700;
+}
+
+#btn-tutorial:hover { background: rgba(30, 192, 0, 0.16); }
+
+.options-block .firstdeal-cell { padding-top: 0.25em; padding-bottom: 0.25em; }
+
+/* Larger face pips (number cards) and court corner pips. */
+.card .face-icon { font-size: 19cqw; }
+.card .court-pip { font-size: 24cqw; }
+
+/* Pips use the same symbol font as the index suits (the serif card font
+   draws tiny suit glyphs). */
+.card .face-icon,
+.card .court-pip {
+  font-family: "Segoe UI Symbol", "DejaVu Sans", "Arial Unicode MS", sans-serif;
+}
+.card .face-icon { font-size: 25cqw; }
+.card .court-pip { font-size: 28cqw; }
+.card .face-icon .ace-pip { font-size: 56cqw; }
+
+/* Side seats sit a fixed distance from the table centre (in card widths),
+   not at the window edges, so wide screens keep everyone near the table. */
+.seat-left  { left:  max(2.5vw, calc(50% - 4.6 * var(--small-card-width))); }
+.seat-right { right: max(2.5vw, calc(50% - 4.6 * var(--small-card-width))); }
+
+/* Compact bid panel, a little below centre, clear of the top seats' names. */
+#bid-panel {
+  top: 53%;
+  width: max-content;
+  max-width: min(92vw, calc(5.4 * var(--small-card-width)));
+}
+#bid-buttons { max-width: 100%; }
+#bid-buttons .bid-btn {
+  min-width: calc(32px * var(--card-scale));
+  padding: calc(5px * var(--card-scale)) calc(8px * var(--card-scale));
+  font-size: calc(15px * var(--card-scale));
+}
+#bid-panel { top: 55%; gap: calc(6px * var(--card-scale)); padding: calc(9px * var(--card-scale)) calc(14px * var(--card-scale)); }
+#bid-panel { max-width: min(92vw, calc(4.9 * var(--small-card-width))); }

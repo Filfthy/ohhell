@@ -250,6 +250,10 @@ body {
   background-color: #062f1a;
 }
 
+html {
+  background-color: #062f1a;
+}
+
 /* Suit colour themes driven by body class */
 body.suitcolors-classic {
   --sc-heart:   #dc322f;
@@ -641,20 +645,24 @@ body.suitcolors-rbbo {
   }
 
   #controls {
-    position: absolute;
+    position: fixed;
     top: 4px;
     right: 8px;
     margin: 0;
     text-align: right;
-    z-index: 50;
+    z-index: 10002;
   }
 
   #controls .icon-btn {
-    width: calc(42px * var(--card-scale));
-    padding-left: 0;
-    padding-right: 0;
+    width: calc(34px * var(--card-scale));
+    height: calc(28px * var(--card-scale));
+    padding: 0;
+    margin: 0 0 0 calc(4px * var(--card-scale));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    font-size: calc(18px * var(--card-scale));
+    font-size: calc(16px * var(--card-scale));
     line-height: 1;
 
     /* override global button styling */

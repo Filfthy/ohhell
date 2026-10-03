@@ -1,0 +1,1665 @@
+// oh-app.js
+// Table view + game controller for Oh Hell.
+
+// Seat positions around the table, clockwise from the human (seat 0, bottom).
+const SEAT_LAYOUTS = {
+  2: ["bottom", "top"],
+  3: ["bottom", "left", "right"],
+  4: ["bottom", "left", "top", "right"],
+  5: ["bottom", "left", "topleft", "topright", "right"]
+};
+
+// Where each seat's card lands in the centre, in card widths / heights, plus a slight tilt.
+const TRICK_OFFSETS = {
+  bottom:   { x:  0.00, y:  0.42, rot:  0 },
+  top:      { x:  0.00, y: -0.42, rot:  0 },
+  left:     { x: -0.95, y:  0.00, rot: -8 },
+  right:    { x:  0.95, y:  0.00, rot:  8 },
+  topleft:  { x: -0.58, y: -0.40, rot: -5 },
+  topright: { x:  0.58, y: -0.40, rot:  5 }
+};
+
+// Each opponent's hand is turned to face the middle of the table.
+const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135, right: -90 };
+
+// Opponents are drawn at random from this pool for each game.
+const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub"];
+const OPP_CARD_SCALE = 0.72;
+
+// Player hand suit order: Spades, Diamonds, Clubs, Hearts (L→R), then specials.
+const PLAYER_SUIT_ORDER = { "♠": 0, "♦": 1, "♣": 2, "♥": 3, "Special": 4 };
+const SPECIAL_SORT = { MOON: 1, JOKER: 2, DRAGON: 3, SUN: 4 };
+
+const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+class GameController {
+  constructor() {
+    this.game = new OhHellGame();
+    this.cardView = new CardView();
+
+    this.difficulty = "easy";
+    this.aiEngine = new OhHellAIEngine({ difficulty: this.difficulty });
+
+    this.ANIM_EASE = t => t * t * (3 - 2 * t);
+
+    this.playerName = "Player";
+    this.numPlayers = 4;
+    this.firstDealMode = "random";
+    this.gameLength = "short";       // 'short' (5) | 'full' (10)
+    this.bidding = "simultaneous";   // 'simultaneous' (secret tokens) | 'sequential' (dealer's hook)
+    this.trumpMode = "coin";         // 'coin' (5-sided coin) | 'card' (turned-up card)
+    this.extended = false;           // extended deck: + 2 Jokers, 4 Dragons, Sun, Moon
+    this.suitColors = "rbbg";
+
+    this.epoch = 0;          // bumps on every new game; stale async flows bail out
+    this.busy = false;       // true while cards are flying
+    this.overlayActive = true;
+    this.dealVisible = null; // per-seat card counts while dealing
+    this.hiddenTrickSeat = null; // seat whose trick card is mid-flight
+    this.playFlow = 0;       // id of the play loop currently allowed to run
+    this.trumpHidden = false;
+    this.coinFace = null;      // face shown while the trump coin spins (undefined = not shown)
+    this.coinSpinning = false;
+    this.bidsRevealed = true;  // simultaneous bids stay face down until everyone has bid
+    this.revealing = false;
+    this.seatEls = [];
+    this.tut = null;           // running tutorial (TUTORIAL script) or null
+    this.pickOpponents();
+
+    // WebAudio (for win/lose jingle)
+    this.audioCtx = null;
+    this.playedEndJingle = false;
+    this.soundMuted = true;
+
+    this.sfx = {
+      cardPlace2: new Audio("card-place-2.ogg"),
+      cardShove2: new Audio("card-shove-2.ogg")
+    };
+    this.sfx.cardPlace2.preload = "auto";
+    this.sfx.cardPlace2.volume = 0.8;
+    try { this.sfx.cardPlace2.load(); } catch (e) { /* ignore */ }
+    this.sfx.cardShove2.preload = "auto";
+    this.sfx.cardShove2.volume = 0.25;
+    try { this.sfx.cardShove2.load(); } catch (e) { /* ignore */ }
+
+    try {
+      const savedMuted = localStorage.getItem("oh_soundMuted");
+      if (savedMuted != null) this.soundMuted = (savedMuted === "1");
+
+      const savedName = localStorage.getItem("oh_playerName");
+      if (savedName) this.playerName = savedName;
+
+      const savedDiff = localStorage.getItem("oh_difficulty");
+      if (savedDiff) this.difficulty = savedDiff;
+
+      const savedPlayers = parseInt(localStorage.getItem("oh_numPlayers"), 10);
+      if (savedPlayers >= 2 && savedPlayers <= 5) this.numPlayers = savedPlayers;
+
+      const savedFirst = localStorage.getItem("oh_firstDeal");
+      if (savedFirst) this.firstDealMode = savedFirst;
+
+      const savedSuit = localStorage.getItem("oh_suitcolors");
+      if (savedSuit) this.suitColors = savedSuit;
+
+      const savedBidding = localStorage.getItem("oh_bidding");
+      if (savedBidding === "simultaneous" || savedBidding === "sequential") this.bidding = savedBidding;
+      const savedTrump = localStorage.getItem("oh_trumpMode");
+      if (savedTrump === "coin" || savedTrump === "card") this.trumpMode = savedTrump;
+      this.extended = localStorage.getItem("oh_extended") === "1";
+    } catch (e) { /* ignore */ }
+
+    this.aiEngine.setDifficulty(this.difficulty);
+
+    this.dom = {
+      gameArea: document.getElementById("game-area"),
+      seats: document.getElementById("seats"),
+      deckSlot: document.getElementById("deck-slot"),
+      trumpSlot: document.getElementById("trump-slot"),
+      trickArea: document.getElementById("trick-area"),
+      playerHand: document.getElementById("player-hand"),
+      playerInfo: document.getElementById("player-seat-info"),
+      roundLabel: document.getElementById("round-label"),
+      scoreTable: document.getElementById("score-table"),
+      bidPanel: document.getElementById("bid-panel"),
+      bidTitle: document.getElementById("bid-title"),
+      bidButtons: document.getElementById("bid-buttons"),
+      bidNote: document.getElementById("bid-note")
+    };
+
+    this.applySoundMuted();
+    this.applyFullscreenUi();
+    this.bindStartOverlay();
+
+    // Draw an empty table behind the start overlay.
+    this.game.startNewGame({ numPlayers: this.numPlayers, maxCards: 5, firstDealer: 0 });
+    this.buildSeats();
+    this.render();
+  }
+
+  // =====================================================
+  // =================== Seats / names ===================
+  // =====================================================
+
+  seatName(seat) {
+    if (seat === 0) return (this.playerName && this.playerName.trim()) || "Player";
+    return this.opponentNames[(seat - 1) % this.opponentNames.length];
+  }
+
+  pickOpponents() {
+    const pool = OPPONENT_POOL.slice();
+    shuffle(pool);
+    this.opponentNames = pool;
+  }
+
+  seatPos(seat) {
+    return SEAT_LAYOUTS[this.game.numPlayers][seat];
+  }
+
+  buildSeats() {
+    const n = this.game.numPlayers;
+    this.dom.seats.innerHTML = "";
+    this.dom.trickArea.innerHTML = "";
+    this.seatEls = [];
+
+    document.body.dataset.players = String(n);
+
+    for (let seat = 0; seat < n; seat++) {
+      const pos = this.seatPos(seat);
+      let handEl, infoEl;
+
+      if (seat === 0) {
+        handEl = this.dom.playerHand;
+        infoEl = this.dom.playerInfo;
+      } else {
+        const seatEl = document.createElement("div");
+        seatEl.className = `seat seat-${pos}`;
+        seatEl.dataset.seat = String(seat);
+
+        handEl = document.createElement("div");
+        handEl.className = "seat-hand";
+        handEl.style.setProperty("--seat-rot", SEAT_ANGLE[pos] + "deg");
+
+        infoEl = document.createElement("div");
+        infoEl.className = "seat-info";
+        infoEl.innerHTML =
+          `<div class="name-label"></div><div class="seat-stats"></div><div class="seat-tokens"></div>`;
+
+        seatEl.appendChild(handEl);
+        seatEl.appendChild(infoEl);
+        this.dom.seats.appendChild(seatEl);
+      }
+
+      const slot = document.createElement("div");
+      slot.className = `trick-slot trick-${pos}`;
+      this.dom.trickArea.appendChild(slot);
+
+      this.seatEls.push({
+        hand: handEl,
+        info: infoEl,
+        name: infoEl.querySelector(".name-label"),
+        stats: infoEl.querySelector(".seat-stats"),
+        tokens: infoEl.querySelector(".seat-tokens"),
+        slot
+      });
+    }
+
+    this.layoutTrickSlots();
+  }
+
+  layoutTrickSlots() {
+    const W = layoutMetrics.cardWidth;
+    const H = layoutMetrics.cardHeight;
+    const n = this.game.numPlayers;
+
+    this.seatEls.forEach((els, seat) => {
+      const pos = this.seatPos(seat);
+      const o = TRICK_OFFSETS[pos];
+      // With five players the side seats sit a little lower to make room.
+      const y = (n === 5 && (pos === "left" || pos === "right")) ? 0.12 : o.y;
+      els.slot.style.left = (o.x * W - W / 2) + "px";
+      els.slot.style.top = (y * H - H / 2) + "px";
+      els.slot.style.transform = `rotate(${o.rot}deg)`;
+      els.slot.style.zIndex = "1";
+    });
+  }
+
+  // =====================================================
+  // ====================== Render =======================
+  // =====================================================
+
+  render() {
+    const g = this.game;
+    if (!this.seatEls.length) return;
+
+    this.layoutTrickSlots();
+    this.renderPlayerHand();
+    for (let seat = 1; seat < g.numPlayers; seat++) this.renderOpponentHand(seat);
+    this.renderSeatInfo();
+    this.renderTrick();
+    this.renderDeck();
+    this.renderScoreboard();
+    this.updateTurnHighlight();
+
+    document.body.setAttribute("data-phase", g.phase);
+  }
+
+  visibleHand(seat) {
+    const cards = this.game.hands[seat] ? this.game.hands[seat].cards : [];
+    if (this.dealVisible) return cards.slice(0, this.dealVisible[seat]);
+    return cards;
+  }
+
+  renderPlayerHand() {
+    const handDiv = this.dom.playerHand;
+    handDiv.innerHTML = "";
+
+    const scale = layoutMetrics.scale;
+    const insetBase = 18 * scale;
+    const cardHeight = layoutMetrics.cardHeight;
+    const cardTop = (cardHeight + 2 * insetBase) - cardHeight;
+
+    const allCards = this.game.hands[0] ? this.game.hands[0].cards : [];
+    const shown = this.visibleHand(0);
+
+    const indexed = shown.map(card => ({ card, idx: allCards.indexOf(card) }));
+    indexed.sort((a, b) => {
+      const s = PLAYER_SUIT_ORDER[a.card.suit] - PLAYER_SUIT_ORDER[b.card.suit];
+      if (s !== 0) return s;
+      if (a.card.isSpecial) return SPECIAL_SORT[a.card.role] - SPECIAL_SORT[b.card.role];
+      return a.card.value - b.card.value;
+    });
+
+    let legal = this.playerInputReady() ? this.game.getLegalMovesFor(0) : [];
+    const tutIdx = this.tutCardIdx(0);
+    if (tutIdx != null) legal = legal.filter(i => i === tutIdx);
+    const total = indexed.length;
+
+    indexed.forEach((obj, slot) => {
+      const pos = computePlayerFanSlot(slot, total, scale);
+      const div = this.cardView.createCardElement(obj.card, { clickable: true });
+
+      div.style.top = cardTop + "px";
+      div.style.setProperty("--fan-x", pos.offsetX + "px");
+      div.style.setProperty("--fan-y", pos.offsetY + "px");
+      div.style.setProperty("--fan-angle", pos.angle + "deg");
+      div.style.zIndex = String(slot + 100);
+
+      if (legal.includes(obj.idx)) div.classList.add("legal-move");
+
+      div.addEventListener("click", (e) => this.handlePlayerCardClick(obj.idx, e.currentTarget));
+      handDiv.appendChild(div);
+    });
+  }
+
+  renderOpponentHand(seat) {
+    const handDiv = this.seatEls[seat].hand;
+    handDiv.innerHTML = "";
+
+    const scale = layoutMetrics.scale;
+    const cards = this.visibleHand(seat);
+    const total = Math.max(cards.length, 1);
+
+    cards.forEach((_, i) => {
+      const pos = computeOppFanSlot(i, total, scale);
+      const back = this.cardView.createCardElement(null, { back: true });
+      back.style.setProperty("--fan-x", pos.offsetX + "px");
+      back.style.setProperty("--fan-y", (-pos.offsetY) + "px");
+      back.style.setProperty("--fan-angle", pos.angle + "deg");
+      back.style.zIndex = String(100 + i);
+      handDiv.appendChild(back);
+    });
+  }
+
+  renderSeatInfo() {
+    const g = this.game;
+    const inRound = g.phase !== "idle" && !this.dealVisible;
+
+    for (let seat = 0; seat < g.numPlayers; seat++) {
+      const els = this.seatEls[seat];
+      els.name.textContent = this.seatName(seat);
+
+      const bid = g.bids ? g.bids[seat] : null;
+      const won = g.won ? g.won[seat] : 0;
+
+      let html = "";
+      if (inRound && seat === g.dealer) {
+        html += `<span class="dealer-chip" title="Dealer">D</span>`;
+      }
+
+      if (!inRound) {
+        html += "";
+      } else if (bid == null) {
+        const thinking = g.phase === "bid" && (g.simultaneous || g.turn === seat);
+        html += `<span class="bid-token empty" title="No bid yet">${thinking ? "…" : ""}</span>` +
+          `<span class="stat-muted">${thinking ? "bidding…" : "waiting"}</span>`;
+      } else if (!this.bidsRevealed) {
+        html += `<span class="bid-token face-down" title="Bid placed face down">?</span>` +
+          `<span class="stat-muted">bid placed</span>`;
+      } else {
+        let cls = "";
+        if (won === bid) cls = "on-target";
+        else if (won > bid) cls = "over";
+        const flip = this.flipTokens ? " flipping" : "";
+        html += `<span class="bid-token revealed ${cls}${flip}" title="Bid ${bid}">${bid}</span>` +
+          `<span class="stat ${cls}">Won <b>${won}</b></span>`;
+      }
+      els.stats.innerHTML = html;
+
+      els.tokens.innerHTML = "";
+      if (inRound) {
+        for (let i = 0; i < won; i++) {
+          const img = document.createElement("img");
+          img.src = "trick.png";
+          img.alt = "";
+          img.className = "token";
+          els.tokens.appendChild(img);
+        }
+      }
+    }
+  }
+
+  renderTrick() {
+    this.seatEls.forEach(els => { els.slot.innerHTML = ""; });
+
+    const plays = this.game.currentTrick ? this.game.currentTrick.plays : [];
+    plays.forEach(({ who, card }, i) => {
+      if (who === this.hiddenTrickSeat) return;
+      const el = this.cardView.createCardElement(card);
+      const slot = this.seatEls[who].slot;
+      slot.style.zIndex = String(10 + i);
+      slot.appendChild(el);
+    });
+  }
+
+  renderDeck() {
+    const g = this.game;
+    const deckSlot = this.dom.deckSlot;
+    const trumpSlot = this.dom.trumpSlot;
+    deckSlot.innerHTML = "";
+    trumpSlot.innerHTML = "";
+
+    if (g.phase === "idle") return;
+
+    // Stock pile: everything not dealt (shrinks visibly while dealing).
+    let stock = g.stockCount;
+    if (this.dealVisible) {
+      const dealt = this.dealVisible.reduce((a, b) => a + b, 0);
+      stock = 52 - dealt;
+    } else if (g.trumpCard && this.trumpHidden) {
+      stock += 1;
+    }
+    const deckSize = g.extended ? 60 : 52;
+    if (g.trumpMode === "coin") stock = deckSize - g.handSize * g.numPlayers;
+    if (this.dealVisible) stock = deckSize - this.dealVisible.reduce((a, b) => a + b, 0);
+
+    let layers = 0;
+    if (stock >= 30) layers = 5;
+    else if (stock >= 20) layers = 4;
+    else if (stock >= 10) layers = 3;
+    else if (stock >= 4) layers = 2;
+    else if (stock > 0) layers = 1;
+
+    const scale = layoutMetrics.scale;
+    for (let i = 0; i < layers; i++) {
+      const backCard = this.cardView.createCardElement(null, { back: true });
+      backCard.style.position = "absolute";
+      backCard.style.left = "50%";
+      backCard.style.top = "50%";
+      backCard.style.transform =
+        `translate(-50%, -50%) translate(${i * 2 * scale}px, ${-i * 1.5 * scale}px)`;
+      backCard.style.zIndex = String(100 + i);
+      backCard.style.boxShadow = (i === layers - 1)
+        ? `0 ${4 * scale}px ${6 * scale}px rgba(0,0,0,0.55)`
+        : `0 ${2 * scale}px ${3 * scale}px rgba(0,0,0,0.35)`;
+      deckSlot.appendChild(backCard);
+    }
+
+    if (g.trumpMode === "coin") {
+      const face = this.coinSpinning ? this.coinFace : (this.trumpHidden || this.dealVisible ? undefined : g.trumpSuit);
+      if (face !== undefined) trumpSlot.appendChild(this.makeCoin(face, this.coinSpinning));
+    } else if (g.trumpCard && !this.trumpHidden && !this.dealVisible) {
+      trumpSlot.appendChild(this.cardView.createCardElement(g.trumpCard));
+    }
+  }
+
+  // The five-sided trump coin: a suit, or blank for no trump.
+  makeCoin(face, spinning) {
+    const coin = document.createElement("div");
+    coin.className = "trump-coin" + (spinning ? " spinning" : "") + (face ? "" : " blank");
+    if (face) {
+      const sym = document.createElement("span");
+      sym.className = "coin-suit " + this.cardView.cardColorClass({ suit: face });
+      sym.textContent = face;
+      coin.appendChild(sym);
+      coin.title = "Trump: " + face;
+    } else {
+      coin.innerHTML = `<span class="coin-blank">No<br>trump</span>`;
+      coin.title = "No trump this round";
+    }
+    return coin;
+  }
+
+  renderScoreboard() {
+    const g = this.game;
+
+    if (g.phase === "idle" || g.roundIndex < 0) {
+      this.dom.roundLabel.textContent = "";
+    } else {
+      this.dom.roundLabel.innerHTML =
+        `Round <b>${g.roundIndex + 1}</b> of ${g.totalRounds}` +
+        ` · <b>${g.handSize}</b> card${g.handSize === 1 ? "" : "s"}` +
+        (g.trumpSuit ? "" : `<div class="sb-nt">No trump this round</div>`);
+    }
+
+    const best = Math.max(...g.scores, 0);
+    let rows = "";
+    for (let seat = 0; seat < g.numPlayers; seat++) {
+      const score = g.scores[seat] || 0;
+      const lead = (score === best && best > 0) ? " leader" : "";
+      const me = seat === 0 ? " me" : "";
+      rows += `<tr class="${lead}${me}"><td>${this.escape(this.seatName(seat))}</td><td>${score}</td></tr>`;
+    }
+
+    let bidLine = "";
+    if ((g.phase === "bid" || g.phase === "play") && !this.dealVisible && this.bidsRevealed) {
+      const total = g.bidTotal();
+      const diff = total - g.handSize;
+      let feel = "";
+      if (g.bids.every(b => b != null)) {
+        feel = diff > 0 ? ` <span class="over">(${diff} over)</span>`
+             : diff < 0 ? ` <span class="under">(${-diff} under)</span>` : "";
+      }
+      bidLine = `<tfoot><tr><td>Bids</td><td>${total}/${g.handSize}${feel}</td></tr></tfoot>`;
+    }
+
+    this.dom.scoreTable.innerHTML = `<tbody>${rows}</tbody>${bidLine}`;
+  }
+
+  escape(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  updateTurnHighlight() {
+    const g = this.game;
+    document.body.classList.remove("player-turn");
+    this.seatEls.forEach(els => els.name.classList.remove("turn-glow"));
+
+    if (this.overlayActive || this.busy || this.dealVisible) return;
+    if (g.phase !== "bid" && g.phase !== "play") return;
+
+    if (g.phase === "bid" && g.simultaneous) {
+      g.bids.forEach((b, seat) => { if (b == null) this.seatEls[seat].name.classList.add("turn-glow"); });
+      return;
+    }
+
+    const els = this.seatEls[g.turn];
+    if (els) els.name.classList.add("turn-glow");
+    if (g.turn === 0 && g.phase === "play") document.body.classList.add("player-turn");
+  }
+
+  playerInputReady() {
+    return !this.overlayActive && !this.busy && !this.dealVisible &&
+      this.game.phase === "play" && this.game.turn === 0;
+  }
+
+  // =====================================================
+  // ===================== Animation =====================
+  // =====================================================
+
+  // Fly a card (face or back) between two viewport-centre points.
+  flyCard({ card = null, from, to, dur = 500, scaleFrom = 1, scaleTo = 1, rotFrom = 0, rotTo = 0, z = 9999 }) {
+    const W = layoutMetrics.cardWidth;
+    const H = layoutMetrics.cardHeight;
+
+    const el = card
+      ? this.cardView.createCardElement(card)
+      : this.cardView.createCardElement(null, { back: true });
+
+    el.style.position = "fixed";
+    el.style.zIndex = String(z);
+    el.style.pointerEvents = "none";
+    el.style.transformOrigin = "center center";
+    el.style.margin = "0";
+
+    const place = (p) => {
+      const x = from.x + (to.x - from.x) * p;
+      const y = from.y + (to.y - from.y) * p;
+      const s = scaleFrom + (scaleTo - scaleFrom) * p;
+      const r = rotFrom + (rotTo - rotFrom) * p;
+      el.style.left = (x - W / 2) + "px";
+      el.style.top = (y - H / 2) + "px";
+      el.style.transform = `rotate(${r}deg) scale(${s})`;
+    };
+
+    place(0);
+    document.body.appendChild(el);
+
+    return new Promise(resolve => {
+      const start = performance.now();
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        el.remove();
+        resolve();
+      };
+      const step = (now) => {
+        if (finished) return;
+        const t = Math.min(1, (now - start) / dur);
+        place(this.ANIM_EASE(t));
+        if (t < 1) requestAnimationFrame(step);
+        else finish();
+      };
+      requestAnimationFrame(step);
+      // rAF pauses in hidden tabs; never let the game stall on an animation.
+      setTimeout(finish, dur + 150);
+    });
+  }
+
+  seatAngle(seat) {
+    return SEAT_ANGLE[this.seatPos(seat)] || 0;
+  }
+
+  seatHandCenter(seat) {
+    return getRectCenter(this.seatEls[seat].hand);
+  }
+
+  slotCenter(seat) {
+    return getRectCenter(this.seatEls[seat].slot);
+  }
+
+  async animateDeal(ep) {
+    const g = this.game;
+    const n = g.numPlayers;
+    this.dealVisible = new Array(n).fill(0);
+    this.busy = true;
+    this.render();
+
+    const deckC = getRectCenter(this.dom.deckSlot);
+    const flights = [];
+    const stagger = Math.max(28, Math.min(70, 1400 / (g.handSize * n)));
+
+    let k = 0;
+    for (let round = 0; round < g.handSize; round++) {
+      for (let i = 1; i <= n; i++) {
+        const seat = (g.dealer + i) % n; // deal starts left of the dealer
+        const order = k++;
+        const delay = order * stagger;
+        flights.push((async () => {
+          await wait(delay);
+          if (ep !== this.epoch) return;
+          if (order % 3 === 0) this.playSfx(this.sfx.cardShove2);
+          const to = seat === 0
+            ? getRectCenter(this.dom.playerHand)
+            : this.seatHandCenter(seat);
+          await this.flyCard({
+            from: deckC, to, dur: 260,
+            scaleTo: seat === 0 ? 1 : OPP_CARD_SCALE,
+            rotTo: this.seatAngle(seat)
+          });
+          if (ep !== this.epoch || !this.dealVisible) return;
+          this.dealVisible[seat]++;
+          this.render();
+        })());
+      }
+    }
+
+    await Promise.all(flights);
+    if (ep !== this.epoch) return;
+
+    this.dealVisible = null;
+    this.trumpHidden = true;
+    this.render();
+
+    if (g.trumpMode === "coin") {
+      await this.animateCoinFlip(ep);
+      if (ep !== this.epoch) return;
+    } else if (g.trumpCard) {
+      // Turn up the trump card.
+      await wait(150);
+      if (ep !== this.epoch) return;
+      this.playSfx(this.sfx.cardShove2);
+      await this.flyCard({
+        card: g.trumpCard,
+        from: getRectCenter(this.dom.deckSlot),
+        to: getRectCenter(this.dom.trumpSlot),
+        dur: 420
+      });
+      if (ep !== this.epoch) return;
+    }
+
+    this.trumpHidden = false;
+    this.busy = false;
+    this.render();
+  }
+
+  async animateCoinFlip(ep) {
+    const faces = TRUMP_COIN_FACES;
+    this.coinSpinning = true;
+    this.playSfx(this.sfx.cardShove2);
+    const steps = 12;
+    for (let i = 0; i < steps; i++) {
+      this.coinFace = faces[(i + Math.floor(Math.random() * faces.length)) % faces.length];
+      this.renderDeck();
+      await wait(55 + i * 9);
+      if (ep !== this.epoch) return;
+    }
+    this.coinSpinning = false;
+    this.coinFace = null;
+    this.trumpHidden = false;
+    this.renderDeck();
+    const coin = this.dom.trumpSlot.querySelector(".trump-coin");
+    if (coin) coin.classList.add("landed");
+    this.playSfx(this.sfx.cardPlace2);
+    await wait(450);
+  }
+
+  async animateTrickToWinner(plays, winner) {
+    const target = getRectCenter(this.seatEls[winner].name);
+    this.seatEls.forEach(els => { els.slot.innerHTML = ""; });
+
+    await Promise.all(plays.map(({ who, card }) => {
+      const from = this.slotCenter(who);
+      const rot = TRICK_OFFSETS[this.seatPos(who)].rot;
+      return this.flyCard({
+        card, from, to: target, dur: 480,
+        rotFrom: rot, rotTo: rot, scaleFrom: 1, scaleTo: 0.25, z: 9998
+      });
+    }));
+  }
+
+  // =====================================================
+  // ===================== Game flow =====================
+  // =====================================================
+
+  startGame() {
+    this.epoch++;
+    this.busy = false;
+    this.dealVisible = null;
+    this.hiddenTrickSeat = null;
+    this.trumpHidden = false;
+    this.playedEndJingle = false;
+    this.hideBidPanel();
+    this.hideRoundSummary();
+
+    this.pickOpponents();
+    const n = this.numPlayers;
+    let firstDealer;
+    if (this.firstDealMode === "player") firstDealer = 0;
+    else if (this.firstDealMode === "opponent") firstDealer = 1 + Math.floor(Math.random() * (n - 1));
+    else firstDealer = Math.floor(Math.random() * n);
+
+    this.game.startNewGame({
+      numPlayers: n,
+      maxCards: this.gameLength === "full" ? 10 : 5,
+      firstDealer,
+      bidding: this.bidding,
+      trumpMode: this.trumpMode,
+      extended: this.extended
+    });
+
+    this.aiEngine.resetMemory();
+    this.aiEngine.setDifficulty(this.difficulty);
+
+    this.buildSeats();
+    this.runRound(this.epoch);
+  }
+
+  async runRound(ep) {
+    this.game.startRound();
+    this.bidsRevealed = !this.game.simultaneous;
+    this.revealing = false;
+    this.flipTokens = false;
+    this.render();
+    await wait(250);
+    if (ep !== this.epoch) return;
+
+    await this.animateDeal(ep);
+    if (ep !== this.epoch) return;
+
+    if (this.tut) {
+      await this.coach("start");
+      if (ep !== this.epoch) return;
+    }
+
+    await this.continueBidding(ep);
+  }
+
+  async continueBidding(ep) {
+    if (this.game.simultaneous) return this.simultaneousBidding(ep);
+
+    const g = this.game;
+    while (g.phase === "bid") {
+      if (g.turn === 0) {
+        this.render();
+        this.showBidPanel();
+        return; // resumes from onPlayerBid
+      }
+
+      this.render();
+      await wait(650);
+      if (ep !== this.epoch) return;
+
+      const seat = g.turn;
+      g.placeBid(seat, this.aiEngine.chooseBid(this.bidContext(seat)));
+      this.playSfx(this.sfx.cardPlace2);
+      this.flashStats(seat);
+    }
+
+    await this.startPlayAfterBids(ep);
+  }
+
+  bidContext(seat) {
+    const g = this.game;
+    return {
+      seat,
+      hand: g.hands[seat].cards,
+      trumpSuit: g.trumpSuit,
+      trumpCard: g.trumpCard,
+      numPlayers: g.numPlayers,
+      handSize: g.handSize,
+      legalBids: g.legalBids(seat),
+      dealer: g.dealer,
+      simultaneous: g.simultaneous,
+      extended: g.extended,
+      // Secret bidding: nobody's bid is visible yet.
+      bids: g.simultaneous ? new Array(g.numPlayers).fill(null) : g.bids.slice()
+    };
+  }
+
+  // Everyone bids at once: AIs place face-down tokens while you choose yours,
+  // then all tokens flip together.
+  async simultaneousBidding(ep) {
+    const g = this.game;
+    this.render();
+    if (this.tut) this.coach("bid");
+    this.showBidPanel();
+
+    const order = [];
+    for (let s = 1; s < g.numPlayers; s++) order.push(s);
+    order.sort(() => Math.random() - 0.5);
+
+    for (const seat of order) {
+      await wait(450 + Math.random() * 500);
+      if (ep !== this.epoch || g.phase !== "bid") return;
+      const bid = this.tut ? this.tutRound().bids[seat] : this.aiEngine.chooseBid(this.bidContext(seat));
+      g.placeBid(seat, bid);
+      this.playSfx(this.sfx.cardPlace2);
+      this.flashStats(seat);
+    }
+    await this.maybeRevealBids(ep);
+  }
+
+  async maybeRevealBids(ep) {
+    const g = this.game;
+    if (this.revealing || g.phase !== "play" || this.bidsRevealed) return;
+    this.revealing = true;
+    this.busy = true; // nobody may lead before the tokens flip
+
+    await wait(500);
+    if (ep !== this.epoch) return;
+
+    this.bidsRevealed = true;
+    this.flipTokens = true;
+    this.playSfx(this.sfx.cardShove2);
+    this.render();
+    await wait(900);
+    if (ep !== this.epoch) return;
+    this.flipTokens = false;
+
+    if (this.tut) {
+      this.render();
+      await this.coach("reveal");
+      if (ep !== this.epoch) return;
+    }
+
+    await this.startPlayAfterBids(ep);
+  }
+
+  async startPlayAfterBids(ep) {
+    // Short pause before the first lead; keep input locked so a quick click
+    // can't start a second play loop alongside this one.
+    this.busy = true;
+    this.render();
+    await wait(500);
+    if (ep !== this.epoch) return;
+    this.busy = false;
+    await this.continuePlay(ep);
+  }
+
+  onPlayerBid(bid) {
+    const g = this.game;
+    if (g.phase !== "bid" || g.bids[0] != null || this.busy) return;
+    if (!g.simultaneous && g.turn !== 0) return;
+    const res = g.placeBid(0, bid);
+    if (!res.ok) return;
+    this.ensureAudioContext();
+    if (this.tut) this.hideCoach();
+    this.hideBidPanel();
+    this.playSfx(this.sfx.cardPlace2);
+    this.flashStats(0);
+    if (g.simultaneous) this.maybeRevealBids(this.epoch);
+    else this.continueBidding(this.epoch);
+  }
+
+  flashStats(seat) {
+    this.render();
+    const el = this.seatEls[seat] && this.seatEls[seat].stats;
+    if (!el) return;
+    el.classList.remove("just-bid");
+    void el.offsetWidth;
+    el.classList.add("just-bid");
+  }
+
+  async continuePlay(ep) {
+    const g = this.game;
+    // Only the most recently started loop may drive the AI.
+    const flow = ++this.playFlow;
+    const stale = () => ep !== this.epoch || flow !== this.playFlow;
+
+    while (g.phase === "play") {
+      if (g.turn === 0) {
+        this.render();
+        if (this.tut) this.coach("play" + g.tricksPlayed);
+        return; // resumes from handlePlayerCardClick
+      }
+
+      this.render();
+      await wait(380);
+      if (stale()) return;
+
+      const result = await this.aiPlay(ep);
+      if (stale() || !result) return;
+
+      if (result.trickComplete) {
+        await this.finishTrick(ep);
+        if (stale()) return;
+      }
+    }
+
+    if (g.phase === "roundEnd" || g.phase === "gameOver") {
+      await wait(400);
+      if (ep !== this.epoch) return;
+      this.showRoundSummary();
+    }
+  }
+
+  async aiPlay(ep) {
+    const g = this.game;
+    const seat = g.turn;
+    const hand = g.hands[seat].cards;
+    const legal = g.getLegalMovesFor(seat);
+
+    let idx = this.aiEngine.choosePlay({
+      hand,
+      legal,
+      plays: g.currentTrick.plays,
+      trumpSuit: g.trumpSuit,
+      trumpCard: g.trumpCard,
+      numPlayers: g.numPlayers,
+      bid: g.bids[seat],
+      won: g.won[seat],
+      tricksLeft: g.handSize - g.tricksPlayed,
+      playedCards: g.playedCards,
+      seat,
+      bids: g.bids,
+      wonAll: g.won,
+      trickHistory: g.trickHistory,
+      handSize: g.handSize,
+      tricksPlayed: g.tricksPlayed,
+      leader: g.currentTrick.leader,
+      extended: g.extended,
+      bonusAll: g.bonus
+    });
+    const tutIdx = this.tutCardIdx(seat);
+    if (tutIdx != null) idx = tutIdx;
+    if (!legal.includes(idx)) idx = legal[Math.floor(Math.random() * legal.length)];
+
+    const from = this.seatHandCenter(seat);
+    const result = g.playCard(seat, idx);
+    if (!result.ok) return null;
+
+    await this.animatePlayToSlot(ep, seat, result.card, from, OPP_CARD_SCALE, this.seatAngle(seat));
+    return result;
+  }
+
+  async animatePlayToSlot(ep, seat, card, from, scaleFrom, rotFrom = 0) {
+    this.busy = true;
+    this.hiddenTrickSeat = seat;
+    this.render();
+    this.playSfx(this.sfx.cardPlace2);
+
+    const rot = TRICK_OFFSETS[this.seatPos(seat)].rot;
+    await this.flyCard({
+      card, from, to: this.slotCenter(seat), dur: 420,
+      scaleFrom, scaleTo: 1, rotFrom, rotTo: rot
+    });
+    if (ep !== this.epoch) return;
+
+    this.hiddenTrickSeat = null;
+    this.busy = false;
+    this.render();
+  }
+
+  async handlePlayerCardClick(idx, cardElement) {
+    if (!this.playerInputReady()) return;
+    const ep = this.epoch;
+
+    this.ensureAudioContext();
+
+    const legal = this.game.getLegalMovesFor(0);
+    if (!legal.includes(idx)) return;
+    const tutIdx = this.tutCardIdx(0);
+    if (tutIdx != null && idx !== tutIdx) return;
+    if (this.tut) this.hideCoach();
+
+    const from = cardElement ? getRectCenter(cardElement) : getRectCenter(this.dom.playerHand);
+    const result = this.game.playCard(0, idx);
+    if (!result.ok) return;
+
+    await this.animatePlayToSlot(ep, 0, result.card, from, 1);
+    if (ep !== this.epoch) return;
+
+    if (result.trickComplete) {
+      await this.finishTrick(ep);
+      if (ep !== this.epoch) return;
+    }
+    await this.continuePlay(ep);
+  }
+
+  async finishTrick(ep) {
+    this.busy = true;
+    this.render();
+    await wait(750);
+    if (ep !== this.epoch) return;
+
+    const res = this.game.resolveCompletedTrick();
+    if (res.moonCapture) this.showCaptureToast(res.moonCapture);
+    await this.animateTrickToWinner(res.plays, res.winner);
+    if (ep !== this.epoch) return;
+
+    this.render();
+    this.flashStats(res.winner);
+    if (this.tut) {
+      await this.coach("trick" + (this.game.tricksPlayed - 1));
+      if (ep !== this.epoch) return;
+    }
+    this.busy = false;
+    this.render();
+  }
+
+  // =====================================================
+  // ====================== Tutorial =====================
+  // =====================================================
+
+  startTutorial() {
+    const T = TUTORIAL;
+    this.epoch++;
+    this.busy = false;
+    this.dealVisible = null;
+    this.hiddenTrickSeat = null;
+    this.trumpHidden = false;
+    this.hideBidPanel();
+    this.hideRoundSummary();
+
+    this.tut = T;
+    this.opponentNames = T.opponents.slice();
+    this.game.startNewGame({
+      numPlayers: T.opponents.length + 1,
+      firstDealer: T.firstDealer,
+      bidding: "simultaneous",
+      trumpMode: "coin",
+      presetRounds: T.rounds
+    });
+    this.buildSeats();
+    this.render();
+
+    const ep = this.epoch;
+    (async () => {
+      await wait(300);
+      if (ep !== this.epoch) return;
+      await this.coachSteps(T.intro);
+      if (ep !== this.epoch) return;
+      this.runRound(ep);
+    })();
+  }
+
+  tutRound() {
+    return this.tut ? this.tut.rounds[this.game.roundIndex] : null;
+  }
+
+  // Index in `seat`'s hand of the card the script plays this trick (or null).
+  tutCardIdx(seat) {
+    const r = this.tutRound();
+    if (!r || this.game.phase !== "play") return null;
+    const trick = r.tricks[this.game.tricksPlayed];
+    const code = trick && trick[seat];
+    if (!code) return null;
+    const idx = this.game.hands[seat].cards.findIndex(c => cardCode(c) === code);
+    return idx >= 0 ? idx : null;
+  }
+
+  // Show the coach step(s) for `key` in the current hand.
+  coach(key) {
+    const r = this.tutRound();
+    const step = r && r.coach[key];
+    if (!step) return Promise.resolve();
+    if (Array.isArray(step)) return this.coachSteps(step);
+    this.showCoach(step.prompt || step, null);
+    return Promise.resolve();
+  }
+
+  async coachSteps(steps) {
+    const ep = this.epoch;
+    const prevBusy = this.busy;
+    this.busy = true;
+    for (const m of steps) {
+      await new Promise(done => this.showCoach(m, done));
+      if (ep !== this.epoch) return;
+    }
+    this.hideCoach();
+    this.busy = prevBusy;
+  }
+
+  showCoach(msg, onNext) {
+    let el = document.getElementById("coach");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "coach";
+      el.innerHTML = `<div class="coach-text"></div>` +
+        `<div class="coach-buttons"><button type="button" class="coach-skip">Skip tutorial</button>` +
+        `<button type="button" class="coach-next">Next ▸</button></div>`;
+      document.body.appendChild(el);
+      el.querySelector(".coach-skip").addEventListener("click", () => this.exitTutorial());
+    }
+    const text = typeof msg === "string" ? msg : msg.t;
+    const spot = typeof msg === "string" ? null : msg.spot;
+    el.querySelector(".coach-text").innerHTML = text;
+
+    document.querySelectorAll(".tut-spot").forEach(n => n.classList.remove("tut-spot"));
+    if (spot) document.querySelectorAll(spot).forEach(n => n.classList.add("tut-spot"));
+
+    const next = el.querySelector(".coach-next");
+    next.style.display = onNext ? "" : "none";
+    next.onclick = onNext ? () => { next.onclick = null; onNext(); } : null;
+    el.classList.toggle("prompt", !onNext);
+    el.style.display = "flex";
+    if (onNext) setTimeout(() => next.focus(), 30);
+  }
+
+  hideCoach() {
+    const el = document.getElementById("coach");
+    if (el) el.style.display = "none";
+    document.querySelectorAll(".tut-spot").forEach(n => n.classList.remove("tut-spot"));
+  }
+
+  async finishTutorial() {
+    const ep = this.epoch;
+    await this.coachSteps(this.tut.outro);
+    if (ep !== this.epoch) return;
+    this.exitTutorial();
+  }
+
+  exitTutorial() {
+    this.tut = null;
+    this.epoch++;
+    this.busy = false;
+    this.dealVisible = null;
+    this.hideCoach();
+    this.hideBidPanel();
+    this.hideRoundSummary();
+
+    this.pickOpponents();
+    this.game.startNewGame({ numPlayers: this.numPlayers, maxCards: 5, firstDealer: 0 });
+    this.buildSeats();
+    this.render();
+
+    const overlay = document.getElementById("start-overlay");
+    overlay.style.display = "flex";
+    this.overlayActive = true;
+    document.body.classList.add("overlay-active");
+  }
+
+  showCaptureToast({ seat, bonus }) {
+    const t = document.createElement("div");
+    t.className = "capture-toast";
+    t.textContent = `🌙 ${this.seatName(seat)}'s Moon captures the Sun!  +${bonus}`;
+    document.body.appendChild(t);
+    this.playSfx(this.sfx.cardShove2);
+    setTimeout(() => t.remove(), 1900);
+  }
+
+  // =====================================================
+  // ====================== Bidding UI ===================
+  // =====================================================
+
+  showBidPanel() {
+    const g = this.game;
+    const legal = g.legalBids(0);
+    const forbidden = g.forbiddenBid(0);
+    const trumpTxt = g.trumpSuit
+      ? `trump <span class="suit-inline ${this.cardView.cardColorClass({ suit: g.trumpSuit })}">${g.trumpSuit}</span>`
+      : "<b>no trump</b>";
+    const cardsTxt = `${g.handSize} card${g.handSize === 1 ? "" : "s"}`;
+
+    this.dom.bidTitle.innerHTML = g.simultaneous
+      ? `Your secret bid · ${cardsTxt} · ${trumpTxt}`
+      : `Your bid · ${cardsTxt} · ${trumpTxt}`;
+
+    this.dom.bidButtons.innerHTML = "";
+    for (let b = 0; b <= g.handSize; b++) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = String(b);
+      btn.className = "bid-btn";
+      if (this.tut && b !== this.tutRound().bids[0]) {
+        btn.disabled = true;
+        btn.title = "Tutorial: bid " + this.tutRound().bids[0];
+      } else if (!legal.includes(b)) {
+        btn.disabled = true;
+        btn.title = "The dealer can't make the bids add up to the number of tricks";
+      } else {
+        btn.addEventListener("click", () => this.onPlayerBid(b));
+      }
+      this.dom.bidButtons.appendChild(btn);
+    }
+
+    let note;
+    if (g.simultaneous) {
+      note = "Bids are revealed together.";
+    } else {
+      const made = g.bids.filter(b => b != null).length;
+      note = made
+        ? `Bid so far: ${g.bidTotal()} of ${g.handSize} trick${g.handSize === 1 ? "" : "s"}.`
+        : "You bid first.";
+      if (forbidden != null) note += ` You're the dealer, so you can't bid ${forbidden}.`;
+    }
+    this.dom.bidNote.textContent = note;
+
+    this.dom.bidPanel.style.display = "flex";
+  }
+
+  hideBidPanel() {
+    this.dom.bidPanel.style.display = "none";
+  }
+
+  // =====================================================
+  // =================== Round summary ===================
+  // =====================================================
+
+  showRoundSummary() {
+    const g = this.game;
+    const r = g.history[g.history.length - 1];
+    if (!r) return;
+
+    const overlay = document.getElementById("end-overlay");
+    const title = document.getElementById("round-summary-title");
+    const sub = document.getElementById("round-summary-sub");
+    const table = document.getElementById("round-summary-table");
+    const btn = document.getElementById("btn-end-next");
+
+    title.textContent = `Round ${g.roundIndex + 1} of ${g.totalRounds} complete`;
+
+    const gameOver = g.phase === "gameOver";
+    if (gameOver) {
+      sub.textContent = "That was the last round.";
+    } else {
+      const nextCards = g.schedule[g.roundIndex + 1];
+      const nextDealer = this.seatName(g.nextSeat(g.dealer));
+      sub.textContent = `Next: ${nextCards} card${nextCards === 1 ? "" : "s"}, ${nextDealer} deals`;
+    }
+
+    let html = `<thead><tr><th>Player</th><th>Bid</th><th>Won</th><th>Points</th><th>Total</th></tr></thead><tbody>`;
+    for (let seat = 0; seat < g.numPlayers; seat++) {
+      const exact = r.bids[seat] === r.won[seat];
+      html += `<tr class="${exact ? "exact" : "missed"}${seat === 0 ? " me" : ""}">` +
+        `<td>${this.escape(this.seatName(seat))}</td>` +
+        `<td>${r.bids[seat]}</td><td>${r.won[seat]}</td>` +
+        `<td>+${r.points[seat]}${exact ? " ✓" : ""}` +
+        `${r.bonus && r.bonus[seat] ? ` <span class="bonus-tag" title="Moon captured the Sun">🌙+${r.bonus[seat]}</span>` : ""}</td>` +
+        `<td>${r.totals[seat]}</td></tr>`;
+    }
+    html += "</tbody>";
+    table.innerHTML = html;
+
+    btn.textContent = gameOver ? "Final results" : "Next round";
+    btn.onclick = () => {
+      this.hideRoundSummary();
+      if (this.tut) this.hideCoach();
+      if (gameOver && this.tut) this.finishTutorial();
+      else if (gameOver) this.showGameResults();
+      else this.runRound(this.epoch);
+    };
+    if (this.tut) {
+      btn.textContent = gameOver ? "Finish" : "Next hand";
+      this.coach("end");
+    }
+
+    overlay.style.display = "flex";
+    this.overlayActive = true;
+    this.updateTurnHighlight();
+    setTimeout(() => btn.focus(), 50);
+  }
+
+  hideRoundSummary() {
+    const overlay = document.getElementById("end-overlay");
+    if (overlay) overlay.style.display = "none";
+    const start = document.getElementById("start-overlay");
+    this.overlayActive = !!(start && start.style.display !== "none");
+  }
+
+  // =====================================================
+  // =================== Final results ===================
+  // =====================================================
+
+  showGameResults() {
+    const g = this.game;
+    const overlay = document.getElementById("start-overlay");
+    const startPanel = document.getElementById("start-panel");
+    const resultsPanel = document.getElementById("results-panel");
+    const resultsWinner = document.getElementById("results-winner");
+    const resultsSubtitle = document.getElementById("results-subtitle");
+    const resultsTable = document.getElementById("results-match-table");
+    const closeBtn = document.getElementById("btn-close-results");
+
+    const startBody = overlay.querySelector(".start-body");
+    const startButtons = overlay.querySelector(".start-buttons");
+
+    const standings = g.scores
+      .map((score, seat) => ({
+        seat,
+        score,
+        exact: g.history.filter(r => r.bids[seat] === r.won[seat]).length
+      }))
+      .sort((a, b) => b.score - a.score || b.exact - a.exact);
+
+    const top = standings[0].score;
+    const winners = standings.filter(s => s.score === top);
+    const playerWon = winners.some(s => s.seat === 0);
+
+    if (winners.length === 1) {
+      resultsWinner.textContent = winners[0].seat === 0
+        ? `${this.seatName(0)} wins!`
+        : `${this.seatName(winners[0].seat)} wins!`;
+    } else {
+      resultsWinner.textContent = "It's a tie!";
+    }
+
+    const names = winners.map(w => this.seatName(w.seat)).join(" & ");
+    resultsSubtitle.textContent = `${names} · ${top} points`;
+
+    let table = `<table><thead><tr><th>#</th><th>Player</th><th>Exact bids</th><th>Score</th></tr></thead><tbody>`;
+    standings.forEach((s, i) => {
+      table += `<tr><td>${i + 1}</td><td>${this.escape(this.seatName(s.seat))}</td>` +
+        `<td>${s.exact} / ${g.history.length}</td><td>${s.score}</td></tr>`;
+    });
+    table += `</tbody></table>`;
+    resultsTable.innerHTML = table;
+    resultsTable.style.display = "block";
+
+    if (!this.playedEndJingle) {
+      this.playedEndJingle = true;
+      this.playEndArpeggio({ outcome: playerWon ? "win" : "lose" });
+    }
+
+    overlay.style.display = "flex";
+    this.overlayActive = true;
+    document.body.classList.add("overlay-active");
+    startPanel.classList.add("results-open");
+    if (startBody) startBody.style.display = "none";
+    if (startButtons) startButtons.style.display = "none";
+    resultsPanel.style.display = "flex";
+
+    closeBtn.onclick = () => this.hideGameResults();
+  }
+
+  hideGameResults() {
+    const overlay = document.getElementById("start-overlay");
+    const startPanel = document.getElementById("start-panel");
+    const resultsPanel = document.getElementById("results-panel");
+    const startBody = overlay.querySelector(".start-body");
+    const startButtons = overlay.querySelector(".start-buttons");
+
+    startPanel.classList.remove("results-open");
+    startPanel.style.height = "";
+    if (startBody) startBody.style.display = "";
+    if (startButtons) startButtons.style.display = "";
+    resultsPanel.style.display = "none";
+
+    // Clear the old table while the start screen is up.
+    this.epoch++;
+    this.game.startNewGame({ numPlayers: this.numPlayers, maxCards: 5, firstDealer: 0 });
+    this.buildSeats();
+    this.render();
+  }
+
+  // =====================================================
+  // ==================== Start overlay ==================
+  // =====================================================
+
+  bindStartOverlay() {
+    const overlay = document.getElementById("start-overlay");
+    const nameInput = document.getElementById("player-name-input");
+    const opponentRadios = document.querySelectorAll('input[name="opponent"]');
+    const playerRadios = document.querySelectorAll('input[name="players"]');
+    const firstDealRadios = document.querySelectorAll('input[name="firstdeal"]');
+    const suitRadios = document.querySelectorAll('input[name="suitcolors"]');
+    const quickBtn = document.getElementById("btn-quick");
+    const matchBtn = document.getElementById("btn-match");
+    const instrBtn = document.getElementById("btn-instructions");
+    const instrPanel = document.getElementById("instructions-panel");
+    const instrDone = document.getElementById("btn-instructions-done");
+    const startBody = overlay.querySelector(".start-body");
+    const startButtons = overlay.querySelector(".start-buttons");
+
+    document.body.classList.add("overlay-active");
+
+    if (nameInput) nameInput.value = this.playerName || "Player";
+    opponentRadios.forEach(r => { r.checked = (r.value === this.difficulty); });
+    playerRadios.forEach(r => { r.checked = (parseInt(r.value, 10) === this.numPlayers); });
+    firstDealRadios.forEach(r => { r.checked = (r.value === this.firstDealMode); });
+    suitRadios.forEach(r => { r.checked = (r.value === this.suitColors); });
+    const biddingRadios = document.querySelectorAll('input[name="bidding"]');
+    const trumpRadios = document.querySelectorAll('input[name="trumpmode"]');
+    const deckRadios = document.querySelectorAll('input[name="deck"]');
+    deckRadios.forEach(r => { r.checked = (r.value === (this.extended ? "extended" : "standard")); });
+    biddingRadios.forEach(r => { r.checked = (r.value === this.bidding); });
+    trumpRadios.forEach(r => { r.checked = (r.value === this.trumpMode); });
+
+    const readSettings = () => {
+      biddingRadios.forEach(r => { if (r.checked) this.bidding = r.value; });
+      trumpRadios.forEach(r => { if (r.checked) this.trumpMode = r.value; });
+      deckRadios.forEach(r => { if (r.checked) this.extended = (r.value === "extended"); });
+      opponentRadios.forEach(r => { if (r.checked) this.difficulty = r.value; });
+      playerRadios.forEach(r => { if (r.checked) this.numPlayers = parseInt(r.value, 10); });
+      firstDealRadios.forEach(r => { if (r.checked) this.firstDealMode = r.value; });
+      this.aiEngine.setDifficulty(this.difficulty);
+    };
+
+    const applySuitColorsClass = (mode) => {
+      document.body.classList.remove("suitcolors-classic", "suitcolors-rbbg", "suitcolors-rbbo");
+      document.body.classList.add(`suitcolors-${mode}`);
+    };
+
+    const chooseSuitColors = () => {
+      let mode = this.suitColors || "rbbg";
+      suitRadios.forEach(r => { if (r.checked) mode = r.value; });
+      this.suitColors = mode;
+      applySuitColorsClass(mode);
+      try { localStorage.setItem("oh_suitcolors", this.suitColors); } catch (e) { /* ignore */ }
+    };
+
+    readSettings();
+    chooseSuitColors();
+    suitRadios.forEach(r => r.addEventListener("change", chooseSuitColors));
+
+    // Preview the seat layout behind the overlay when the player count changes.
+    playerRadios.forEach(r => r.addEventListener("change", () => {
+      readSettings();
+      this.game.startNewGame({ numPlayers: this.numPlayers, maxCards: 5, firstDealer: 0 });
+      this.buildSeats();
+      this.render();
+    }));
+
+    const startHandler = (length) => {
+      const rawName = nameInput && nameInput.value ? nameInput.value.trim() : "";
+      this.playerName = rawName || "Player";
+      readSettings();
+      this.gameLength = length;
+
+      try {
+        localStorage.setItem("oh_playerName", this.playerName);
+        localStorage.setItem("oh_difficulty", this.difficulty);
+        localStorage.setItem("oh_numPlayers", String(this.numPlayers));
+        localStorage.setItem("oh_firstDeal", this.firstDealMode);
+        localStorage.setItem("oh_suitcolors", this.suitColors);
+        localStorage.setItem("oh_bidding", this.bidding);
+        localStorage.setItem("oh_trumpMode", this.trumpMode);
+        localStorage.setItem("oh_extended", this.extended ? "1" : "0");
+      } catch (e) { /* ignore */ }
+
+      overlay.style.display = "none";
+      this.overlayActive = false;
+      document.body.classList.remove("overlay-active");
+
+      this.ensureAudioContext();
+      this.startGame();
+    };
+
+    if (quickBtn) quickBtn.addEventListener("click", () => startHandler("short"));
+    const tutBtn = document.getElementById("btn-tutorial");
+    if (tutBtn) tutBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+      this.overlayActive = false;
+      document.body.classList.remove("overlay-active");
+      this.ensureAudioContext();
+      this.startTutorial();
+    });
+    if (matchBtn) matchBtn.addEventListener("click", () => startHandler("full"));
+
+    const closeInstructions = () => {
+      const startPanelEl = document.getElementById("start-panel");
+      if (startPanelEl) {
+        startPanelEl.classList.remove("instructions-open");
+        startPanelEl.style.height = "";
+      }
+      if (startBody) startBody.style.display = "";
+      if (startButtons) startButtons.style.display = "";
+      instrPanel.style.display = "none";
+      if (instrBtn) instrBtn.focus();
+    };
+
+    if (instrBtn && instrPanel) {
+      instrBtn.addEventListener("click", () => {
+        const startPanelEl = document.getElementById("start-panel");
+        if (startPanelEl) {
+          const r = startPanelEl.getBoundingClientRect();
+          startPanelEl.style.height = Math.round(r.height) + "px";
+          startPanelEl.classList.add("instructions-open");
+        }
+        if (startBody) startBody.style.display = "none";
+        if (startButtons) startButtons.style.display = "none";
+        instrPanel.style.display = "flex";
+        if (instrDone) setTimeout(() => instrDone.focus(), 50);
+      });
+    }
+
+    if (instrDone && instrPanel) instrDone.addEventListener("click", closeInstructions);
+
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && instrPanel && instrPanel.style.display !== "none") {
+        closeInstructions();
+      }
+    });
+  }
+
+  // =====================================================
+  // ================= Sound / fullscreen ================
+  // =====================================================
+
+  applySoundMuted() {
+    const muted = !!this.soundMuted;
+
+    try {
+      for (const k of Object.keys(this.sfx)) {
+        const a = this.sfx[k];
+        if (a && typeof a === "object") a.muted = muted;
+      }
+    } catch (e) { /* ignore */ }
+
+    const btn = document.getElementById("btn-sound");
+    if (btn) {
+      btn.textContent = muted ? "🔇" : "🔊";
+      btn.setAttribute("aria-pressed", muted ? "true" : "false");
+      btn.title = muted ? "Sound: muted" : "Sound: on";
+      btn.classList.toggle("muted", muted);
+
+      if (!btn.__ohBound) {
+        btn.__ohBound = true;
+        btn.addEventListener("click", () => {
+          this.setSoundMuted(!this.soundMuted);
+          if (!this.soundMuted) this.ensureAudioContext();
+        });
+      }
+    }
+
+    try { localStorage.setItem("oh_soundMuted", muted ? "1" : "0"); } catch (e) { /* ignore */ }
+  }
+
+  setSoundMuted(muted) {
+    this.soundMuted = !!muted;
+    this.applySoundMuted();
+  }
+
+  getFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  isFullscreenEnabled() {
+    return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  }
+
+  applyFullscreenUi() {
+    const btn = document.getElementById("btn-fullscreen");
+    if (!btn) return;
+
+    const root = document.documentElement;
+    const supported = this.isFullscreenEnabled() && !!(root.requestFullscreen || root.webkitRequestFullscreen);
+    if (!supported) {
+      btn.style.display = "none";
+      return;
+    }
+
+    const isFs = !!this.getFullscreenElement();
+    btn.textContent = isFs ? "🗗" : "⛶";
+    btn.setAttribute("aria-pressed", isFs ? "true" : "false");
+    btn.title = isFs ? "Exit fullscreen" : "Fullscreen";
+
+    if (!btn.__ohBound) {
+      btn.__ohBound = true;
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        try {
+          if (this.getFullscreenElement()) {
+            const fn = document.exitFullscreen || document.webkitExitFullscreen;
+            const p = fn && fn.call(document);
+            if (p && typeof p.catch === "function") p.catch(() => {});
+          } else {
+            const fn = root.requestFullscreen || root.webkitRequestFullscreen;
+            const p = fn && fn.call(root);
+            if (p && typeof p.catch === "function") p.catch(() => {});
+          }
+        } catch (e) { /* ignore */ }
+      });
+    }
+
+    if (!this.__ohFullscreenChangeBound) {
+      this.__ohFullscreenChangeBound = true;
+      document.addEventListener("fullscreenchange", () => this.applyFullscreenUi());
+      document.addEventListener("webkitfullscreenchange", () => this.applyFullscreenUi());
+    }
+  }
+
+  playSfx(audio) {
+    if (this.soundMuted || !audio) return;
+    try {
+      audio.currentTime = 0;
+      const p = audio.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    } catch (e) { /* ignore */ }
+  }
+
+  ensureAudioContext() {
+    if (!this.audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) this.audioCtx = new AC();
+    }
+    if (this.audioCtx && this.audioCtx.state === "suspended") {
+      try { this.audioCtx.resume().catch(() => {}); } catch (e) { /* ignore */ }
+    }
+    return this.audioCtx;
+  }
+
+  playEndArpeggio({ outcome } = {}) {
+    if (this.soundMuted) return;
+    const ctx = this.ensureAudioContext();
+    if (!ctx) return;
+
+    const now = ctx.currentTime;
+    const midiToFreq = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+    // Win: upbeat arpeggio. Lose: diminished-7 arpeggios stepping down.
+    const seq = (outcome === "lose")
+      ? [
+        60, 63, 66, 69,  59, 62, 65, 68,  58, 61, 64, 67,
+        57, 60, 63, 66,  56, 59, 62, 65,  55, 58, 61, 64
+      ].map(midiToFreq)
+      : [
+        261.63, 329.63, 392.00, 523.25, 659.25,
+        440.00, 523.25, 698.46, 587.33, 349.23,
+        698.46, 587.33, 349.23, 698.46, 493.88,
+        587.33, 783.99, 493.88, 659.25, 392.00,
+        493.88, 659.25, 392.00, 523.25
+      ];
+
+    const noteGap = 0.1;
+    const noteDur = 0.09;
+    const totalTime = seq.length * noteGap;
+
+    const gainNode = ctx.createGain();
+    gainNode.connect(ctx.destination);
+    gainNode.gain.setValueAtTime(0.0001, now);
+    gainNode.gain.linearRampToValueAtTime(0.22, now + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + totalTime + 0.12);
+
+    seq.forEach((freq, index) => {
+      const t = now + index * noteGap;
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, t);
+      osc.connect(gainNode);
+      osc.start(t);
+      osc.stop(t + noteDur);
+    });
+
+    setTimeout(() => {
+      try { gainNode.disconnect(); } catch (_) {}
+    }, (totalTime + 0.25) * 1000);
+  }
+}
+
+// ---- scaling glue ----
+function updateScale() {
+  const cardsInHand = 10;
+  const maxFanWidth = window.innerWidth * 0.9;
+  const overlapFactor = 0.35;
+  const scaleFromFan = maxFanWidth / (cardsInHand * BASE_CARD_WIDTH * overlapFactor);
+
+  // Side seats + centre trick need roughly 7.5 card widths across.
+  const scaleFromWidth = (window.innerWidth * 0.95) / (BASE_CARD_WIDTH * 7.5);
+
+  // Top seat, trick area, player hand + labels stacked vertically.
+  const layoutRows = 4.9;
+  const scaleFromHeight = (window.innerHeight * 0.92) / (BASE_CARD_HEIGHT * layoutRows);
+
+  let scale = Math.min(scaleFromFan, scaleFromWidth, scaleFromHeight);
+  if (!isFinite(scale) || scale <= 0) scale = 1;
+  scale = Math.max(0.4, scale);
+
+  const root = document.documentElement;
+  root.style.setProperty("--card-scale", scale.toString());
+  root.style.setProperty("--index-size", Math.max(MIN_INDEX_PX, BASE_INDEX_PX * scale) + "px");
+  root.style.setProperty("--pip-size", Math.max(MIN_PIP_PX, BASE_PIP_PX * scale) + "px");
+
+  layoutMetrics.scale = scale;
+  layoutMetrics.cardWidth = BASE_CARD_WIDTH * scale;
+  layoutMetrics.cardHeight = BASE_CARD_HEIGHT * scale;
+}
+
+updateScale();
+const controller = new GameController();
+
+window.addEventListener("resize", () => {
+  updateScale();
+  controller.render();
+});
