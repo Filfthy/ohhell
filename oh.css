@@ -1594,8 +1594,24 @@ body.faces-large #player-hand .card.picked .jumbo-pip { display: block; }
     border-radius: 8px;
   }
   /* Keep the scoreboard below them... */
-  #scoreboard { top: 54px; transform: scale(0.85); transform-origin: top right; }
+  #scoreboard { top: 54px; transform: scale(var(--sb-scale, 1.2)); transform-origin: top right; }
   /* ...and the start panel to their left. */
   #start-overlay { justify-content: flex-start; padding-left: 10px; }
   #start-panel:not(.instructions-open):not(.results-open) { max-width: calc(100vw - 140px); }
+}
+/* Phones: shift the playing area left a little to make room for the
+   score box in the top-right corner. */
+@media (orientation: landscape) and (max-height: 500px) {
+  :root { --play-shift: 5vw; }
+  #trick-area, #player-seat-info, .seat-top, .seat-topleft, .seat-topright, #deck-slot, #bid-panel {
+    margin-left: calc(-1 * var(--play-shift));
+  }
+  #player-hand { left: calc(-1 * var(--play-shift)); }
+  .seat-left  { margin-left: calc(-0.5 * var(--play-shift)); }
+  .seat-right { margin-right: var(--play-shift); }
+}
+/* Narrow phones: shift a bit further, score box slightly smaller. */
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 720px) {
+  :root { --play-shift: 8vw; }
+  #scoreboard { --sb-scale: 1.1; }
 }
