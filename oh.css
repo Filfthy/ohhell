@@ -1013,13 +1013,18 @@ body[data-players="5"] .seat-right { top: 62%; }
 .card .face-icon .ace-pip { font-size: 62cqw; }
 .card .court-pip { font-size: 30cqw; }
 
-/* Suit symbols in coach text: suit colour with a light halo so black
-   spades and clubs stay readable on the dark panel. */
+/* Suit symbols in coach text: on a small card-coloured chip, so black
+   spades and clubs read on the dark panel; forced to text (not emoji)
+   glyphs, with a little space after the rank. */
 #coach .coach-suit {
+  display: inline-block;
   font-family: "Segoe UI Symbol", "DejaVu Sans", sans-serif;
-  text-shadow:
-    -1px -1px 0 #fdf6e3, 1px -1px 0 #fdf6e3,
-    -1px 1px 0 #fdf6e3, 1px 1px 0 #fdf6e3;
+  font-weight: normal;
+  line-height: 1.15;
+  margin-left: 0.2em;
+  padding: 0 0.14em;
+  border-radius: 0.2em;
+  background: #fdf6e3;
 }
 
 /* =====================================================================
@@ -1614,4 +1619,33 @@ body.faces-large #player-hand .card.picked .jumbo-pip { display: block; }
 @media (orientation: landscape) and (max-height: 500px) and (max-width: 720px) {
   :root { --play-shift: 8vw; }
   #scoreboard { --sb-scale: 1.1; }
+}
+
+/* ===== How to play: use most of the screen, text in a readable column ===== */
+#start-panel.instructions-open {
+  width: min(96vw, 1200px);
+  max-width: 96vw;
+  height: min(92vh, 100vh - 130px);   /* clear of the corner buttons */
+  max-height: none;
+}
+#start-panel.instructions-open .start-title-img { max-height: 5.5em; }
+#instructions-panel .instructions-content {
+  font-size: clamp(15px, 0.75vw + 0.9vh, 19px);
+  line-height: 1.5;
+}
+/* Centre a ~68 character column inside the wide panel. */
+#instructions-panel .instructions-content {
+  padding-left: max(8px, calc((100% - 68ch) / 2));
+  padding-right: max(18px, calc((100% - 68ch) / 2));
+}
+#instructions-panel .instructions-content h3 { font-size: 1.25em; margin-top: 0.9em; }
+#instructions-panel .instructions-content h3:first-child { margin-top: 0; }
+#instructions-panel .instructions-content ul { padding-left: 1.2em; }
+#instructions-panel .instructions-content li { margin-bottom: 0.45em; }
+#instructions-panel .instructions-footer { justify-content: center; padding-right: 0; }
+#btn-instructions-done { font-size: 18px; font-weight: 700; padding: 8px 34px; min-height: 42px; border-radius: 10px; }
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Phones: no logo here, and keep clear of the corner buttons. */
+  #start-panel.instructions-open { max-width: calc(100vw - 140px); width: calc(100vw - 140px); height: 92vh; }
+  #start-panel.instructions-open .start-panel-header { display: none; }
 }

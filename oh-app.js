@@ -1249,7 +1249,7 @@ class GameController {
     // Suit symbols in the deck's suit colours.
     const suitCls = { "♠": "s-spade", "♥": "s-heart", "♦": "s-diamond", "♣": "s-club" };
     el.querySelector(".coach-text").innerHTML =
-      text.replace(/[♠♥♦♣]/g, ch => `<span class="coach-suit ${suitCls[ch]}">${ch}</span>`);
+      text.replace(/[♠♥♦♣]/g, ch => `<span class="coach-suit ${suitCls[ch]}">${ch}︎</span>`);
 
     this.placeSpot(spot);
 
@@ -1913,11 +1913,8 @@ class GameController {
     if (instrBtn && instrPanel) {
       instrBtn.addEventListener("click", () => {
         const startPanelEl = document.getElementById("start-panel");
-        if (startPanelEl) {
-          const r = startPanelEl.getBoundingClientRect();
-          startPanelEl.style.height = Math.round(r.height) + "px";
-          startPanelEl.classList.add("instructions-open");
-        }
+        // The How to play page sizes itself (see oh.css), not to the start panel.
+        if (startPanelEl) startPanelEl.classList.add("instructions-open");
         if (startBody) startBody.style.display = "none";
         if (startButtons) startButtons.style.display = "none";
         instrPanel.style.display = "flex";
