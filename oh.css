@@ -1448,8 +1448,8 @@ body.faces-large .card .jumbo-court { width: 64cqw; height: auto; }
 
 /* ===== Touch screens: tap a card to pick it, tap it again to play ===== */
 body.player-turn #player-hand .card.legal-move.picked {
-  --sel-lift: -16%;   /* of the card's own height */
-  --hover-scale: 1.08;
+  --sel-lift: -24%;   /* of the card's own height: clears its neighbours */
+  --hover-scale: 1;    /* no growing, so it doesn't cover the card to its left */
   box-shadow:
     0 10px 18px rgba(0, 0, 0, 0.85),
     0 0 0 3px #ffd84a;
@@ -1487,6 +1487,7 @@ body.faces-large #player-hand .card.picked .jumbo-pip { display: block; }
    Sits in the middle of the table (empty while bidding), clear of the
    opponents' cards. */
 #bid-panel.touch {
+  top: 41%;
   gap: 6px;
   padding: 8px 14px 10px;
   font-size: 13px;
@@ -1573,3 +1574,28 @@ body.faces-large #player-hand .card.picked .jumbo-pip { display: block; }
 }
 .bid-confirm b { font-size: 26px; font-weight: 900; }
 .bid-confirm:disabled { background: rgba(255, 255, 255, 0.15); color: rgba(255, 255, 255, 0.6); font-size: 14px; }
+
+/* Phones: plain solid white seat names; the outlined italic is hard to read small. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .seat-info .name-label {
+    color: #fff;
+    -webkit-text-stroke: 0;
+  }
+}
+
+/* Phones: bigger corner controls (quit, sound, fullscreen) for fingers. */
+@media (orientation: landscape) and (max-height: 500px) {
+  #controls { top: 6px; right: 8px; }
+  #controls .icon-btn {
+    width: 46px;
+    height: 40px;
+    margin-left: 8px;
+    font-size: 22px;
+    border-radius: 8px;
+  }
+  /* Keep the scoreboard below them... */
+  #scoreboard { top: 54px; transform: scale(0.85); transform-origin: top right; }
+  /* ...and the start panel to their left. */
+  #start-overlay { justify-content: flex-start; padding-left: 10px; }
+  #start-panel:not(.instructions-open):not(.results-open) { max-width: calc(100vw - 140px); }
+}

@@ -47,6 +47,7 @@ function applyFaces() {
 }
 const COIN_BIG = 2.2;
 const PHONE_HAND_SCALE = 1.4;   // your hand on phones (see updateScale)
+const PHONE_FAN_TIGHTEN = 0.9;  // closer card spacing for that bigger hand
 let IS_PHONE = false;
 let HAND_SCALE = 1;   // trump coin size while it spins mid-table
 // Touch screens get "tap to pick, tap again to play" so a stray tap
@@ -332,9 +333,14 @@ class GameController {
     const tutIdx = this.tutCardIdx(0);
     if (tutIdx != null) legal = legal.filter(i => i === tutIdx);
     const total = indexed.length;
+    // A picked card (touch screens) opens a gap either side of it, so the
+    // card next to it is easy to tap instead.
+    const pickedSlot = legal.includes(this.pickedIdx) ? indexed.findIndex(o => o.idx === this.pickedIdx) : -1;
+    const pickGap = 0.22 * layoutMetrics.cardWidth * HAND_SCALE;
 
     indexed.forEach((obj, slot) => {
-      const pos = computePlayerFanSlot(slot, total, scale * HAND_SCALE);
+      const pos = computePlayerFanSlot(slot, total, scale * HAND_SCALE * (IS_PHONE ? PHONE_FAN_TIGHTEN : 1));
+      if (pickedSlot >= 0 && slot !== pickedSlot) pos.offsetX += slot < pickedSlot ? -pickGap : pickGap;
       const div = this.cardView.createCardElement(obj.card, { clickable: true });
 
       div.style.top = cardTop + "px";
@@ -344,10 +350,9 @@ class GameController {
       div.style.zIndex = String(slot + 100);
 
       if (legal.includes(obj.idx)) div.classList.add("legal-move");
-      if (obj.idx === this.pickedIdx && legal.includes(obj.idx)) {
-        div.classList.add("picked");
-        div.style.zIndex = "300";   // in front of its neighbours
-      }
+      // The picked card lifts but keeps its place in the fan, so the cards
+      // either side of it can still be tapped.
+      if (obj.idx === this.pickedIdx && legal.includes(obj.idx)) div.classList.add("picked");
 
       div.addEventListener("click", (e) => this.handlePlayerCardClick(obj.idx, e.currentTarget));
       handDiv.appendChild(div);
