@@ -1687,3 +1687,10 @@ body.back-artifact .card.back { background: transparent url("back-artifact.webp"
   #oh-modal .oh-modal-slot .seg-backs .bk { height: 2.6em; }
   #oh-modal .tut-offer-buttons button { padding: 0.4em 1.1em; }
 }
+
+/* every scrolling area: a slim scrollbar in the table's colour, never the browser's grey one */
+* { scrollbar-width: thin; scrollbar-color: var(--ui-accent, #1EC000) rgba(0, 0, 0, 0.25); }
+*::-webkit-scrollbar { width: 7px; height: 7px; }
+*::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); border-radius: 7px; }
+*::-webkit-scrollbar-thumb { background: var(--ui-accent, #1EC000); border-radius: 7px; }
+*::-webkit-scrollbar-corner { background: transparent; }
