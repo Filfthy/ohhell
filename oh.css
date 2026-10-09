@@ -1694,3 +1694,12 @@ body.back-artifact .card.back { background: transparent url("back-artifact.webp"
 *::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.25); border-radius: 7px; }
 *::-webkit-scrollbar-thumb { background: var(--ui-accent, #1EC000); border-radius: 7px; }
 *::-webkit-scrollbar-corner { background: transparent; }
+
+/* ===== The Souls table: animated soul sand (oh-souls.js draws it on #souls-bg) ===== */
+body.table-souls { background: transparent !important; --ui-rgb: 26, 15, 10; --ui-accent: #6fc9d3; }   /* the sand canvas shows through; the dark colour is on the page root */
+html:has(body.table-souls) { background-color: #160d09; }
+#souls-bg { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; display: none; }
+.seg-tables .sw-souls { background:
+    radial-gradient(ellipse 18% 30% at 30% 45%, rgba(150, 205, 215, 0.45), rgba(0, 0, 0, 0) 70%),
+    radial-gradient(ellipse 14% 24% at 72% 58%, rgba(150, 205, 215, 0.3), rgba(0, 0, 0, 0) 70%),
+    radial-gradient(ellipse at 50% 55%, #4a3326, #2a1c14 70%, #160d09) !important; }

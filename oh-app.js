@@ -1755,10 +1755,12 @@ class GameController {
     const trumpRadios = document.querySelectorAll('input[name="trumpmode"]');
     const deckRadios = document.querySelectorAll('input[name="deck"]');
     // Table surface (applied immediately, remembered).
-    const TABLES = ["green", "red", "blue", "walnut", "mahogany", "tavern", "marble"];
+    const TABLES = ["green", "red", "blue", "walnut", "mahogany", "tavern", "marble", "souls"];
     const applyTable = (t) => {
       TABLES.forEach(x => document.body.classList.remove("table-" + x));
       document.body.classList.add("table-" + t);
+      // the Souls table is animated; a background must never stop the start screen working
+      try { if (typeof SOULS !== "undefined") SOULS.setActive(t === "souls"); } catch (e) { /* ignore */ }
     };
     let table = "green";
     try { const t = localStorage.getItem("oh_table"); if (TABLES.includes(t)) table = t; } catch (e) { /* ignore */ }
