@@ -1,0 +1,79 @@
+/* bv-more.css - "More card games" and the sharing strip, shared by BugVictim's card games (see bv-more.js).
+   Each game sets these to its own colours:
+   --bv-edge (button edges), --bv-edge-rgb (the same as r, g, b), --bv-fill and --bv-fill-hi (the Play on
+   itch.io buttons), --bv-fill-text, --bv-text, --bv-soft (small notes) and --bv-heading. */
+:root {
+  --bv-edge: #1EC000; --bv-edge-rgb: 30, 192, 0;
+  --bv-fill: #1EC000; --bv-fill-hi: #23e000; --bv-fill-text: #021408;
+  --bv-text: #fdf6e3; --bv-soft: #9fe38f; --bv-heading: #ffd54a;
+}
+
+/* the note on the splash */
+#splash .bv-note { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: clamp(14px, 2.1vh, 20px);
+  color: var(--bv-text); opacity: 0.85; text-shadow: 0 1px 4px #000; margin: 0.4vh 0 -0.6vh; }
+
+/* More card games button and the sharing strip, under the start buttons */
+.bv-friends { display: flex; flex-direction: column; align-items: stretch; gap: 0.6em; width: 100%; margin-top: 0.8em; box-sizing: border-box; }
+.bv-games-btn { margin: 0; padding: 0.6em 0.8em; border-radius: 10px; cursor: pointer; font-size: 1.05em; font-weight: 700;
+  background: rgba(0, 0, 0, 0.35); color: var(--bv-text); border: 1px solid var(--bv-edge); }
+.bv-games-btn:hover { background: rgba(var(--bv-edge-rgb), 0.22); }
+.bv-pips { display: inline-flex; gap: 0.15em; margin: 0 0.6em; font-size: 1.15em; vertical-align: -0.08em; font-family: "Segoe UI Symbol", "Arial Unicode MS", sans-serif; }
+.bv-pips .pr { color: #e0393a; text-shadow: 0 0 1px #fdf6e3, 0 0 1px #fdf6e3, 0 0 2px #fdf6e3; }
+.bv-pips .pb { color: #111; text-shadow: 0 0 1px #fdf6e3, 0 0 1px #fdf6e3, 0 0 2px #fdf6e3; }
+
+.bv-share { display: grid; grid-template-columns: 1fr; justify-items: center; text-align: center; row-gap: 0.35em;
+  padding: 0.45em 0.6em 0.55em; border: 1.5px solid rgba(253, 246, 227, 0.8); border-radius: 9px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.35); color: var(--bv-text); font-size: 0.85em; cursor: default; }
+.bv-share p { margin: 0; font-size: 0.95em; text-shadow: 0 1px 3px #000; }
+.bv-share .bv-share-buttons { display: flex; gap: 0.5em; margin: 0; }
+.bv-share .bv-share-buttons button { margin: 0; padding: 0.4em 0.8em; border-radius: 6px; font-size: 0.95em; font-weight: 600; line-height: 1; cursor: pointer;
+  background: rgba(0, 0, 0, 0.35); color: var(--bv-text); border: 1px solid var(--bv-edge); }
+.bv-share .bv-share-buttons button:hover { background: rgba(var(--bv-edge-rgb), 0.22); }
+.bv-share .bv-share-status { font-size: 0.9em; color: var(--bv-soft); }
+.bv-share .bv-share-status:empty { display: none; }
+.bv-share .bv-share-link { width: 100%; box-sizing: border-box; padding: 0.3em; font-size: 0.9em; color: #fff;
+  background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(253, 246, 227, 0.5); border-radius: 4px; }
+.bv-share .bv-share-link[hidden] { display: none; }
+/* side by side in the popup */
+.bv-panel .bv-share { grid-template-columns: auto auto; column-gap: 0.9em; align-items: center; padding: 0.35em 0.9em; }
+.bv-panel .bv-share .bv-share-status, .bv-panel .bv-share .bv-share-link { grid-column: 1 / -1; }
+
+/* the popup, in the game's own popup panel */
+#bv-more { z-index: 16000; }
+#bv-more .bv-panel { width: min(64em, 94vw); max-height: 94vh; overflow-y: auto; box-sizing: border-box; text-align: left; }
+#bv-more .tut-offer-title { text-align: center; color: var(--bv-heading); }
+#bv-more .bv-intro { margin: -0.2em 0 1em; text-align: center; font-style: italic; opacity: 0.85; }
+#bv-more .bv-games { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2em; }
+#bv-more .bv-game { display: flex; flex-direction: column; min-width: 0; }
+#bv-more .bv-picture { display: block; aspect-ratio: 630 / 500; border-radius: 10px; overflow: hidden; background: #000;
+  border: 1px solid rgba(var(--bv-edge-rgb), 0.45); transition: transform 0.12s, box-shadow 0.12s; }
+#bv-more .bv-picture:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6); border-color: var(--bv-edge); }
+#bv-more .bv-picture img { width: 100%; height: 100%; object-fit: contain; display: block; }
+#bv-more h3 { margin: 0.6em 0 0.15em; font-size: 1.15em; color: var(--bv-text); }
+#bv-more .bv-devices { font-size: 0.82em; color: var(--bv-soft); letter-spacing: 0.04em; }
+#bv-more .bv-game p { margin: 0.4em 0 0.9em; font-size: 0.9em; line-height: 1.4; flex: 1 1 auto; }
+#bv-more .bv-play { display: block; text-align: center; text-decoration: none; font-weight: 700; border-radius: 9px; padding: 0.5em 0.8em;
+  background: var(--bv-fill); color: var(--bv-fill-text); }
+#bv-more .bv-play:hover { background: var(--bv-fill-hi); }
+#bv-more .bv-panel .bv-share { margin: 1.1em auto 0; width: max-content; max-width: 100%; }
+#bv-more .bv-close-row { display: flex; justify-content: center; margin-top: 1em; }
+#bv-more .bv-close { background: var(--bv-fill); color: var(--bv-fill-text); border: none; min-width: 7em; }
+#bv-more .bv-close:hover { background: var(--bv-fill-hi); }
+
+/* short screens (phones on their side) */
+@media (max-height: 520px) {
+  .bv-friends { gap: 0.4em; margin-top: 0.5em; }
+  .bv-games-btn { font-size: max(1em, 12px); padding: 0.35em 0.6em; }
+  .bv-share { font-size: max(0.85em, 11px); padding: 0.3em 0.5em 0.35em; row-gap: 0.25em; }
+  .bv-share .bv-share-buttons button { padding: 0.3em 0.7em; }
+  #bv-more .bv-panel { padding: 0.6em 1em 0.7em; font-size: 13.5px; }
+  #bv-more .tut-offer-title { margin-bottom: 0; }
+  #bv-more .bv-intro { margin: 0 0 0.5em; }
+  #bv-more .bv-games { gap: 0.9em; }
+  #bv-more .bv-picture { height: 21vh; width: auto; align-self: center; }   /* the whole thumbnail, never cropped */
+  #bv-more h3 { margin-top: 0.4em; font-size: 1.05em; }
+  #bv-more .bv-game p { font-size: 0.82em; margin: 0.25em 0 0.5em; line-height: 1.3; }
+  #bv-more .bv-play { padding: 0.35em 0.6em; }
+  #bv-more .bv-panel .bv-share { margin-top: 0.6em; }
+  #bv-more .bv-close-row { margin-top: 0.6em; }
+}

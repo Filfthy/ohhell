@@ -18,6 +18,7 @@
   <link rel="preload" href="share.jpg" as="image" fetchpriority="low">
   <link rel="stylesheet" href="./gw.css?v=141">
   <link rel="stylesheet" href="./oh.css?v=141">
+  <link rel="stylesheet" href="./bv-more.css?v=141">
 </head>
 <body>
   <div id="game-area">
@@ -407,6 +408,12 @@
   <script src="./oh-core.js?v=141"></script>
   <script src="./oh-tutorial.js?v=141"></script>
   <script src="./oh-ai.js?v=141"></script>
+  <script src="./bv-more.js?v=141"></script>
   <script src="./oh-app.js?v=141"></script>
+  <script>
+    BVMore.init({ key: "oh-hell-extended", title: "Oh Hell! Extended", others: ["drakeharbour", "german-whist", "artifact"],
+      shareText: "Bid your tricks, then win exactly that many. Play Oh Hell! Extended.",
+      click: () => controller.sfxTick() });
+  </script>
 </body>
 </html>
