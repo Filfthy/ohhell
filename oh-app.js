@@ -1882,6 +1882,7 @@ class GameController {
         }, 600);
       };
       splash.addEventListener("click", dismiss);
+      if (window.__splashEarly) dismiss();   // clicked while the game was still loading
       splash.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " " || e.key === "Escape") { e.preventDefault(); dismiss(); }
       });
