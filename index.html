@@ -16,9 +16,9 @@
   <meta property="og:image" content="share.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="share.jpg" as="image" fetchpriority="low">
-  <link rel="stylesheet" href="./gw.css?v=143">
-  <link rel="stylesheet" href="./oh.css?v=143">
-  <link rel="stylesheet" href="./bv-more.css?v=143">
+  <link rel="stylesheet" href="./gw.css?v=144">
+  <link rel="stylesheet" href="./oh.css?v=144">
+  <link rel="stylesheet" href="./bv-more.css?v=144">
 </head>
 <body>
   <div id="game-area">
@@ -61,9 +61,11 @@
     </div>
 
     <div id="controls">
-      <button id="btn-quit" type="button" class="icon-btn" aria-label="Quit game" title="Quit game">✕</button>
-      <button id="btn-sound" type="button" class="icon-btn" aria-label="Toggle sound" aria-pressed="true" title="Sound: muted">🔇</button>
-      <button id="btn-fullscreen" type="button" class="icon-btn" aria-label="Toggle fullscreen" aria-pressed="false" title="Fullscreen">⛶</button>
+      <button id="btn-quit" type="button" class="icon-btn" aria-label="Quit this game" data-tip="Quit this game"></button>
+      <button id="btn-rules" type="button" class="icon-btn" aria-label="Rules" data-tip="Rules"></button>
+      <button id="btn-settings" type="button" class="icon-btn" aria-label="Settings" data-tip="Settings"></button>
+      <button id="btn-sound" type="button" class="icon-btn" aria-label="Sound" aria-pressed="true" data-tip="Sound: off"></button>
+      <button id="btn-fullscreen" type="button" class="icon-btn" aria-label="Fullscreen" aria-pressed="false" data-tip="Fullscreen"></button>
     </div>
   </div>
 
@@ -85,7 +87,7 @@
 
 <!-- SPLASH -->
 <div id="splash" role="button" tabindex="0" aria-label="Click to start">
-  <img src="logo-ohhell.webp?v=143" alt="Oh Hell! Extended" class="splash-title">
+  <img src="logo-ohhell.webp?v=144" alt="Oh Hell! Extended" class="splash-title">
   <div class="logo-subtitle splash-subtitle">Oh Hell! with a trick up its sleeve</div>
   <img src="bugvictim.svg" alt="BugVictim" class="splash-logo">
   <div class="splash-credit">© BugVictim 2026</div>
@@ -107,6 +109,15 @@
   <div class="rotate-phone">📱</div>
   <div class="rotate-title">Please turn your phone sideways</div>
   <div class="rotate-text">Oh Hell! Extended is played in landscape.</div>
+</div>
+
+<!-- IN-GAME POPUP: Settings (the Look & feel tab) or Rules (the How to play text), lent while it's open -->
+<div id="oh-modal" class="modal-shade" style="display:none;">
+  <div class="tut-offer-panel oh-modal-panel" role="dialog" aria-modal="true" aria-labelledby="oh-modal-title">
+    <div class="tut-offer-title" id="oh-modal-title"></div>
+    <div class="oh-modal-slot"></div>
+    <div class="tut-offer-buttons"><button type="button" id="oh-modal-close">Back to the game</button></div>
+  </div>
 </div>
 
 <!-- QUIT CONFIRM -->
@@ -139,7 +150,7 @@
 
     <div class="start-panel-header">
       <div class="start-header">
-        <img src="logo-ohhell.webp?v=143" alt="Oh Hell! Extended" class="start-title-img">
+        <img src="logo-ohhell.webp?v=144" alt="Oh Hell! Extended" class="start-title-img">
       </div>
 
       <div class="start-logo-row start-credit-line">© BugVictim 2026</div>
@@ -223,30 +234,32 @@
         <div class="opt-row">
           <div class="opt-label">Table</div>
           <div class="seg seg-tables" role="radiogroup">
-            <label title="Green baize"><input type="radio" name="table" value="green" checked><span class="sw sw-green">Green</span></label>
-            <label title="Hellfire red felt"><input type="radio" name="table" value="red"><span class="sw sw-red">Red</span></label>
-            <label title="Midnight blue felt"><input type="radio" name="table" value="blue"><span class="sw sw-blue">Blue</span></label>
-            <label title="Walnut table"><input type="radio" name="table" value="walnut"><span class="sw sw-walnut">Walnut</span></label>
-            <label title="Mahogany table"><input type="radio" name="table" value="mahogany"><span class="sw sw-mahogany">Mahogany</span></label>
-            <label title="Worn tavern table"><input type="radio" name="table" value="tavern"><span class="sw sw-tavern">Tavern</span></label>
-            <label title="Dark marble"><input type="radio" name="table" value="marble"><span class="sw sw-marble">Marble</span></label>
+            <label data-tip="Green baize"><input type="radio" name="table" value="green" checked><span class="sw sw-green">Green</span></label>
+            <label data-tip="Hellfire red felt"><input type="radio" name="table" value="red"><span class="sw sw-red">Red</span></label>
+            <label data-tip="Midnight blue felt"><input type="radio" name="table" value="blue"><span class="sw sw-blue">Blue</span></label>
+            <label data-tip="Walnut table"><input type="radio" name="table" value="walnut"><span class="sw sw-walnut">Walnut</span></label>
+            <label data-tip="Mahogany table"><input type="radio" name="table" value="mahogany"><span class="sw sw-mahogany">Mahogany</span></label>
+            <label data-tip="Worn tavern table"><input type="radio" name="table" value="tavern"><span class="sw sw-tavern">Tavern</span></label>
+            <label data-tip="Dark marble"><input type="radio" name="table" value="marble"><span class="sw sw-marble">Marble</span></label>
           </div>
         </div>
         <div class="opt-row">
           <div class="opt-label">Card back</div>
           <div class="seg seg-backs" role="radiogroup">
-            <label title="BugVictim"><input type="radio" name="cardback" value="bugvictim" checked><span class="bk bk-bugvictim"></span></label>
-            <label title="Hellfire"><input type="radio" name="cardback" value="hellfire"><span class="bk bk-hellfire"></span></label>
-            <label title="Classic blue"><input type="radio" name="cardback" value="classic-blue"><span class="bk bk-classic-blue"></span></label>
-            <label title="Classic red"><input type="radio" name="cardback" value="classic-red"><span class="bk bk-classic-red"></span></label>
+            <label data-tip="BugVictim"><input type="radio" name="cardback" value="bugvictim" checked><span class="bk bk-bugvictim"></span></label>
+            <label data-tip="Hellfire"><input type="radio" name="cardback" value="hellfire"><span class="bk bk-hellfire"></span></label>
+            <label data-tip="Classic blue"><input type="radio" name="cardback" value="classic-blue"><span class="bk bk-classic-blue"></span></label>
+            <label data-tip="Classic red"><input type="radio" name="cardback" value="classic-red"><span class="bk bk-classic-red"></span></label>
+            <label data-tip="Drakeharbour"><input type="radio" name="cardback" value="drakeharbour"><span class="bk bk-drakeharbour"></span></label>
+            <label data-tip="Artifact"><input type="radio" name="cardback" value="artifact"><span class="bk bk-artifact"></span></label>
           </div>
         </div>
         <div class="opt-row">
-          <div class="opt-label" title="Large index: big corner index and one big pip, for small screens">Card faces</div>
+          <div class="opt-label" data-tip="Large index: big corner index and one big pip, for small screens">Card faces</div>
           <div class="seg" role="radiogroup">
-            <label title="Large index on small screens, full artwork otherwise"><input type="radio" name="faces" value="auto" checked><span>Auto</span></label>
-            <label title="Full artwork always"><input type="radio" name="faces" value="classic"><span>Classic</span></label>
-            <label title="Big corner index and one big pip, always"><input type="radio" name="faces" value="large"><span>Large index</span></label>
+            <label data-tip="Large index on small screens, full artwork otherwise"><input type="radio" name="faces" value="auto" checked><span>Auto</span></label>
+            <label data-tip="Full artwork always"><input type="radio" name="faces" value="classic"><span>Classic</span></label>
+            <label data-tip="Big corner index and one big pip, always"><input type="radio" name="faces" value="large"><span>Large index</span></label>
           </div>
         </div>
         <div class="opt-row">
@@ -254,7 +267,7 @@
           <div class="seg" role="radiogroup"><label><input type="radio" name="speed" value="normal" checked><span>Normal</span></label><label><input type="radio" name="speed" value="fast"><span>Fast</span></label></div>
         </div>
         <div class="opt-row">
-          <div class="opt-label" title="Suit colours">Colours</div>
+          <div class="opt-label" data-tip="Suit colours">Colours</div>
           <div class="seg seg-suits" role="radiogroup">
             <label><input type="radio" name="suitcolors" value="classic"><span class="pill-suits classic"><span>♥</span><span>♠</span><span>♦</span><span>♣</span></span></label>
             <label><input type="radio" name="suitcolors" value="rbbg" checked><span class="pill-suits rbbg"><span>♥</span><span>♠</span><span>♦</span><span>♣</span></span></label>
@@ -406,11 +419,11 @@
   </div>
 </div>
 
-  <script src="./oh-core.js?v=143"></script>
-  <script src="./oh-tutorial.js?v=143"></script>
-  <script src="./oh-ai.js?v=143"></script>
-  <script src="./bv-more.js?v=143"></script>
-  <script src="./oh-app.js?v=143"></script>
+  <script src="./oh-core.js?v=144"></script>
+  <script src="./oh-tutorial.js?v=144"></script>
+  <script src="./oh-ai.js?v=144"></script>
+  <script src="./bv-more.js?v=144"></script>
+  <script src="./oh-app.js?v=144"></script>
   <script>
     BVMore.init({ key: "oh-hell-extended", title: "Oh Hell! Extended", others: ["drakeharbour", "german-whist", "artifact"],
       shareText: "Bid your tricks, then win exactly that many. Play Oh Hell! Extended.",

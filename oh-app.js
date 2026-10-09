@@ -1,6 +1,18 @@
 // oh-app.js
 // Table view + game controller for Oh Hell.
 
+// Corner button icons (drawn, so they look the same everywhere), as in German Whist.
+const svgIcon = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ICONS = {
+  full: svgIcon('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
+  exitFull: svgIcon('<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>'),
+  sound: svgIcon('<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>'),
+  muted: svgIcon('<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/>'),
+  quit: svgIcon('<path d="M6 6l12 12M18 6L6 18"/>'),
+  rules: svgIcon('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8.5 7.5h7M8.5 11h7"/>'),
+  gear: svgIcon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>')
+};
+
 // Seat positions around the table, clockwise from the human (seat 0, bottom).
 const SEAT_LAYOUTS = {
   2: ["bottom", "top"],
@@ -161,6 +173,7 @@ class GameController {
     this.bindBidKeys();
     this.bindScorecard();
     this.bindQuit();
+    this.bindCornerButtons();
     this.bindStartOverlay();
     // A tap anywhere outside your hand puts a picked card back.
     document.addEventListener("click", (e) => {
@@ -1303,6 +1316,65 @@ class GameController {
     this.exitTutorial();
   }
 
+  // Rules and Settings in the corner: mid-game popups that borrow the How to play text and the Look & feel
+  // tab from the start screen (they go back when the popup closes, so their settings stay wired up).
+  bindCornerButtons() {
+    document.getElementById("btn-quit").innerHTML = ICONS.quit;
+    document.getElementById("btn-rules").innerHTML = ICONS.rules;
+    document.getElementById("btn-settings").innerHTML = ICONS.gear;
+    document.getElementById("btn-rules").addEventListener("click", e => { e.currentTarget.blur(); this.showLentPopup("Rules", document.querySelector("#instructions-panel .instructions-content")); });
+    document.getElementById("btn-settings").addEventListener("click", e => { e.currentTarget.blur(); this.showLentPopup("Settings", document.querySelector('.tab-pane[data-pane="look"]')); });
+    const shade = document.getElementById("oh-modal");
+    document.getElementById("oh-modal-close").addEventListener("click", () => this.closeLentPopup());
+    shade.addEventListener("click", e => { if (e.target === shade) this.closeLentPopup(); });
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && shade.style.display !== "none") this.closeLentPopup(); });
+    this.initTips();
+  }
+  showLentPopup(title, node) {
+    if (!node) return;
+    this.closeLentPopup();
+    const shade = document.getElementById("oh-modal");
+    document.getElementById("oh-modal-title").textContent = title;
+    this._lent = { node, parent: node.parentNode, next: node.nextSibling, wasActive: node.classList.contains("active") };
+    node.classList.add("active");
+    shade.querySelector(".oh-modal-slot").appendChild(node);
+    shade.querySelector(".oh-modal-panel").classList.toggle("is-rules", title === "Rules");
+    shade.style.display = "flex";
+    shade.querySelector(".oh-modal-slot").scrollTop = 0;
+  }
+  closeLentPopup() {
+    const shade = document.getElementById("oh-modal");
+    if (!shade || shade.style.display === "none") return;
+    if (this._lent) {
+      const { node, parent, next, wasActive } = this._lent;
+      parent.insertBefore(node, next);
+      node.classList.toggle("active", wasActive);
+      this._lent = null;
+    }
+    shade.style.display = "none";
+  }
+  // Tooltips for anything with a data-tip (mouse only; phones have no hover).
+  initTips() {
+    if (window.matchMedia && matchMedia("(pointer: coarse)").matches) return;
+    const tip = document.createElement("div");
+    tip.id = "oh-tip";
+    document.body.appendChild(tip);
+    let cur = null;
+    document.addEventListener("mouseover", e => {
+      const el = e.target.closest && e.target.closest("[data-tip]");
+      if (el === cur) return;
+      cur = el;
+      if (!el) { tip.classList.remove("on"); return; }
+      const r = el.getBoundingClientRect();
+      tip.textContent = el.dataset.tip;
+      const w = tip.offsetWidth;
+      tip.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + "px";
+      tip.style.top = (r.bottom + 8 + tip.offsetHeight > window.innerHeight ? r.top - tip.offsetHeight - 8 : r.bottom + 8) + "px";
+      tip.classList.add("on");
+    });
+    document.addEventListener("mousedown", () => { tip.classList.remove("on"); cur = null; });
+  }
+
   // Quit button: confirm, then back to the start screen.
   bindQuit() {
     const btn = document.getElementById("btn-quit");
@@ -1700,7 +1772,7 @@ class GameController {
     });
 
     // Card back (applied immediately, remembered).
-    const BACKS = ["bugvictim", "hellfire", "classic-blue", "classic-red"];
+    const BACKS = ["bugvictim", "hellfire", "classic-blue", "classic-red", "drakeharbour", "artifact"];
     const applyBack = (k) => {
       BACKS.forEach(x => document.body.classList.remove("back-" + x));
       document.body.classList.add("back-" + k);
@@ -1944,9 +2016,9 @@ class GameController {
 
     const btn = document.getElementById("btn-sound");
     if (btn) {
-      btn.textContent = muted ? "🔇" : "🔊";
+      btn.innerHTML = muted ? ICONS.muted : ICONS.sound;
       btn.setAttribute("aria-pressed", muted ? "true" : "false");
-      btn.title = muted ? "Sound: muted" : "Sound: on";
+      btn.dataset.tip = muted ? "Sound: off" : "Sound: on";
       btn.classList.toggle("muted", muted);
 
       if (!btn.__ohBound) {
@@ -1986,9 +2058,9 @@ class GameController {
     }
 
     const isFs = !!this.getFullscreenElement();
-    btn.textContent = isFs ? "🗗" : "⛶";
+    btn.innerHTML = isFs ? ICONS.exitFull : ICONS.full;
     btn.setAttribute("aria-pressed", isFs ? "true" : "false");
-    btn.title = isFs ? "Exit fullscreen" : "Fullscreen";
+    btn.dataset.tip = isFs ? "Leave fullscreen" : "Fullscreen";
 
     if (!btn.__ohBound) {
       btn.__ohBound = true;

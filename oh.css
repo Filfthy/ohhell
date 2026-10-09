@@ -1649,3 +1649,41 @@ body.faces-large #player-hand .card.picked .jumbo-pip { display: block; }
   #start-panel.instructions-open { max-width: calc(100vw - 140px); width: calc(100vw - 140px); height: 92vh; }
   #start-panel.instructions-open .start-panel-header { display: none; }
 }
+
+/* ===== Corner buttons: drawn icons (as in German Whist); Quit, Rules and Settings only in a game ===== */
+#controls .icon-btn { display: inline-flex; align-items: center; justify-content: center; }
+#controls .icon-btn svg { display: block; width: 58%; height: 70%; max-width: 22px; max-height: 22px; }
+body.overlay-active #btn-rules, body.overlay-active #btn-settings { display: none; }
+
+/* the Drakeharbour and Artifact backs (their edges are part of the picture) */
+body.back-drakeharbour .card.back { background: transparent url("back-drakeharbour.webp") center / 100% 100% no-repeat; border-color: transparent; }
+.seg-backs .bk-drakeharbour { background: transparent url("back-drakeharbour.webp") center / 100% 100% no-repeat !important; }
+body.back-artifact .card.back { background: transparent url("back-artifact.webp") center / 100% 100% no-repeat; border-color: transparent; }
+.seg-backs .bk-artifact { background: transparent url("back-artifact.webp") center / 100% 100% no-repeat !important; }
+
+/* the in-game Settings / Rules popup, holding the Look & feel tab or the How to play text */
+#oh-modal { z-index: 16500; }
+#oh-modal .oh-modal-panel { width: min(46em, 94vw); max-height: 92vh; display: flex; flex-direction: column; box-sizing: border-box; text-align: left; }
+#oh-modal .oh-modal-panel.is-rules { width: min(52em, 94vw); }
+#oh-modal .tut-offer-title { text-align: center; color: #ffd54a; }
+#oh-modal .oh-modal-slot { overflow-y: auto; min-height: 0; flex: 1 1 auto; margin: 0.4em 0 0.9em; }
+#oh-modal .oh-modal-slot > .tab-pane { display: block; visibility: visible; }
+#oh-modal #oh-modal-close { background: #1EC000; color: #021408; }
+#oh-modal #oh-modal-close:hover { background: #23e000; }
+
+/* tooltips */
+#oh-tip { position: fixed; z-index: 30000; pointer-events: none; background: rgba(var(--ui-rgb, 3, 32, 18), 0.96); color: #fdf6e3;
+  border: 1px solid #1EC000; border-radius: 7px; padding: 5px 10px; font-size: 15px; white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6); opacity: 0; transition: opacity 0.12s; }
+#oh-tip.on { opacity: 1; }
+#oh-modal .oh-modal-slot .instructions-content > h3:first-child { display: none; }   /* the popup's own title says Rules */
+#controls .icon-btn { border-color: var(--ui-accent, #1EC000); }
+@media (max-height: 520px) {
+  #oh-modal .oh-modal-panel { padding: 0.55em 1em 0.6em; font-size: 13px; max-height: 96vh; }
+  #oh-modal .tut-offer-title { margin-bottom: 0; font-size: 1.25em; }
+  #oh-modal .oh-modal-slot { margin: 0.2em 0 0.45em; }
+  #oh-modal .oh-modal-slot .opt-row { margin-top: 0.2em; margin-bottom: 0.2em; }
+  #oh-modal .oh-modal-slot .seg label > span { padding-top: 0.25em; padding-bottom: 0.25em; }
+  #oh-modal .oh-modal-slot .seg-backs .bk { height: 2.6em; }
+  #oh-modal .tut-offer-buttons button { padding: 0.4em 1.1em; }
+}
