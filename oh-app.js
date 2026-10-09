@@ -98,12 +98,8 @@ class GameController {
     this.soundMuted = true;
 
     this.sfx = {
-      cardPlace2: new Audio("card-place-2.ogg"),
       cardShove2: new Audio("card-shove-2.ogg")
     };
-    this.sfx.cardPlace2.preload = "auto";
-    this.sfx.cardPlace2.volume = 0.8;
-    try { this.sfx.cardPlace2.load(); } catch (e) { /* ignore */ }
     this.sfx.cardShove2.preload = "auto";
     this.sfx.cardShove2.volume = 0.4;
     try { this.sfx.cardShove2.load(); } catch (e) { /* ignore */ }
@@ -769,7 +765,7 @@ class GameController {
     const result = this.game.trumpSuit;
     show(result, false);
     flight.firstChild.classList.add("landed");
-    this.playSfx(this.sfx.cardPlace2);
+    this.sfxFlick();
     await wait(750);
     if (ep !== this.epoch) return cleanup();
 
@@ -882,7 +878,7 @@ class GameController {
 
       const seat = g.turn;
       g.placeBid(seat, this.aiEngine.chooseBid(this.bidContext(seat)));
-      this.playSfx(this.sfx.cardPlace2);
+      this.sfxFlick();
       this.flashStats(seat);
     }
 
@@ -924,7 +920,7 @@ class GameController {
       if (ep !== this.epoch || g.phase !== "bid") return;
       const bid = this.tut ? this.tutRound().bids[seat] : this.aiEngine.chooseBid(this.bidContext(seat));
       g.placeBid(seat, bid);
-      this.playSfx(this.sfx.cardPlace2);
+      this.sfxFlick();
       this.flashStats(seat);
     }
     await this.maybeRevealBids(ep);
@@ -976,7 +972,7 @@ class GameController {
     this.ensureAudioContext();
     if (this.tut) this.hideCoach();
     this.hideBidPanel();
-    this.playSfx(this.sfx.cardPlace2);
+    this.sfxFlick();
     this.flashStats(0);
     if (g.simultaneous) this.maybeRevealBids(this.epoch);
     else this.continueBidding(this.epoch);
@@ -1067,7 +1063,7 @@ class GameController {
     this.busy = true;
     this.hiddenTrickSeat = seat;
     this.render();
-    this.playSfx(this.sfx.cardPlace2);
+    this.sfxFlick();
 
     const rot = TRICK_OFFSETS[this.seatPos(seat)].rot;
     await this.flyCard({
@@ -2062,6 +2058,34 @@ class GameController {
     }
   }
 
+  // A card landing: two quick filtered noise bursts, the double flick German Whist and Artifact use
+  // (it replaced the recorded card-place sound).
+  sfxFlick() {
+    if (this.soundMuted) return;
+    const ctx = this.ensureAudioContext();
+    if (!ctx) return;
+    const burst = (t, dur, freq, peak) => {
+      const now = ctx.currentTime + t;
+      const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * (dur + 0.02)), ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const f = ctx.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = freq;
+      f.Q.value = 1.2;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(peak, now + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      src.connect(f).connect(g).connect(ctx.destination);
+      src.start(now);
+      src.stop(now + dur + 0.02);
+    };
+    burst(0, 0.06, 2600, 0.29);
+    burst(0.07, 0.05, 3400, 0.22);
+  }
   sfxTick()        { this.playTones([[1800, 0, 0.03]], { type: "square", gain: 0.035 }); }
   sfxTrickMine()   { this.playTones([[784, 0, 0.12], [1175, 0.08, 0.2]], { gain: 0.13 }); }
   sfxTrickOther()  { this.playTones([[330, 0, 0.14]], { gain: 0.08 }); }
