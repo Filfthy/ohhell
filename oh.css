@@ -2131,3 +2131,14 @@ body.style-infernal .name-label .portrait.r-exact { animation: rExact 1.2s ease-
 @media (prefers-reduced-motion: reduce) {
   body.style-infernal .name-label .portrait.r-lean, body.style-infernal .name-label .portrait.r-win { animation: none; }
 }
+/* Infernal scoreboard: no box, just the writing with a thin dark outline, the scores pulled in next to the
+   names, and the whole block sitting against the right-hand edge */
+body.style-infernal #scoreboard {
+  background: none !important; border: none !important; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none !important;
+  text-shadow: 0 0 1px #000, 0 0 2px #000, 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, 0.8);
+  min-width: 0; text-align: right;
+}
+body.style-infernal #scoreboard #score-table { width: auto; margin-left: auto; }
+body.style-infernal #scoreboard #score-table td { text-align: left; }
+body.style-infernal #scoreboard #score-table td:last-child { text-align: right; padding-left: 0.9em; }
+body.style-infernal #scoreboard:hover { filter: brightness(1.15); }
