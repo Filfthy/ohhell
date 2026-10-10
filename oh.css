@@ -2106,3 +2106,5 @@ body.style-infernal .seat-info .name-label .portrait.flip { --fx: -1; }
 @media (orientation: landscape) and (max-height: 500px) {
   #player-seat-info { margin-left: calc(-55px * var(--card-scale) - 50px); }   /* clear of your bigger phone hand */
 }
+/* your name row sits in front of your hand, so a card's corner never hides your seal or "bidding…" */
+#player-seat-info { z-index: 310; }
