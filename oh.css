@@ -2075,3 +2075,22 @@ body.suits-infernal .card:not(.back)[data-crease]::after, body.back-infernal .ca
 .card[data-crease="5"]::after { background-image: url("img/crease-5.webp?v=2"); }
 .card[data-crease="6"]::after { background-image: url("img/crease-6.webp?v=2"); }
 .card[data-crease="7"]::after { background-image: url("img/crease-7.webp?v=2"); }
+/* Infernal portraits: each player's bust beside their nameplate, on the outer side, looking in towards the
+   table (img/opp-*.webp, cut by tools/cut-portraits.py). --py lifts it, --fx mirrors it. */
+.seat-info .portrait { display: none; }
+body.style-infernal .seat .seat-info { position: relative; }
+body.style-infernal .seat-info .portrait {
+  display: block; position: absolute; top: 50%; right: 100%; margin-right: calc(6px * var(--card-scale));
+  width: calc(84px * var(--card-scale)); aspect-ratio: 1; transform: translateY(var(--py, -50%)) scaleX(var(--fx, 1));
+  background: center bottom / contain no-repeat; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); pointer-events: none;
+}
+body.style-infernal .seat-info .portrait.on-right { right: auto; left: 100%; margin-right: 0; margin-left: calc(6px * var(--card-scale)); }
+body.style-infernal .seat-info .portrait.flip { --fx: -1; }
+/* the side seats' portraits rise from beside the nameplate, clear of the trump coin below */
+body.style-infernal .seat-left .seat-info .portrait, body.style-infernal .seat-right .seat-info .portrait { top: 0; --py: -40%; }
+/* with five players the two upper seats' portraits are smaller, so they keep clear of the side seats' cards */
+body.style-infernal .seat-topleft .seat-info .portrait, body.style-infernal .seat-topright .seat-info .portrait { top: 0; --py: -25%; width: calc(48px * var(--card-scale)); }
+/* and the side seats sit lower, so their portraits rise higher to keep off the trump coin */
+body[data-players="5"].style-infernal .seat-left .seat-info .portrait, body[data-players="5"].style-infernal .seat-right .seat-info .portrait { --py: -65%; }
+/* yours stands on the bottom edge */
+body.style-infernal #player-seat-info .portrait { top: auto; bottom: calc(-1.2vh - 2px); --py: 0; }

@@ -38,6 +38,10 @@ const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135
 const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub",
   "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Banshee", "Faust",
   "Morgana", "Jezebel"];
+// Which way each portrait looks as drawn (l/r; the rest face front). They're mirrored as needed to
+// look in towards the table.
+const PORTRAIT_FACING = { persephone: "r", lamia: "r", loki: "r", "old-nick": "r", "davy-jones": "r", faust: "r",
+  morgana: "r", jezebel: "r", hellga: "l", banshee: "l" };
 // Opponent card size relative to yours; recalculated for screen shape and
 // player count (see updateOppScale).
 let OPP_CARD_SCALE = 0.85;
@@ -189,6 +193,21 @@ class GameController {
   // =====================================================
   // =================== Seats / names ===================
   // =====================================================
+
+  // Infernal style: each player's portrait beside their nameplate, on the outer side, turned to look in
+  // towards the middle of the table (you are the hooded one)
+  setPortrait(seat, els) {
+    let p = els.info.querySelector(".portrait");
+    if (!p) { p = document.createElement("div"); p.className = "portrait"; els.info.prepend(p); }
+    const who = seat === 0 ? "player" : this.seatName(seat).toLowerCase().replace(/\s+/g, "-");
+    const pos = seat === 0 ? "bottom" : this.seatPos(seat);
+    const onRight = pos === "right" || pos === "topright";
+    const looksRight = !(pos === "right" || pos === "topright");
+    const face = PORTRAIT_FACING[who];
+    if (p.dataset.who !== who) { p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${who}.webp")`; }
+    p.classList.toggle("on-right", onRight);
+    p.classList.toggle("flip", !!face && face !== (looksRight ? "r" : "l"));
+  }
 
   seatName(seat) {
     if (seat === 0) return (this.playerName && this.playerName.trim()) || "Player";
@@ -394,6 +413,7 @@ class GameController {
     for (let seat = 0; seat < g.numPlayers; seat++) {
       const els = this.seatEls[seat];
       els.name.textContent = this.seatName(seat);
+      this.setPortrait(seat, els);
 
       const bid = g.bids ? g.bids[seat] : null;
       const won = g.won ? g.won[seat] : 0;
