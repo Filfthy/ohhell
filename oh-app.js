@@ -40,8 +40,8 @@ const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub
   "Morgana", "Jezebel"];
 // Which way each portrait looks as drawn (l/r; the rest face front). They're mirrored as needed to
 // look in towards the table.
-const PORTRAIT_FACING = { persephone: "r", lamia: "r", loki: "r", "old-nick": "r", "davy-jones": "r", faust: "r",
-  morgana: "r", jezebel: "r", hellga: "l", banshee: "l" };
+const PORTRAIT_FACING = { lamia: "r", loki: "r", "old-nick": "r", hellga: "r", "davy-jones": "r", banshee: "r", faust: "r",
+  persephone: "l", morgana: "l" };
 // Opponent card size relative to yours; recalculated for screen shape and
 // player count (see updateOppScale).
 let OPP_CARD_SCALE = 0.85;
@@ -197,12 +197,14 @@ class GameController {
   // Infernal style: each player's portrait beside their nameplate, on the outer side, turned to look in
   // towards the middle of the table (you are the hooded one)
   setPortrait(seat, els) {
-    let p = els.info.querySelector(".portrait");
-    if (!p) { p = document.createElement("div"); p.className = "portrait"; els.info.prepend(p); }
+    // it lives inside the nameplate (tucked behind its end), so it's put back each time the name is written
+    let p = els.portrait;
+    if (!p) { p = els.portrait = document.createElement("div"); p.className = "portrait"; }
+    if (p.parentNode !== els.name) els.name.appendChild(p);
     const who = seat === 0 ? "player" : this.seatName(seat).toLowerCase().replace(/\s+/g, "-");
     const pos = seat === 0 ? "bottom" : this.seatPos(seat);
-    const onRight = pos === "right" || pos === "topright";
-    const looksRight = !(pos === "right" || pos === "topright");
+    const onRight = pos === "right" || pos === "topright";   // the outer side; everyone looks in to the middle
+    const looksRight = !onRight;
     const face = PORTRAIT_FACING[who];
     if (p.dataset.who !== who) { p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${who}.webp")`; }
     p.classList.toggle("on-right", onRight);
