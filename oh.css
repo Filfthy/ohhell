@@ -1800,8 +1800,8 @@ body.style-infernal .icon-btn { color: #e8c88a !important; }
 body.style-infernal .seat-info .name-label {
   font-family: "Cinzel", Georgia, serif; font-style: normal; font-weight: 700; letter-spacing: 0.02em;
   color: var(--inf-ink); -webkit-text-stroke: 0; text-shadow: none;
-  background: url("img/parchment-card.webp?v=3") center / 300% 300%, #e3c48b;
-  border: 1px solid #7a4a1e; border-radius: 4px; padding: 0.1em 0.75em 0.12em;
+  background: url("img/parchment-plate.webp") center / 100% 100% no-repeat, #e3c48b;
+  border: 0; border-radius: 3px; padding: 0.12em 0.85em 0.14em;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(110, 60, 20, 0.35);
 }
 body.style-infernal .seat-info .name-label.turn-glow { animation: emberPlate 1.2s ease-in-out infinite; }
@@ -1833,7 +1833,7 @@ body.style-infernal .trump-coin {
   box-shadow: inset 0 0 0 calc(3px * var(--card-scale)) #4d2a10, inset 0 0 0 calc(6px * var(--card-scale)) rgba(240, 190, 120, 0.55),
     inset 0 0 calc(14px * var(--card-scale)) rgba(40, 18, 5, 0.6), 0 calc(4px * var(--card-scale)) calc(9px * var(--card-scale)) rgba(0, 0, 0, 0.65);
 }
-body.style-infernal .trump-coin .coin-suit { color: #3e1e08 !important; -webkit-text-stroke: 0;
+body.style-infernal .trump-coin .coin-suit { -webkit-text-stroke: 0;   /* keeps its suit colour, struck into the bronze */
   filter: drop-shadow(0 1px 0 rgba(255, 220, 160, 0.55)) drop-shadow(0 -1px 0 rgba(30, 10, 0, 0.5)); }
 body.style-infernal .trump-coin .coin-blank { font-family: "Cinzel", Georgia, serif; color: #3e1e08; text-shadow: 0 1px 0 rgba(255, 220, 160, 0.55); }
 
