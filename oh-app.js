@@ -41,7 +41,7 @@ const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub
 // Which way each portrait looks as drawn (l/r; the rest face front). They're mirrored as needed to
 // look in towards the table.
 const PORTRAIT_FACING = { lamia: "r", loki: "r", "old-nick": "r", hellga: "r", "davy-jones": "r", banshee: "r", faust: "r",
-  persephone: "l", morgana: "l" };
+  persephone: "r", morgana: "r" };
 // Portraits drawn in three views (img/opp-<name>-l/c/r.webp), shown as they are rather than mirrored
 const PORTRAIT_VIEWS = { "old-nick": true };
 // Opponent card size relative to yours; recalculated for screen shape and
