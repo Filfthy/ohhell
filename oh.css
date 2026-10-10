@@ -2061,12 +2061,17 @@ body.style-infernal .bid-token { padding-top: 0.1em; box-sizing: border-box; }  
 /* the player across the table: seal and tricks won sit beside the nameplate, not under it, so the card
    they play is never hidden under their bid */
 .seat-top .seat-info { flex-direction: row; gap: calc(10px * var(--card-scale)); }
-/* Infernal cards: now and then a crease where the card was once folded - a faint shadow on one side of the
-   fold, a dark line, and a pale line where the ink and the paper's surface have cracked */
-body.suits-infernal .card:not(.back)[data-crease]::after {
+/* Infernal cards (fronts and backs): now and then a crease where the card was once folded - drawn by
+   tools/make-creases.py, flipped any of four ways */
+body.suits-infernal .card:not(.back)[data-crease]::after, body.back-infernal .card.back[data-crease]::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
-  background: linear-gradient(var(--crease-a),
-    transparent calc(var(--crease-p) - 9%), rgba(90, 55, 20, 0.07) calc(var(--crease-p) - 2.5%),
-    rgba(70, 40, 14, 0.32) calc(var(--crease-p) - 0.5%), rgba(255, 246, 222, 0.55) calc(var(--crease-p) + 0.3%),
-    rgba(255, 246, 222, 0.12) calc(var(--crease-p) + 1.6%), transparent calc(var(--crease-p) + 4%));
+  background-position: center; background-size: 100% 100%; background-repeat: no-repeat; transform: scale(var(--crease-x, 1), var(--crease-y, 1));
 }
+.card[data-crease="0"]::after { background-image: url("img/crease-0.webp?v=2"); }
+.card[data-crease="1"]::after { background-image: url("img/crease-1.webp?v=2"); }
+.card[data-crease="2"]::after { background-image: url("img/crease-2.webp?v=2"); }
+.card[data-crease="3"]::after { background-image: url("img/crease-3.webp?v=2"); }
+.card[data-crease="4"]::after { background-image: url("img/crease-4.webp?v=2"); }
+.card[data-crease="5"]::after { background-image: url("img/crease-5.webp?v=2"); }
+.card[data-crease="6"]::after { background-image: url("img/crease-6.webp?v=2"); }
+.card[data-crease="7"]::after { background-image: url("img/crease-7.webp?v=2"); }

@@ -378,7 +378,7 @@ class GameController {
 
     cards.forEach((_, i) => {
       const pos = computeOppFanSlot(i, total, scale);
-      const back = this.cardView.createCardElement(null, { back: true });
+      const back = this.cardView.createCardElement(cards[i], { back: true });
       back.style.setProperty("--fan-x", pos.offsetX + "px");
       back.style.setProperty("--fan-y", (-pos.offsetY) + "px");
       back.style.setProperty("--fan-angle", pos.angle + "deg");

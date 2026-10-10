@@ -1,6 +1,9 @@
 // oh-core.js
 // the creases on Infernal cards: picked afresh for each game
 let CREASE_SEED = (Math.random() * 4294967296) >>> 0;
+// the backs have creases of their own, unrelated to the fronts and picked afresh every deal, so a crease on a
+// back never tells you which card it is
+let BACK_CREASE_SEED = (Math.random() * 4294967296) >>> 0;
 // Core constants, model classes, geometry helpers, and CardView.
 // (Pure rules + card rendering – no DOM element lookups, no AI engine here.)
 
@@ -369,6 +372,7 @@ class OhHellGame {
   }
 
   startRound() {
+    BACK_CREASE_SEED = (Math.random() * 4294967296) >>> 0;
     if (this.roundIndex >= 0) this.dealer = this.nextSeat(this.dealer);
     this.roundIndex++;
 
@@ -654,6 +658,16 @@ class CardView {
     return { x: colMap[col] ?? 50, y: rowMap[row] ?? 50 };
   }
 
+  // about one card in six gets a crease: a fold across it, or a corner once bent over (tools/make-creases.py)
+  crease(div, h) {
+    const r = n => (h = (Math.imul(h, 1103515245) + 12345) >>> 0) % n;
+    const roll = r(100);
+    if (roll >= 17) return;
+    // one of the drawn creases (img/crease-N.webp; 5 and 6 are bent corners), flipped any of four ways
+    div.dataset.crease = String(roll < 6 ? 5 + r(2) : [0, 1, 2, 3, 4, 7][r(6)]);
+    div.style.setProperty("--crease-x", r(2) ? "-1" : "1"); div.style.setProperty("--crease-y", r(2) ? "-1" : "1");
+  }
+
   createCardElement(card, options = {}) {
     const div = document.createElement("div");
     div.className = "card small";
@@ -662,6 +676,7 @@ class CardView {
 
     if (options.back) {
       div.classList.add("back");
+      if (card) { let h = 11; for (const ch of cardCode(card) + (card.copy || "")) h = (h * 37 + ch.charCodeAt(0)) >>> 0; this.crease(div, (h ^ BACK_CREASE_SEED) >>> 0); }
       if (options.clickable) {
         div.classList.add("clickable");
       }
@@ -676,15 +691,7 @@ class CardView {
     if (card) {
       let h = 7; for (const ch of cardCode(card) + (card.copy || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0; div.dataset.paper = String(h % 8);
       // a few cards have been folded at some point: a crease across the card, or a corner once bent over
-      h = (h ^ CREASE_SEED) >>> 0;   // which cards are creased changes with every game
-      const r = n => (h = (Math.imul(h, 1103515245) + 12345) >>> 0) % n;
-      const roll = r(100);
-      if (roll < 17) {
-        let ang, pos;
-        if (roll < 6) { ang = [45, 135, 225, 315][r(4)] + r(11) - 5; pos = 13 + r(9); }
-        else { ang = [180, 90, 140, 40][r(4)] + r(17) - 8; pos = 34 + r(33); }
-        div.dataset.crease = "1"; div.style.setProperty("--crease-a", ang + "deg"); div.style.setProperty("--crease-p", pos + "%");
-      }
+      this.crease(div, (h ^ CREASE_SEED) >>> 0);   // which cards are creased changes with every game
     }
 
     if (card && card.isSpecial) return this.fillSpecialCard(div, card);
