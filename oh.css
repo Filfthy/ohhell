@@ -1710,3 +1710,13 @@ html:has(body.table-souls) { background-color: #160d09; }
     radial-gradient(ellipse 5% 9% at 66% 46%, #120804 60%, transparent 70%), radial-gradient(ellipse 5% 9% at 78% 46%, #120804 60%, transparent 70%),
     radial-gradient(ellipse 5% 12% at 72% 70%, #120804 60%, transparent 70%),
     radial-gradient(ellipse at 50% 55%, #5a3e29, #33231a 70%, #1c120c) !important; }
+
+/* ===== The Infernal suits: drawn symbols (index.html #suit-symbols) in their own four colours ===== */
+.sg { display: inline-block; width: 0.9em; height: 0.9em; fill: currentColor; vertical-align: -0.1em; overflow: visible; }
+body.suits-infernal { --sc-heart: #c0222a; --sc-diamond: #1d55c4; --sc-club: #1f7a3a; --sc-spade: #6e2e99; }
+body.suits-infernal .opt-row-colours { display: none; }   /* Infernal suits have their own colours */
+.suitset-pill i { font-style: normal; margin-left: 0.4em; letter-spacing: 0.05em; }
+.suitset-pill .sg { width: 1em; height: 1em; margin: 0 0.06em; }
+.card .face-icon .sg { width: 0.8em; height: 0.8em; }   /* the drawn symbols fill more of their box than the font's suits */
+.suitset-pill i { background: #fdf6e3; border-radius: 6px; padding: 0.1em 0.3em; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15); }
+.suitset-pill i b { font-weight: normal; font-family: "Segoe UI Symbol", "DejaVu Sans", sans-serif; }

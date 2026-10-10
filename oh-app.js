@@ -515,7 +515,7 @@ class GameController {
     if (face) {
       const sym = document.createElement("span");
       sym.className = "coin-suit " + this.cardView.cardColorClass({ suit: face });
-      sym.textContent = face;
+      sym.innerHTML = suitMark(face);
       coin.appendChild(sym);
       coin.title = "Trump: " + face;
     } else {
@@ -1258,7 +1258,7 @@ class GameController {
     // Suit symbols in the deck's suit colours.
     const suitCls = { "♠": "s-spade", "♥": "s-heart", "♦": "s-diamond", "♣": "s-club" };
     el.querySelector(".coach-text").innerHTML =
-      text.replace(/[♠♥♦♣]/g, ch => `<span class="coach-suit ${suitCls[ch]}">${ch}︎</span>`);
+      suitWords(text).replace(/[♠♥♦♣]/g, ch => `<span class="coach-suit ${suitCls[ch]}">${INFERNAL ? suitMark(ch) : ch + "︎"}</span>`);
 
     this.placeSpot(spot);
 
@@ -1436,7 +1436,7 @@ class GameController {
     const legal = g.legalBids(0);
     const forbidden = g.forbiddenBid(0);
     const trumpTxt = g.trumpSuit
-      ? `trump <span class="suit-inline ${this.cardView.cardColorClass({ suit: g.trumpSuit })}">${g.trumpSuit}</span>`
+      ? `trump <span class="suit-inline ${this.cardView.cardColorClass({ suit: g.trumpSuit })}">${suitMark(g.trumpSuit)}</span>`
       : "<b>no trump</b>";
     const cardsTxt = `${g.handSize} card${g.handSize === 1 ? "" : "s"}`;
 
@@ -1550,7 +1550,7 @@ class GameController {
     for (let s = 0; s < n; s++) html += `<th>${this.escape(this.seatName(s))}</th>`;
     html += `</tr></thead><tbody>`;
     g.history.forEach(r => {
-      html += `<tr><td>${r.cards}</td><td>${r.trumpSuit || "–"}</td>`;
+      html += `<tr><td>${r.cards}</td><td>${r.trumpSuit ? suitMark(r.trumpSuit) : "–"}</td>`;
       for (let s = 0; s < n; s++) {
         const exact = r.bids[s] === r.won[s];
         html += `<td class="${exact ? "exact" : ""}"><span class="sc-bw">${r.bids[s]}/${r.won[s]}</span> <b>${r.totals[s]}</b></td>`;
@@ -1799,6 +1799,23 @@ class GameController {
       });
     });
     applyFaces();
+
+    // Suit symbols: Classic or Infernal (redraws whatever is on the table)
+    const applySuitSet = v => {
+      INFERNAL = v === "infernal";
+      document.body.classList.toggle("suits-infernal", INFERNAL);
+    };
+    let suitset = "classic";
+    try { if (localStorage.getItem("oh_suits") === "infernal") suitset = "infernal"; } catch (e) { /* ignore */ }
+    applySuitSet(suitset);
+    document.querySelectorAll('input[name="suitset"]').forEach(r => {
+      r.checked = (r.value === suitset);
+      r.addEventListener("change", () => {
+        applySuitSet(r.value);
+        try { localStorage.setItem("oh_suits", r.value); } catch (e) { /* ignore */ }
+        try { this.render(); } catch (e) { /* ignore */ }
+      });
+    });
 
     const speedRadios = document.querySelectorAll('input[name="speed"]');
     speedRadios.forEach(r => { r.checked = (r.value === (GAME_SPEED < 1 ? "fast" : "normal")); });

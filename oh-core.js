@@ -5,6 +5,27 @@
 // ===== Card / rules constants =====
 
 const SUITS = ["♠", "♥", "♦", "♣"];
+
+// The Infernal suits (a Look & feel choice): drawn symbols standing in for the usual four, matched by
+// colour - Flame for hearts, Trident for diamonds, Horns for clubs, Pentagram for spades. The cards'
+// own suits never change; only how they're shown. The symbols are in index.html's #suit-symbols.
+let INFERNAL = false;
+const INFERNAL_ICON = { "♥": "s-flame", "♦": "s-trident", "♣": "s-horns", "♠": "s-pentagram" };
+const INFERNAL_NAME = { hearts: "flames", diamonds: "tridents", clubs: "horns", spades: "pentagrams",
+  heart: "flame", diamond: "trident", club: "horn", spade: "pentagram" };
+// A suit as HTML: the usual symbol, or the Infernal one.
+function suitMark(suit) {
+  return INFERNAL && INFERNAL_ICON[suit]
+    ? `<svg class="sg" viewBox="0 0 100 100" aria-hidden="true"><use href="#${INFERNAL_ICON[suit]}"/></svg>` : suit;
+}
+// Suit names in running text follow the symbols ("hearts" becomes "flames"), keeping capitals.
+function suitWords(text) {
+  if (!INFERNAL) return text;
+  return text.replace(/\b(hearts?|diamonds?|clubs?|spades?)\b/gi, w => {
+    const r = INFERNAL_NAME[w.toLowerCase()];
+    return w[0] === w[0].toUpperCase() ? r[0].toUpperCase() + r.slice(1) : r;
+  });
+}
 const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"];
 const RANK_VALUES = Object.fromEntries(RANKS.map((r, i) => [r, i + 2]));
 
@@ -628,9 +649,9 @@ class CardView {
 
     if (card) {
       cornerTop.innerHTML =
-        `<span class="rank${card.rank === "10" ? " ten" : ""}">${card.rank}</span><span class="suit">${card.suit}</span>`;
+        `<span class="rank${card.rank === "10" ? " ten" : ""}">${card.rank}</span><span class="suit">${suitMark(card.suit)}</span>`;
       cornerBottom.innerHTML =
-        `<span class="rank${card.rank === "10" ? " ten" : ""}">${card.rank}</span><span class="suit">${card.suit}</span>`;
+        `<span class="rank${card.rank === "10" ? " ten" : ""}">${card.rank}</span><span class="suit">${suitMark(card.suit)}</span>`;
     }
 
     div.appendChild(cornerTop);
@@ -640,7 +661,7 @@ class CardView {
     // replaces the pips and court artwork.
     if (card) {
       let jumbo;
-      if (card.rank === "A" && card.suit === "♠") {
+      if (card.rank === "A" && card.suit === "♠" && !INFERNAL) {
         // Keep the BugVictim branding on the ace of spades.
         jumbo = document.createElement("img");
         jumbo.className = "jumbo-pip jumbo-icon jumbo-ace";
@@ -655,7 +676,7 @@ class CardView {
       } else {
         jumbo = document.createElement("div");
         jumbo.className = "jumbo-pip " + this.cardColorClass(card);
-        jumbo.textContent = card.suit;
+        jumbo.innerHTML = suitMark(card.suit);
       }
       div.appendChild(jumbo);
     }
@@ -688,7 +709,7 @@ class CardView {
       } else {
         center.style.display = "block";
 
-        if (card.rank === "A" && card.suit === "♠") {
+        if (card.rank === "A" && card.suit === "♠" && !INFERNAL) {
           const img = document.createElement("img");
           img.src = "spade.svg";
           img.alt = "";
@@ -720,7 +741,7 @@ class CardView {
           ];
           positions.forEach(([x, y]) => {
             const s = document.createElement("span");
-            s.textContent = card.suit;
+            s.innerHTML = suitMark(card.suit);
             s.style.position = "absolute";
             s.style.left = x + "%";
             s.style.top = y + "%";
@@ -738,7 +759,7 @@ class CardView {
           ];
           positions.forEach(([x, y]) => {
             const s = document.createElement("span");
-            s.textContent = card.suit;
+            s.innerHTML = suitMark(card.suit);
             s.style.position = "absolute";
             s.style.left = x + "%";
             s.style.top = y + "%";
@@ -755,7 +776,7 @@ class CardView {
           ];
           positions.forEach(([x, y]) => {
             const s = document.createElement("span");
-            s.textContent = card.suit;
+            s.innerHTML = suitMark(card.suit);
             s.style.position = "absolute";
             s.style.left = x + "%";
             s.style.top = y + "%";
@@ -769,7 +790,7 @@ class CardView {
             layout.forEach(([col, row]) => {
               const pos = this.pipPositionToPercent(col, row);
               const s = document.createElement("span");
-              s.textContent = card.suit;
+              s.innerHTML = suitMark(card.suit);
               if (card.rank === "A") s.className = "ace-pip"; // one big traditional pip
               s.style.position = "absolute";
               s.style.left = pos.x + "%";

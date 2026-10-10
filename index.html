@@ -16,11 +16,35 @@
   <meta property="og:image" content="share.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="share.jpg" as="image" fetchpriority="low">
-  <link rel="stylesheet" href="./gw.css?v=152">
-  <link rel="stylesheet" href="./oh.css?v=152">
-  <link rel="stylesheet" href="./bv-more.css?v=152">
+  <link rel="stylesheet" href="./gw.css?v=153">
+  <link rel="stylesheet" href="./oh.css?v=153">
+  <link rel="stylesheet" href="./bv-more.css?v=153">
 </head>
 <body>
+<!-- The Infernal suits (Look & feel): drawn with <use href="#s-flame"> etc. -->
+<svg id="suit-symbols" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <!-- Flame: a three-tongued fire, its inner tongues cut out -->
+    <symbol id="s-flame" viewBox="0 0 100 100">
+      <path fill-rule="evenodd" d="M50 98 C30 92 13 79 12 60 C11 46 18 37 24 30 C23 39 26 45 31 48 C29 34 35 19 50 4 C49 18 55 26 62 33 C64 26 66 21 71 16 C72 29 80 36 86 47 C92 59 88 78 74 89 C67 94 58 96 50 98 Z
+        M49 86 C39 83 33 75 34 66 C35 57 42 52 45 43 C49 52 47 59 52 64 C55 58 56 53 61 49 C66 58 68 66 65 74 C62 81 56 85 49 86 Z"/>
+    </symbol>
+    <!-- Trident: three barbed prongs on a curved head, a collar, and the shaft -->
+    <symbol id="s-trident" viewBox="0 0 100 100">
+      <path d="M50 2 L60 18 L54 17 L54 68 L46 68 L46 17 L40 18 Z
+        M20 18 L29 31 L24 31 L24 47 C24 58 33 64 46 64 L54 64 C67 64 76 58 76 47 L76 31 L71 31 L80 18 L85 34 L82 33 L82 48 C82 63 71 72 56 72 L44 72 C29 72 18 63 18 48 L18 33 L15 34 Z
+        M43 72 L57 72 C57 75 59 77 60 78 C58 80 55 81 54 82 L54 98 L46 98 L46 82 C45 81 42 80 40 78 C41 77 43 75 43 72 Z"/>
+    </symbol>
+    <!-- Horns: two long curved horns rising from a band -->
+    <symbol id="s-horns" viewBox="0 0 100 100">
+      <path d="M27 95 C11 86 6 64 9 43 C11 25 16 12 23 2 C20 17 19 33 22 47 C25 60 32 68 41 71 L59 71 C68 68 75 60 78 47 C81 33 80 17 77 2 C84 12 89 25 91 43 C94 64 89 86 73 95 C68 89 62 85 56 84 L44 84 C38 85 32 89 27 95 Z"/>
+    </symbol>
+    <!-- Pentagram: an inverted five-pointed star in a ring -->
+    <symbol id="s-pentagram" viewBox="0 0 100 100">
+      <path fill-rule="evenodd" d="M50 2 A48 48 0 1 1 49.99 2 Z M50 10 A40 40 0 1 0 50.01 10 Z"/>
+      <path fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="miter" stroke-miterlimit="10"
+        d="M50 83 L30.6 23.3 L81.38 60.2 L18.62 60.2 L69.4 23.3 Z"/>
+    </symbol>
+  </defs></svg>
   <div id="game-area">
 
     <!-- Opponent seats are built by oh-app.js -->
@@ -87,7 +111,7 @@
 
 <!-- SPLASH -->
 <div id="splash" role="button" tabindex="0" aria-label="Click to start">
-  <img src="logo-ohhell.webp?v=152" alt="Oh Hell! Extended" class="splash-title">
+  <img src="logo-ohhell.webp?v=153" alt="Oh Hell! Extended" class="splash-title">
   <div class="logo-subtitle splash-subtitle">Oh Hell! with a trick up its sleeve</div>
   <img src="bugvictim.svg" alt="BugVictim" class="splash-logo">
   <div class="splash-credit">© BugVictim 2026</div>
@@ -150,7 +174,7 @@
 
     <div class="start-panel-header">
       <div class="start-header">
-        <img src="logo-ohhell.webp?v=152" alt="Oh Hell! Extended" class="start-title-img">
+        <img src="logo-ohhell.webp?v=153" alt="Oh Hell! Extended" class="start-title-img">
       </div>
 
       <div class="start-logo-row start-credit-line">© BugVictim 2026</div>
@@ -268,6 +292,13 @@
           <div class="seg" role="radiogroup"><label><input type="radio" name="speed" value="normal" checked><span>Normal</span></label><label><input type="radio" name="speed" value="fast"><span>Fast</span></label></div>
         </div>
         <div class="opt-row">
+          <div class="opt-label" data-tip="The suit symbols">Suits</div>
+          <div class="seg seg-suitset" role="radiogroup">
+            <label data-tip="Hearts, spades, diamonds and clubs"><input type="radio" name="suitset" value="classic" checked><span class="suitset-pill">Classic <i><b style="color:#dc322f">♥</b><b style="color:#111">♠</b><b style="color:#dc322f">♦</b><b style="color:#111">♣</b></i></span></label>
+            <label data-tip="Flames, pentagrams, tridents and horns"><input type="radio" name="suitset" value="infernal"><span class="suitset-pill">Infernal <i><svg class="sg" viewBox="0 0 100 100" style="color:#c0222a"><use href="#s-flame"/></svg><svg class="sg" viewBox="0 0 100 100" style="color:#6e2e99"><use href="#s-pentagram"/></svg><svg class="sg" viewBox="0 0 100 100" style="color:#1d55c4"><use href="#s-trident"/></svg><svg class="sg" viewBox="0 0 100 100" style="color:#1f7a3a"><use href="#s-horns"/></svg></i></span></label>
+          </div>
+        </div>
+        <div class="opt-row opt-row-colours">
           <div class="opt-label" data-tip="Suit colours">Colours</div>
           <div class="seg seg-suits" role="radiogroup">
             <label><input type="radio" name="suitcolors" value="classic"><span class="pill-suits classic"><span>♥</span><span>♠</span><span>♦</span><span>♣</span></span></label>
@@ -420,12 +451,12 @@
   </div>
 </div>
 
-  <script src="./oh-core.js?v=152"></script>
-  <script src="./oh-tutorial.js?v=152"></script>
-  <script src="./oh-ai.js?v=152"></script>
-  <script src="./bv-more.js?v=152"></script>
-  <script src="./oh-souls.js?v=152"></script>
-  <script src="./oh-app.js?v=152"></script>
+  <script src="./oh-core.js?v=153"></script>
+  <script src="./oh-tutorial.js?v=153"></script>
+  <script src="./oh-ai.js?v=153"></script>
+  <script src="./bv-more.js?v=153"></script>
+  <script src="./oh-souls.js?v=153"></script>
+  <script src="./oh-app.js?v=153"></script>
   <script>
     BVMore.init({ key: "oh-hell-extended", title: "Oh Hell! Extended", others: ["drakeharbour", "german-whist", "artifact"],
       shareText: "Bid your tricks, then win exactly that many. Play Oh Hell! Extended.",
