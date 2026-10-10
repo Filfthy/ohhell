@@ -271,7 +271,7 @@ const SOULS = {
     }
     c.globalCompositeOperation = "source-over";
     // the souls, on top of everything (smoke and fire pass behind them), solid
-    c.globalAlpha = 1;
+    c.globalAlpha = 0.95;
     for (const f of this.faces) {
       const u = 34 * f.size * d;
       // the groan: the mouth slowly opens wide and sags shut again
