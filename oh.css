@@ -1733,3 +1733,4 @@ body.suits-infernal .card:not(.back) {
 body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0 4px #f1dcae; }
 /* Infernal specials: one letter at top left, in the court style */
 .card.inf-court-card .corner.sp-letter { display: flex; flex-direction: column; font-family: Georgia, "Times New Roman", serif; font-weight: 700; }
+.card.inf-court-card .inf-sp-glyph { z-index: 2; width: 26cqw; top: 2cqw; left: 2cqw; filter: drop-shadow(0 0 2px #f1dcae) drop-shadow(0 0 3px #f1dcae); }
