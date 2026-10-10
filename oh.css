@@ -1723,7 +1723,7 @@ body.suits-infernal .opt-row-colours { display: none; }   /* Infernal suits have
 
 /* ===== The Infernal set is printed on parchment, with woodcut court figures (img/inf-*.webp) ===== */
 body.suits-infernal .card:not(.back) {
-  background: #e8cc93 url("img/parchment-card.webp?v=2") center / 100% 100% no-repeat;
+  background: #e8cc93 url("img/parchment-card.webp?v=3") center / 100% 100% no-repeat;
   border-color: #8f6a3c;
 }
 .card .inf-court { position: absolute; inset: 3% 4%; overflow: hidden; pointer-events: none; }   /* no frame line: the art sits on the parchment */
@@ -1746,5 +1746,5 @@ body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0
 .trump-coin .coin-suit:has(.sg) { display: flex; align-items: center; justify-content: center; line-height: 0; }
 .trump-coin .coin-suit .sg { vertical-align: 0; display: block; }
 /* the Infernal back (its parchment edge is part of the picture) */
-body.back-infernal .card.back { background: transparent url("back-infernal.webp?v=4") center / 100% 100% no-repeat; border-color: transparent; }
-.seg-backs .bk-infernal { background: transparent url("back-infernal.webp?v=4") center / 100% 100% no-repeat !important; }
+body.back-infernal .card.back { background: transparent url("back-infernal.webp?v=5") center / 100% 100% no-repeat; border-color: transparent; }
+.seg-backs .bk-infernal { background: transparent url("back-infernal.webp?v=5") center / 100% 100% no-repeat !important; }
