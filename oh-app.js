@@ -38,10 +38,9 @@ const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135
 const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub",
   "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Banshee", "Faust",
   "Morgana", "Jezebel"];
-// Which way each portrait looks as drawn (l/r; the rest face front). They're mirrored as needed to
-// look in towards the table.
-const PORTRAIT_FACING = { lamia: "r", loki: "r", "old-nick": "r", hellga: "r", "davy-jones": "r", banshee: "r", faust: "r",
-  persephone: "r", morgana: "r", jezebel: "r" };
+// Every portrait looks to the right as drawn, except these, which face straight ahead (you, and three-headed
+// Cerberus). Portraits left of the table's centre line are shown as drawn; right of it they're mirrored.
+const PORTRAIT_FRONT = { player: true, cerberus: true };
 // Portraits drawn in three views (img/opp-<name>-l/c/r.webp), shown as they are rather than mirrored
 const PORTRAIT_VIEWS = { "old-nick": true };
 // Opponent card size relative to yours; recalculated for screen shape and
@@ -206,13 +205,11 @@ class GameController {
     const who = seat === 0 ? "player" : this.seatName(seat).toLowerCase().replace(/\s+/g, "-");
     const pos = seat === 0 ? "bottom" : this.seatPos(seat);
     const onRight = pos === "right" || pos === "topright";   // the outer side; everyone looks in to the middle
-    const looksRight = !onRight;
-    const face = PORTRAIT_FACING[who];
-    // a portrait drawn in three views shows the one that looks in (straight ahead from across the table)
-    const file = PORTRAIT_VIEWS[who] ? `${who}-${pos === "top" ? "c" : looksRight ? "r" : "l"}` : who;
+    // a portrait drawn in three views shows the one that looks in, rather than being mirrored
+    const file = PORTRAIT_VIEWS[who] ? `${who}-${onRight ? "l" : "r"}` : who;
     if (p.dataset.file !== file) { p.dataset.file = file; p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${file}.webp")`; }
     p.classList.toggle("on-right", onRight);
-    p.classList.toggle("flip", !PORTRAIT_VIEWS[who] && !!face && face !== (looksRight ? "r" : "l"));
+    p.classList.toggle("flip", onRight && !PORTRAIT_VIEWS[who] && !PORTRAIT_FRONT[who]);
   }
 
   seatName(seat) {
