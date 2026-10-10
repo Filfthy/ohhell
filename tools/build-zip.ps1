@@ -244,7 +244,7 @@ while ($queue.Count -gt 0) {
 # Card art loaded through runtime-built paths (court/KH.svg, special/SUN.svg,
 # special/icon-SUN.svg): include those folders' top-level files. Source art
 # under special/art/ is not needed at runtime.
-foreach ($dir in @("court", "special", "img")) {
+foreach ($dir in @("court", "special", "img", "img/infpips")) {
   $dirFull = Join-Path $rootDir $dir
   if (Test-Path -LiteralPath $dirFull) {
     Get-ChildItem -LiteralPath $dirFull -File | Where-Object { $_.Extension -in @(".svg", ".png", ".webp") } | ForEach-Object {

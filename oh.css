@@ -1739,3 +1739,7 @@ body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0
 .card.inf-ace .inf-court img { left: 9%; top: 3%; width: 88%; height: 94%; object-fit: contain; transform: none; }   /* a little right of centre, clear of the index */
 .card.inf-ace-pentagrams .inf-court img { left: 4%; width: 92%; top: 12%; height: 76%; }   /* round: full width, centred top to bottom */
 .card.inf-ace-flames .inf-court img { left: 6%; width: 92%; top: 2%; height: 96%; }
+/* Infernal 2-10: the drawn pip pattern covers the whole card (it leaves the top-left free for the index) */
+.card.inf-num .inf-court { inset: 0; border: none; border-radius: 0; }
+.card.inf-num .inf-court::after { content: ""; position: absolute; inset: 3% 4%; border: 1px solid rgba(110, 70, 30, 0.6); border-radius: 3px; }
+.card.inf-num .inf-court img { left: 0; top: 0; right: auto; width: 100%; height: 100%; object-fit: fill; transform: none; }

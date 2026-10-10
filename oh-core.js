@@ -719,14 +719,17 @@ class CardView {
       center.style.width = "100%";
       center.style.height = "100%";
 
-      if ((card.rank === "J" || card.rank === "Q" || card.rank === "K" || card.rank === "A") && INFERNAL) {
-        // Infernal courts and aces: a woodcut in a framed panel, the index only at top left
+      if (INFERNAL) {
+        // Infernal: courts and aces are woodcuts, 2-10 the drawn pip patterns (img/infpips), each in a
+        // framed panel with the index only at top left
         div.classList.add("inf-court-card");
+        const art = /^[AJQK]$/.test(card.rank);
+        if (!art) div.classList.add("inf-num");
         if (card.rank === "A") div.classList.add("inf-ace", "inf-ace-" + INFERNAL_SUITS[card.suit]);
         const frame = document.createElement("div");
         frame.className = "inf-court";
         const img = document.createElement("img");
-        img.src = `img/inf-${card.rank}-${INFERNAL_SUITS[card.suit]}.webp`;
+        img.src = art ? `img/inf-${card.rank}-${INFERNAL_SUITS[card.suit]}.webp` : `img/infpips/${card.rank}-${INFERNAL_SUITS[card.suit]}.svg`;
         img.alt = ""; img.draggable = false;
         frame.appendChild(img);
         center.appendChild(frame);
