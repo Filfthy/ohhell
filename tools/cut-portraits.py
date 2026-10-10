@@ -78,3 +78,5 @@ for i, v in enumerate("lcr"):
     sq.paste(c, ((side - c.width) // 2, side - c.height))
     sq.resize((240, 240), Image.LANCZOS).save(f"img/opp-old-nick-{v}.webp", "WEBP", quality=86, method=6)
     print("old-nick", v, c.size)
+# the old single Old Nick from sheet 1 is retired: his plain portrait is the new looking-right view too
+Image.open("img/opp-old-nick-r.webp").save("img/opp-old-nick.webp", "WEBP", quality=86, method=6)
