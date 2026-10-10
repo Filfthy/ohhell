@@ -1735,5 +1735,7 @@ body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0
 .card.inf-court-card .corner.sp-letter { display: flex; flex-direction: column; font-family: Georgia, "Times New Roman", serif; font-weight: 700; }
 .card.inf-court-card .inf-sp-glyph { z-index: 2; width: 26cqw; top: 2cqw; left: 2cqw; filter: drop-shadow(0 0 2px #f1dcae) drop-shadow(0 0 3px #f1dcae); }
 /* Infernal aces: the woodcut centred in its panel; the pentagram sits a little smaller, as drawn */
-.card.inf-ace .inf-court img { right: auto; left: 50%; transform: translateX(-50%); }
-.card.inf-ace-pentagrams .inf-court img { top: 9%; height: 84%; }
+/* the whole woodcut inside the panel, as large as fits, centred, clear of the frame line */
+.card.inf-ace .inf-court img { left: 9%; top: 3%; width: 88%; height: 94%; object-fit: contain; transform: none; }   /* a little right of centre, clear of the index */
+.card.inf-ace-pentagrams .inf-court img { left: 4%; width: 92%; top: 20%; height: 76%; }   /* round: full width, below the index */
+.card.inf-ace-flames .inf-court img { left: 6%; width: 92%; top: 2%; height: 96%; }
