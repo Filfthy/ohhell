@@ -1,6 +1,6 @@
 // oh-souls.js - the "Souls" table: dark soul sand packed with faces of the damned, drifting a little in
 // the sand, rocking slowly (always mostly upright) and groaning: each mouth slowly opens and closes and
-// the eyes slowly narrow and widen, every face at its own pace. Wisps of dark smoke rise among them. Drawn on a canvas behind the table; it only runs while the Souls table is chosen, rests
+// the eyes slowly narrow and widen, every face at its own pace. Wisps of dark smoke rise among them, embers drift up and licks of flame flare from the sand. Drawn on a canvas behind the table; it only runs while the Souls table is chosen, rests
 // while the tab is hidden, and stays still for anyone who has asked their computer for reduced motion.
 
 const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in its life
@@ -101,6 +101,12 @@ const SOULS = {
     this.wisps = [];
     const nw = Math.max(70, Math.round(W * H / 5000));
     for (let i = 0; i < nw; i++) this.wisps.push(this.newWisp(rnd() ));
+    // embers drifting up, and now and then a lick of flame from a crack in the sand
+    this.embers = [];
+    for (let i = 0; i < Math.max(25, Math.round(W * H / 9000)); i++) this.embers.push(this.newEmber(true));
+    this.flames = [];
+    this.flameEvery = 1100000 / (W * H);   // seconds between new licks: about 3 at once on a big screen
+    this.flameT = 0;
     this.draw(performance.now());
   },
 
@@ -112,6 +118,32 @@ const SOULS = {
       len: (50 + Math.random() * 90) * k, amp: (5 + Math.random() * 9) * k, freq: 0.035 + Math.random() * 0.04,
       speed: 1.2 + Math.random() * 1.4, ph: Math.random() * 6.3, lean: (Math.random() - 0.5) * 0.5,
       rise: (6 + Math.random() * 8) * k, w: (1.3 + Math.random() * 1.5) * k, a: 0.5 + Math.random() * 0.3 };
+  },
+  newEmber(anywhere) {
+    const k = this.k;
+    return { x: Math.random() * this.W, y: anywhere ? Math.random() * this.H : this.H * (0.3 + Math.random() * 0.75),
+      vy: (10 + Math.random() * 22) * k, vx: (Math.random() - 0.5) * 8 * k, r: (0.8 + Math.random() * 1.6) * k,
+      age: 0, life: 3 + Math.random() * 5, fl: Math.random() * 6.3, fs: 6 + Math.random() * 10, hot: Math.random() };
+  },
+  // a lick of flame: a few tongues rising from one spot, flaring up and dying back over a second or two
+  newFlame() {
+    const k = this.k, n = 2 + Math.floor(Math.random() * 3), tongues = [];
+    for (let i = 0; i < n; i++) tongues.push({ dx: (i - (n - 1) / 2) * 7 * k + (Math.random() - 0.5) * 4 * k,
+      h: (38 + Math.random() * 42) * k, w: (4 + Math.random() * 3) * k, ph: Math.random() * 6.3, sp: 7 + Math.random() * 5 });
+    return { x: Math.random() * this.W, y: this.H * (0.15 + Math.random() * 0.85), age: 0, life: 1.4 + Math.random() * 1.6, tongues };
+  },
+  stepFire(dt) {
+    for (let i = 0; i < this.embers.length; i++) {
+      const e = this.embers[i];
+      e.age += dt; e.y -= e.vy * dt; e.x += (e.vx + Math.sin(e.age * 1.7 + e.fl) * 6 * this.k) * dt;
+      if (e.age >= e.life || e.y < -10) this.embers[i] = this.newEmber(false);
+    }
+    this.flameT += dt;
+    while (this.flameT >= this.flameEvery) { this.flameT -= this.flameEvery; this.flames.push(this.newFlame()); }
+    for (const f of this.flames) f.age += dt;
+    this.flames = this.flames.filter(f => f.age < f.life);
+    for (const f of this.flames) if (Math.random() < dt * 3) this.embers.push(Object.assign(this.newEmber(false), { x: f.x, y: f.y - 10 * this.k, life: 1.5 + Math.random() * 2, hot: 1 }));
+    if (this.embers.length > 400) this.embers.splice(0, this.embers.length - 400);
   },
   stepSmoke(dt) {
     for (let i = 0; i < this.wisps.length; i++) {
@@ -196,6 +228,45 @@ const SOULS = {
       c.restore();
     }
     c.globalAlpha = 1;
+    // fire, glowing through everything: licks of flame, then the embers
+    c.globalCompositeOperation = "lighter";
+    for (const f of this.flames) {
+      const q = f.age / f.life, life = Math.sin(Math.PI * Math.min(1, q * 1.15)) ** 0.8;
+      if (life < 0.02) continue;
+      const x0 = f.x * d, y0 = f.y * d;
+      const glow = c.createRadialGradient(x0, y0, 0, x0, y0, 34 * this.k * d);
+      glow.addColorStop(0, `rgba(255, 110, 20, ${(0.22 * life).toFixed(3)})`); glow.addColorStop(1, "rgba(255, 60, 0, 0)");
+      c.fillStyle = glow; c.fillRect(x0 - 34 * this.k * d, y0 - 34 * this.k * d, 68 * this.k * d, 68 * this.k * d);
+      for (const t of f.tongues) {
+        const h = t.h * life * d, w = t.w * d, bx = x0 + t.dx * d;
+        const sway = Math.sin(s * t.sp + t.ph) * w * 0.9, tipx = bx + sway * 1.6;
+        // fades in from the sand, brightest low down, thinning to nothing at the tip
+        const g = c.createLinearGradient(0, y0 + w, 0, y0 - h);
+        g.addColorStop(0, "rgba(255, 150, 40, 0)");
+        g.addColorStop(0.18, `rgba(255, 185, 70, ${(0.5 * life).toFixed(3)})`);
+        g.addColorStop(0.55, `rgba(235, 85, 15, ${(0.32 * life).toFixed(3)})`);
+        g.addColorStop(1, "rgba(150, 20, 0, 0)");
+        c.fillStyle = g;
+        c.beginPath();
+        // a tongue: rounded at the root, bellying out, then curling to a thin tip
+        c.moveTo(bx, y0 + w * 0.8);
+        c.quadraticCurveTo(bx - w * 1.4, y0 + w * 0.5, bx - w * 1.2 + sway * 0.3, y0 - h * 0.3);
+        c.quadraticCurveTo(bx - w * 0.6 + sway * 1.2, y0 - h * 0.75, tipx, y0 - h);
+        c.quadraticCurveTo(bx + w * 0.6 + sway * 1.1, y0 - h * 0.7, bx + w * 1.2 + sway * 0.3, y0 - h * 0.3);
+        c.quadraticCurveTo(bx + w * 1.4, y0 + w * 0.5, bx, y0 + w * 0.8);
+        c.closePath(); c.fill();
+      }
+    }
+    for (const e of this.embers) {
+      const q = e.age / e.life, a = Math.min(1, q * 5) * (1 - q) * (0.6 + 0.4 * Math.sin(e.age * e.fs + e.fl));
+      if (a < 0.03) continue;
+      const x = e.x * d, y = e.y * d, r = e.r * d;
+      const g = c.createRadialGradient(x, y, 0, x, y, r * 4);
+      g.addColorStop(0, e.hot > 0.5 ? `rgba(255, 210, 120, ${a.toFixed(3)})` : `rgba(255, 140, 40, ${a.toFixed(3)})`);
+      g.addColorStop(0.3, `rgba(240, 80, 10, ${(a * 0.5).toFixed(3)})`); g.addColorStop(1, "rgba(200, 40, 0, 0)");
+      c.fillStyle = g; c.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+    }
+    c.globalCompositeOperation = "source-over";
     c.drawImage(this.shade, 0, 0);
   },
 
@@ -211,6 +282,7 @@ const SOULS = {
       const dt = this.last ? Math.min(0.25, (now - this.last) / 1000) : 0;
       this.last = now;
       this.stepSmoke(dt);
+      this.stepFire(dt);
       this.draw(now);
     };
     this.raf = requestAnimationFrame(tick);
