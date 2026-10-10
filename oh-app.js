@@ -231,7 +231,7 @@ class GameController {
     this.dom.trickArea.innerHTML = "";
     this.seatEls = [];
 
-    document.body.dataset.players = String(n);
+    if (document.body.dataset.players !== String(n)) { document.body.dataset.players = String(n); updateScale(); }
 
     for (let seat = 0; seat < n; seat++) {
       const pos = this.seatPos(seat);
@@ -2245,7 +2245,11 @@ function updateScale() {
   const scaleFromWidth = (window.innerWidth * 0.95) / (BASE_CARD_WIDTH * 7.5);
 
   // Top seat, trick area, player hand + labels stacked vertically.
-  const layoutRows = 4.9;
+  // (desktop windows have room to spare, so the rows are packed a little tighter and every card is bigger)
+  const desktop = !(window.innerHeight <= 500 && window.innerWidth > window.innerHeight);
+  // five players: the two top seats sit beside the trick, so their cards grow a little less
+  const five = document.body && document.body.dataset.players === "5";
+  const layoutRows = desktop ? (five ? 4.6 : 4.5) : 4.9;
   const scaleFromHeight = (window.innerHeight * 0.92) / (BASE_CARD_HEIGHT * layoutRows);
 
   let scale = Math.min(scaleFromFan, scaleFromWidth, scaleFromHeight);
