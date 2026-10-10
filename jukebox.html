@@ -179,27 +179,27 @@ class Synth {
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + len * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
     s.connect(lp); lp.connect(g); g.connect(dest); s.start(t); s.stop(t + len + 0.1);
   }
-  // ---- the organ: pipe ranks added together, with a celeste rank tuned slightly sharp (that uneasy beating)
-  // and a tremulant (a slow wobble in loudness)
-  ranks(t, f, dur, v, dest, stops, level, celeste = 0.0035) {
-    const end = t + dur + 0.4, g = this.held(t, 0.035, level * v, dur, 0.18), trem = this.ctx.createGain();
-    const lfo = this.osc("sine", 5.6, t, end), depth = this.ctx.createGain(); depth.gain.value = 0.22; trem.gain.value = 0.78;
-    lfo.connect(depth); depth.connect(trem.gain);
-    for (const [k, a, type] of stops) for (const det of celeste ? [1, 1 + celeste] : [1]) {
-      const o = this.osc(type || "sine", f * k * det, t, end), ga = this.ctx.createGain(); ga.gain.value = a / (celeste ? 2 : 1); o.connect(ga); ga.connect(trem);
+  // ---- the organ: full organ, in the manner of a cathedral plenum (the Mr Crowley intro sound): many ranks
+  // from 16' up to a bright mixture, buzzy reed-like tone, no tremulant, a slow swell and a long release
+  // into a big hall. A faint second rank keeps it thick rather than wobbly.
+  ranks(t, f, dur, v, dest, stops, level, bright) {
+    const end = t + dur + 0.8, g = this.held(t, 0.03, level * v, dur, 0.4);
+    const lp = this.filter("lowpass", Math.min(12000, f * bright), 0.6), mix = this.ctx.createGain();
+    for (const [k, a, type] of stops) for (const det of [1, 1.0015]) {
+      const o = this.osc(type || "sine", f * k * det, t, end), ga = this.ctx.createGain(); ga.gain.value = a / 2; o.connect(ga); ga.connect(mix);
     }
-    trem.connect(g); g.connect(dest);
+    mix.connect(lp); lp.connect(g); g.connect(dest);
   }
-  organ(t, f, dur, v, dest) {   // soft flutes and a diapason, for the chords
-    this.ranks(t, f, Math.max(dur, 0.12), v, dest, [[1, 1], [2, 0.45], [4, 0.12]], 0.05);
+  organ(t, f, dur, v, dest) {   // the chords: principals, reeds and mixture
+    this.ranks(t, f, Math.max(dur, 0.2), v, dest,
+      [[0.5, 0.35, "square"], [1, 0.6, "sawtooth"], [1, 0.35, "square"], [2, 0.4, "sawtooth"], [3, 0.12], [4, 0.15, "square"], [6, 0.06], [8, 0.05]], 0.03, 14);
   }
-  organLead(t, f, dur, v, dest) {   // a reedy solo stop: a vox humana-ish reed over flutes, for the tunes
-    const lp = this.filter("lowpass", 1800, 1.5), reed = this.filter("peaking", 900, 3); reed.gain.value = 7;
-    lp.connect(reed); reed.connect(dest);
-    this.ranks(t, f, dur, v, lp, [[1, 0.55, "sawtooth"], [1, 0.8], [2, 0.5], [3, 0.18], [4, 0.15]], 0.085, 0.004);
+  organLead(t, f, dur, v, dest) {   // the tune: the same full sound, a touch brighter so it rides on top
+    this.ranks(t, f, dur, v, dest,
+      [[1, 0.7, "sawtooth"], [1, 0.3, "square"], [2, 0.45, "sawtooth"], [3, 0.15], [4, 0.2, "square"], [8, 0.07]], 0.045, 18);
   }
-  organPedal(t, f, dur, v, dest) {   // 16' and 8' pedal pipes
-    this.ranks(t, f, Math.max(dur, 0.3), v, dest, [[0.5, 0.9], [1, 0.7], [2, 0.2]], 0.16, 0);
+  organPedal(t, f, dur, v, dest) {   // 16' and 8' pedal pipes, with a reed to give it bite
+    this.ranks(t, f, Math.max(dur, 0.3), v, dest, [[0.5, 0.8, "square"], [1, 0.6, "sawtooth"], [2, 0.2, "sawtooth"]], 0.075, 9);
   }
   choir(t, f, dur, v, dest) {   // "aah": two detuned saws through three vowel formants
     const end = t + dur + 2.2, g = this.held(t, 1.4, 0.05 * v, dur, 2), mix = this.ctx.createGain();
@@ -236,7 +236,7 @@ const bars = s => s.split("|").map(parseBar);
 const TUNES = [
   { id: "black", title: "Waltz in Black", meta: "Grand waltz · C minor · organ, or saxophone, strings, tuba and violin",
     desc: "After Shostakovich's Second Waltz, only darker: a slow, sweeping ballroom waltz for a ball nobody leaves.",
-    bpm: 150, beats: 3, send: 1.4, gain: 1.7, organ: true, useOrgan: true, organGain: 1.15,
+    bpm: 150, beats: 3, send: 1.4, gain: 1.7, organ: true, useOrgan: true, organGain: 1.4,
     chords: ("Cm Cm Cm G7 G7 G7 G7 Cm Cm Cm C7 Fm Fm Cm G7 Cm " +
              "Ab Ab Fm Fm Cm Cm D7 G7 Ab Ab Fm G7 Cm G7 Cm Cm").split(" "),
     parts: [
@@ -252,6 +252,11 @@ const TUNES = [
     ],
     // the big oom-pah-pah: tuba on the downbeat, strings on two and three, a soft snare tap, a crash at each section
     accomp(S, bus, t, b, ch, beat) {
+      if (S.isOrgan) {   // pedal held through the bar, the chord sounding on two and held to the end
+        S.organPedal(t, hz(36 + ch.root - (ch.root > 4 ? 12 : 0)), beat * 2.9, 1, bus);
+        for (const tone of ch.tones) S.organ(t + beat, hz(55 + ((ch.root + tone + 5) % 12)), beat * 1.85, 1, bus);
+        return;
+      }
       S.tuba(t, hz(36 + ch.root - (ch.root > 4 ? 12 : 0)), beat, 0.95, bus);
       for (const k of [1, 2]) for (const tone of ch.tones) S.strings(t + k * beat, hz(55 + ((ch.root + tone + 5) % 12)), beat * 0.55, 0.8, S.pan(bus, 0.15 * (k === 1 ? -1 : 1)));
       S.hit(t + beat, 0.04, bus, 3200, 2, 0.05); S.hit(t + 2 * beat, 0.035, bus, 3200, 2, 0.05);
@@ -260,7 +265,7 @@ const TUNES = [
 
   { id: "parlour", title: "The Devil's Parlour", meta: "Waltz · D minor · organ, or harpsichord, bassoon and pizzicato",
     desc: "A sly, slightly crooked waltz for a card room run by the Devil himself. My suggestion for the main game music.",
-    bpm: 138, beats: 3, organ: true, useOrgan: true, organGain: 2,
+    bpm: 138, beats: 3, organ: true, useOrgan: true, organGain: 2.2,
     chords: "Dm Dm A7 A7 Dm Dm Gm A7 Dm Dm Gm Gm Dm A7 Dm Dm Bb Bb F F Gm A7 Dm A7 Dm Dm Gm Gm Dm A7 Dm Dm".split(" "),
     parts: [
       { inst: "bassoon", vel: 1, shift: -12, notes: bars(
@@ -275,6 +280,11 @@ const TUNES = [
     ],
     // oom-pah-pah: a plucked bass note, then two crisp harpsichord chords
     accomp(S, bus, t, b, ch, beat) {
+      if (S.isOrgan) {
+        S.organPedal(t, hz(36 + ch.root), beat * 2.9, 1, bus);
+        for (const tone of ch.tones.slice(0, 3)) S.organ(t + beat, hz(60 + ((ch.root + tone) % 12)), beat * 1.85, 1, bus);
+        return;
+      }
       S.pizz(t, hz(36 + ch.root), beat, 0.9, bus);
       for (const k of [1, 2]) for (const tone of ch.tones.slice(0, 3)) S.harpsichord(t + k * beat, hz(60 + ((ch.root + tone) % 12)), beat * 0.25, 0.45, S.pan(bus, 0.25));
     } },
@@ -330,6 +340,7 @@ function organised(S) {
   const o = Object.create(S);
   for (const [k, v] of Object.entries(ORGAN)) o[k] = (...a) => S[v](...a);
   o.hit = () => {};
+  o.isOrgan = true;
   return o;
 }
 let ctx = null, S = null, now = null;
@@ -348,7 +359,7 @@ function play(tune) {
   if (ctx.state === "suspended") ctx.resume();
   stop();
   const onOrgan = tune.organ && tune.useOrgan, P = onOrgan ? organised(S) : S;
-  const bus = S.bus(tune.send || 1); bus.gain.value = (tune.gain || 1) * (onOrgan ? tune.organGain || 1 : 1);
+  const bus = S.bus(onOrgan ? 2.6 : tune.send || 1); bus.gain.value = (tune.gain || 1) * (onOrgan ? tune.organGain || 1 : 1);
   const el = document.getElementById("t-" + tune.id), bar = el.querySelector(".bar i");
   el.classList.add("playing"); el.querySelector(".play").textContent = "■";
   now = { tune, bus, extra: [] };
@@ -408,7 +419,7 @@ TUNES.forEach(t => document.querySelector(`#t-${t.id} .play`).addEventListener("
 document.getElementById("vol").addEventListener("input", e => { if (S) S.out.gain.value = +e.target.value; });
 // for testing: render a tune offline
 window.__render = async (id, secs) => {
-  const off = new OfflineAudioContext(2, 44100 * secs, 44100), s = new Synth(off), tune = TUNES.find(x => x.id === id), bus = s.bus(tune.send || 1); bus.gain.value = (tune.gain || 1) * (tune.organ && tune.useOrgan ? tune.organGain || 1 : 1);
+  const off = new OfflineAudioContext(2, 44100 * secs, 44100), s = new Synth(off), tune = TUNES.find(x => x.id === id), bus = s.bus(tune.organ && tune.useOrgan ? 2.6 : tune.send || 1); bus.gain.value = (tune.gain || 1) * (tune.organ && tune.useOrgan ? tune.organGain || 1 : 1);
   if (!tune.ambient) {
     const beat = 60 / tune.bpm; let at = 0.05, b = 0;
     while (at < secs) { const i = b % tune.chords.length, ch = chordOf(tune.chords[i]), next = chordOf(tune.chords[(i + 1) % tune.chords.length]);
