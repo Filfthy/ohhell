@@ -1888,3 +1888,11 @@ body.suits-infernal .card:not(.back)[data-paper="4"] { background-image: url("im
 body.suits-infernal .card:not(.back)[data-paper="5"] { background-image: url("img/parchment-card-5.webp"); }
 body.suits-infernal .card:not(.back)[data-paper="6"] { background-image: url("img/parchment-card-6.webp"); }
 body.suits-infernal .card:not(.back)[data-paper="7"] { background-image: url("img/parchment-card-7.webp"); }
+
+/* desktop nameplates in blackletter (phones keep Cinzel, which reads better small) */
+@font-face { font-family: "Manufacturing Consent"; src: url("fonts/manufacturing-consent.woff2") format("woff2"); font-display: swap; }
+@media not all and (max-height: 520px) {
+  body.style-infernal .seat-info .name-label { font-family: "Manufacturing Consent", "Cinzel", Georgia, serif; font-weight: 400; letter-spacing: 0.01em; font-size: calc(21px * var(--card-scale)); }
+}
+/* Infernal indices sit a little further in from the edge */
+body.suits-infernal .card:not(.back) .corner:not(.bottom) { left: 3.5cqw; top: 3.5cqw; }
