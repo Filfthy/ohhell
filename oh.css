@@ -2039,4 +2039,21 @@ body.style-infernal .trump-coin .coin-suit.s-heart .sg { transform: translate(-0
 body.style-infernal .trump-coin .coin-suit.s-club .sg { transform: translate(0, -5.1%); }
 body.style-infernal .trump-coin .coin-suit.s-diamond .sg { transform: translate(0, -0.5%); }
 /* Infernal suit colours are the cards' own pip colours, on the coin and the indices alike */
-body.suits-infernal { --sc-heart: #a82025; --sc-diamond: #164f9c; --sc-club: #1f7a3a; --sc-spade: #71338b; }
+body.suits-infernal { --sc-heart: #c62b14; --sc-diamond: #164f9c; --sc-club: #1f7a3a; --sc-spade: #71338b; }
+/* ===== Infernal bids: real wax seals (img/wax-seal.webp) with the number pressed into the middle ===== */
+body.style-infernal .bid-token {
+  position: relative; isolation: isolate; background: none !important; box-shadow: none !important; border-radius: 0;
+  color: #f3c7a8; line-height: 1; padding: 0; font-weight: 700;
+  text-shadow: 0 -1px 0 rgba(60, 0, 0, 0.9), 0 1px 0 rgba(255, 170, 140, 0.35);
+}
+body.style-infernal .bid-token::before {
+  content: ""; position: absolute; inset: -14%; z-index: -1;
+  background: url("img/wax-seal.webp") center / contain no-repeat;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7));
+}
+body.style-infernal .bid-token.empty::before { filter: saturate(0) brightness(0.35) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6)); opacity: 0.7; }
+body.style-infernal .bid-token.empty { color: rgba(241, 220, 174, 0.75); text-shadow: none; }
+body.style-infernal .bid-token.face-down::before { filter: brightness(0.62) drop-shadow(0 2px 2px rgba(0, 0, 0, 0.7)); }
+body.style-infernal .bid-token.face-down { color: #d9ac5c; }
+body.style-infernal .bid-token.revealed.on-target::before { filter: drop-shadow(0 0 3px #e8b85a) drop-shadow(0 0 7px rgba(240, 180, 80, 0.75)); }
+body.style-infernal .bid-token.revealed.over::before { filter: saturate(0.25) brightness(0.62) drop-shadow(0 0 3px #e0503a) drop-shadow(0 0 6px rgba(224, 80, 58, 0.7)); }

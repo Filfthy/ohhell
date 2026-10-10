@@ -732,7 +732,7 @@ class CardView {
         const frame = document.createElement("div");
         frame.className = "inf-court";
         const img = document.createElement("img");
-        img.src = art ? `img/inf-${card.rank}-${INFERNAL_SUITS[card.suit]}.webp` : `img/infpips/${card.rank}-${INFERNAL_SUITS[card.suit]}.svg`;
+        img.src = art ? `img/inf-${card.rank}-${INFERNAL_SUITS[card.suit]}.webp` : `img/infpips/${card.rank}-${INFERNAL_SUITS[card.suit]}.svg?v=2`;
         img.alt = ""; img.draggable = false;
         frame.appendChild(img);
         center.appendChild(frame);
