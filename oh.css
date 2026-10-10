@@ -1800,7 +1800,7 @@ body.style-infernal .icon-btn { color: #e8c88a !important; }
 body.style-infernal .seat-info .name-label {
   font-family: "Cinzel", Georgia, serif; font-style: normal; font-weight: 700; letter-spacing: 0.02em;
   color: var(--inf-ink); -webkit-text-stroke: 0; text-shadow: none;
-  background: url("img/parchment-plate.webp") center / 100% 100% no-repeat, #e3c48b;
+  background: url("img/parchment-plate.webp?v=2") center / 100% 100% no-repeat, #e3c48b;
   border: 0; border-radius: 3px; padding: 0.12em 0.85em 0.14em;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(110, 60, 20, 0.35);
 }
