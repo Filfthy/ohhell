@@ -3,6 +3,8 @@
 // the eyes slowly narrow and widen, every face at its own pace. Wisps of dark smoke rise among them. Drawn on a canvas behind the table; it only runs while the Souls table is chosen, rests
 // while the tab is hidden, and stays still for anyone who has asked their computer for reduced motion.
 
+const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in its life
+
 const SOULS = {
   canvas: null, ctx: null, sand: null, faces: [], active: false, raf: 0, last: 0, W: 0, H: 0, dpr: 1, k: 1,
   still: !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches),
@@ -91,8 +93,13 @@ const SOULS = {
     hc.beginPath(); hc.ellipse(0, 0, U * 1.0, U * 1.3, 0, 0, Math.PI * 2); hc.fill();
     this.head = hs;
     // smoke: lots of thin wisps curling up out of the sand
+    // they're drawn on a small layer (a third of the size) and softened as it's laid down, so they look
+    // hazy and diffuse rather than drawn
+    this.sm = document.createElement("canvas");
+    this.sm.width = Math.ceil(W / 3); this.sm.height = Math.ceil(H / 3);
+    this.smc = this.sm.getContext("2d");
     this.wisps = [];
-    const nw = Math.max(36, Math.round(W * H / 13000));
+    const nw = Math.max(70, Math.round(W * H / 5000));
     for (let i = 0; i < nw; i++) this.wisps.push(this.newWisp(rnd() ));
     this.draw(performance.now());
   },
@@ -136,6 +143,37 @@ const SOULS = {
     if (!this.sand || !this.sand.width || !this.sand.height) return;
     const c = this.ctx, d = this.dpr, s = now / 1000;
     c.drawImage(this.sand, 0, 0);
+    // the smoke, under the faces: thin wisps curling up, drawn small and softened
+    const m = this.smc, S = 1 / 3;
+    m.clearRect(0, 0, this.sm.width, this.sm.height);
+    m.lineCap = "round"; m.lineJoin = "round";
+    for (const w of this.wisps) {
+      const q = w.age / w.life, fade = Math.sin(Math.PI * q) ** 1.2;
+      if (fade < 0.02) continue;
+      const x0 = w.x * S, y0 = (w.y - w.rise * w.age) * S, L = w.len * S;
+      const g = m.createLinearGradient(0, y0, 0, y0 - L);
+      g.addColorStop(0, "rgba(8, 4, 2, 0)");
+      g.addColorStop(0.2, `rgba(8, 4, 2, ${(w.a * fade).toFixed(3)})`);
+      g.addColorStop(0.75, `rgba(8, 4, 2, ${(w.a * fade * 0.5).toFixed(3)})`);
+      g.addColorStop(1, "rgba(8, 4, 2, 0)");
+      m.strokeStyle = g;
+      m.beginPath();
+      for (let j = 0; j <= 12; j++) {
+        const t = j / 12, yy = y0 - L * t;
+        // the curl grows as the thread climbs, and travels up it as the smoke rises
+        const xx = x0 + (Math.sin(t * w.len * w.freq - w.age * w.speed + w.ph) * w.amp * (0.25 + t) + w.lean * w.len * t) * S;
+        if (j) m.lineTo(xx, yy); else m.moveTo(xx, yy);
+      }
+      m.lineWidth = w.w * (1 + t0(q)) * 1.6 * S * 3; m.globalAlpha = 0.45; m.stroke();   // the spreading haze
+      m.lineWidth = w.w * S * 3 * 0.6; m.globalAlpha = 1; m.stroke();                    // the thread
+    }
+    m.globalAlpha = 1;
+    c.save();
+    if ("filter" in c) c.filter = `blur(${(1.6 * d).toFixed(1)}px)`;
+    c.drawImage(this.sm, 0, 0, this.canvas.width, this.canvas.height);
+    c.restore();
+    // the faces, above the smoke but only partly solid, so it shows through them
+    c.globalAlpha = 0.68;
     for (const f of this.faces) {
       const u = 34 * f.size * d;
       // the groan: the mouth slowly opens wide and sags shut again
@@ -156,28 +194,6 @@ const SOULS = {
       this.hollow(c, u * 0.36, -u * 0.25, u * 0.19, eye, -slant);
       this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
       c.restore();
-    }
-    // thin dark wisps of smoke curling up over the faces
-    c.lineCap = "round"; c.lineJoin = "round";
-    for (const w of this.wisps) {
-      const q = w.age / w.life, fade = Math.sin(Math.PI * q) ** 1.2;
-      if (fade < 0.02) continue;
-      const x0 = w.x * d, y0 = (w.y - w.rise * w.age) * d, L = w.len * d;
-      const g = c.createLinearGradient(0, y0, 0, y0 - L);
-      g.addColorStop(0, "rgba(8, 4, 2, 0)");
-      g.addColorStop(0.2, `rgba(8, 4, 2, ${(w.a * fade).toFixed(3)})`);
-      g.addColorStop(0.75, `rgba(8, 4, 2, ${(w.a * fade * 0.5).toFixed(3)})`);
-      g.addColorStop(1, "rgba(8, 4, 2, 0)");
-      c.strokeStyle = g;
-      c.beginPath();
-      for (let j = 0; j <= 14; j++) {
-        const t = j / 14, yy = y0 - L * t;
-        // the curl grows as the thread climbs, and travels up it as the smoke rises
-        const xx = x0 + (Math.sin(t * L * w.freq / d - w.age * w.speed + w.ph) * w.amp * (0.25 + t) + w.lean * L * t) * d / 1;
-        if (j) c.lineTo(xx, yy); else c.moveTo(xx, yy);
-      }
-      c.lineWidth = w.w * 4 * d; c.globalAlpha = 0.3; c.stroke();     // a soft halo
-      c.lineWidth = w.w * d; c.globalAlpha = 1; c.stroke();            // the thread itself
     }
     c.globalAlpha = 1;
     c.drawImage(this.shade, 0, 0);
