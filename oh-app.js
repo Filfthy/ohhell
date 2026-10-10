@@ -2328,6 +2328,8 @@ function updateScale() {
   if (document.body) applyFaces();
 }
 
+// start the Infernal fonts loading now (they are otherwise only fetched when a nameplate first needs them)
+if (document.fonts && document.fonts.load) { document.fonts.load('21px "Manufacturing Consent"').catch(() => {}); document.fonts.load('16px "Cinzel"').catch(() => {}); }
 updateScale();
 const controller = new GameController();
 

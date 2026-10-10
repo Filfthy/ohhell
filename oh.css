@@ -2088,3 +2088,21 @@ body.style-infernal .seat-info .name-label .portrait {
 }
 body.style-infernal .seat-info .name-label .portrait.on-right { right: auto; left: calc(100% - 12px * var(--card-scale)); }
 body.style-infernal .seat-info .name-label .portrait.flip { --fx: -1; }
+/* Nameplates (and the portraits beside them) never shift while the bids, tricks won and dealer chip come and
+   go: the line under the name always keeps a bid seal's height, takes up no width of its own (it spreads
+   out evenly either side of its middle), and for you and the player opposite it hangs off the plate's
+   right-hand end, so the plate itself stays put in the middle */
+.seat-stats { min-height: 2.3em; }
+.seat .seat-stats { width: 0; justify-content: center; align-self: center; }
+.seat-top .seat-info { position: relative; }
+.seat-top .seat-info .seat-stats, #player-seat-info .seat-stats {
+  position: absolute; left: 100%; top: 50%; margin-top: -1.15em; margin-left: calc(10px * var(--card-scale));
+  width: auto; justify-content: flex-start;
+}
+.seat .seat-stats > * { flex-shrink: 0; }
+/* with the line hanging off the right-hand end, the plate sits a fixed step left of centre, where it used to be */
+.seat-top .seat-info { left: calc(-55px * var(--card-scale)); }
+#player-seat-info { margin-left: calc(-55px * var(--card-scale)); }
+@media (orientation: landscape) and (max-height: 500px) {
+  #player-seat-info { margin-left: calc(-55px * var(--card-scale) - 50px); }   /* clear of your bigger phone hand */
+}
