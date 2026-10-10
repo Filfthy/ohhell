@@ -1,6 +1,6 @@
 // oh-souls.js - the "Souls" table: dark soul sand packed with faces of the damned, drifting a little in
 // the sand, rocking slowly (always mostly upright) and groaning: each mouth slowly opens and closes and
-// the eyes slowly narrow and widen, every face at its own pace. Drawn on a canvas behind the table; it only runs while the Souls table is chosen, rests
+// the eyes slowly narrow and widen, every face at its own pace. Wisps of dark smoke rise among them. Drawn on a canvas behind the table; it only runs while the Souls table is chosen, rests
 // while the tab is hidden, and stays still for anyone who has asked their computer for reduced motion.
 
 const SOULS = {
@@ -90,7 +90,45 @@ const SOULS = {
     hc.fillStyle = head;
     hc.beginPath(); hc.ellipse(0, 0, U * 1.0, U * 1.3, 0, 0, Math.PI * 2); hc.fill();
     this.head = hs;
+    // smoke: a few puff shapes, each a cluster of soft dark blots so they look wispy, not round
+    this.puffs = [];
+    for (let v = 0; v < 3; v++) {
+      const P = Math.ceil(110 * dpr), pc = document.createElement("canvas");
+      pc.width = pc.height = P;
+      const px = pc.getContext("2d");
+      for (let i = 0; i < 26; i++) {
+        const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * P * 0.28;
+        const x = P / 2 + Math.cos(a) * r * 1.2, y = P / 2 + Math.sin(a) * r * 0.8, br = P * (0.08 + rnd() * 0.16);
+        const g = px.createRadialGradient(x, y, 0, x, y, br);
+        g.addColorStop(0, `rgba(10, 5, 3, ${0.16 + rnd() * 0.14})`); g.addColorStop(1, "rgba(10, 5, 3, 0)");
+        px.fillStyle = g; px.fillRect(x - br, y - br, br * 2, br * 2);
+      }
+      this.puffs.push(pc);
+    }
+    // vents in the sand that the smoke seeps from
+    this.vents = [];
+    for (let i = 0; i < Math.max(4, Math.round(W * H / 110000)); i++)
+      this.vents.push({ x: rnd() * W, y: H * (0.3 + rnd() * 0.8), every: 0.12 + rnd() * 0.1, t: rnd(), ph: rnd() * 6.3, lean: (rnd() - 0.5) * 10 });
+    this.smoke = [];
+    for (let i = 0; i < 40; i++) this.stepSmoke(0.25);   // start with the smoke already rising
     this.draw(performance.now());
+  },
+
+  // Each vent lets out a puff now and then; puffs rise, sway, spread and thin away.
+  stepSmoke(dt) {
+    const k = this.k;
+    for (const v of this.vents) {
+      v.t += dt;
+      if (v.t >= v.every) {
+        v.t -= v.every;
+        // puffs from one vent share its slow sway, so together they make one wavering thread
+        this.smoke.push({ x: v.x + (Math.random() - 0.5) * 4 * k, y: v.y, age: 0, life: 7 + Math.random() * 3, vent: v,
+          vy: (16 + Math.random() * 6) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 0.25,
+          peak: 0.2 + Math.random() * 0.1, kind: Math.floor(Math.random() * 3) });
+      }
+    }
+    for (const p of this.smoke) { p.age += dt; p.y -= p.vy * dt; p.rot += p.vr * dt; }
+    this.smoke = this.smoke.filter(p => p.age < p.life);
   },
   vignette() {
     const v = document.createElement("canvas");
@@ -136,6 +174,19 @@ const SOULS = {
       this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
       c.restore();
     }
+    // dark smoke drifting up over the faces
+    for (const p of this.smoke) {
+      const q = p.age / p.life;
+      const a = p.peak * Math.sin(Math.PI * q) ** 1.3;
+      if (a < 0.01) continue;
+      const img = this.puffs[p.kind], sz = img.width * (0.22 + q * 0.75) * this.k;
+      // the thread wavers more the higher it rises, and leans a little with its vent
+      const v = p.vent, rise = p.age;
+      const x = (p.x + (Math.sin(s * 0.5 + v.ph - rise * 0.9) * 22 + v.lean * rise * 0.3) * q * this.k) * d, y = p.y * d;
+      c.save(); c.globalAlpha = a; c.translate(x, y); c.rotate(Math.sin(p.rot) * 0.4); c.scale(0.7, 1.9);
+      c.drawImage(img, -sz / 2, -sz / 2, sz, sz);
+      c.restore();
+    }
     c.drawImage(this.shade, 0, 0);
   },
 
@@ -148,7 +199,9 @@ const SOULS = {
       if (!this.active || document.hidden) return;
       this.raf = requestAnimationFrame(tick);
       if (now - this.last < 1000 / 24) return;   // slow movement: 24 frames a second is plenty
+      const dt = this.last ? Math.min(0.25, (now - this.last) / 1000) : 0;
       this.last = now;
+      this.stepSmoke(dt);
       this.draw(now);
     };
     this.raf = requestAnimationFrame(tick);
