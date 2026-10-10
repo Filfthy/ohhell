@@ -122,6 +122,7 @@ const SOULS = {
     this.makeGlow();
     this.shade = this.vignette();
     this.makeHead();
+    this.makeSprites();
     // smoke: lots of thin wisps curling up out of the sand
     // they're drawn on a small layer (a third of the size) and softened as it's laid down, so they look
     // hazy and diffuse rather than drawn
@@ -206,6 +207,64 @@ const SOULS = {
     c.drawImage(this.sand, 0, 0);
     c.restore();
   },
+  // ---- sprite sheets
+  makeSprites() { this.makeWispSheet(); this.makeFaceSheet(); this.makeEmberSprites(); },
+  // Smoke: 12 kinds of wisp, each drawn at 12 stages of its curl (the curl climbs the thread as it
+  // turns), at a third of full size and softened, the way the smoke layer used to be drawn every frame.
+  makeWispSheet() {
+    const S = 1 / 3, L0 = 140 * this.k, cw = Math.ceil(70 * this.k * S * 1.4) + 8, ch = Math.ceil(L0 * S) + 10, V = 12, F = 12;
+    const sheet = document.createElement("canvas"); sheet.width = cw * F; sheet.height = ch * V;
+    const c = sheet.getContext("2d");
+    let seed = 41; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let v = 0; v < V; v++) {
+      const amp = (5 + rnd() * 9) * this.k, freq = 0.035 + rnd() * 0.04, lean = (rnd() - 0.5) * 0.5, wid = (1.3 + rnd() * 1.5) * this.k;
+      for (let f = 0; f < F; f++) {
+        const ox = f * cw + cw / 2, oy = v * ch + ch - 5, L = L0 * S, ph = (f / F) * Math.PI * 2;
+        const g = c.createLinearGradient(0, oy, 0, oy - L);
+        g.addColorStop(0, "rgba(8, 4, 2, 0)"); g.addColorStop(0.2, "rgba(8, 4, 2, 1)"); g.addColorStop(0.75, "rgba(8, 4, 2, 0.5)"); g.addColorStop(1, "rgba(8, 4, 2, 0)");
+        c.save(); c.beginPath(); c.rect(f * cw, v * ch, cw, ch); c.clip();
+        c.filter = "blur(0.6px)"; c.strokeStyle = g; c.lineCap = "round"; c.lineJoin = "round";
+        c.beginPath();
+        for (let j = 0; j <= 12; j++) {
+          const t = j / 12, x = ox + (Math.sin(t * L0 * freq - ph) * amp * (0.25 + t) + lean * L0 * t) * S, y = oy - L * t;
+          if (j) c.lineTo(x, y); else c.moveTo(x, y);
+        }
+        c.lineWidth = wid * 1.75 * 1.6 * S * 3; c.globalAlpha = 0.45; c.stroke();
+        c.lineWidth = wid * S * 3 * 0.6; c.globalAlpha = 1; c.stroke();
+        c.restore();
+      }
+    }
+    this.wispSheet = { img: sheet, cw, ch, F, L0 };
+  },
+  // Faces: every expression a face can pull (3 shapes x 16 mouth openings x 5 eye openings), each with its
+  // head, drawn once at the largest face size.
+  makeFaceSheet() {
+    if (!this.head) return;
+    const P = this.P, big = 1.15 * this.k, d = this.dpr, u = 34 * big * d;
+    const fw = Math.ceil(this.head.width * big), fh = Math.ceil(this.head.height * big);
+    const SH = 3, MO = 16, EY = 5, cols = MO * EY;
+    const sheet = document.createElement("canvas"); sheet.width = fw * cols; sheet.height = fh * SH;
+    const c = sheet.getContext("2d");
+    for (let sh = 0; sh < SH; sh++) for (let mo = 0; mo < MO; mo++) for (let ey = 0; ey < EY; ey++) {
+      const shape = (sh + 0.5) / SH, open = mo / (MO - 1) * 0.7, e = ey / (EY - 1), g = Math.min(1, open / 0.5);
+      const mouth = u * (0.12 + open * 0.6), eye = u * (0.27 - 0.13 * e - 0.04 * g);
+      c.save(); c.translate((mo * EY + ey) * fw + fw / 2, sh * fh + fh / 2);
+      c.globalAlpha = Math.min(1, P.headSolid); c.drawImage(this.head, -fw / 2, -fh / 2, fw, fh);
+      c.globalAlpha = 1; this.misery(c, u, eye, mouth, g, shape);
+      c.restore();
+    }
+    this.faceSheet = { img: sheet, fw, fh, SH, MO, EY, big };
+  },
+  // Embers: two soft glowing dots (hot and warm), painted at each ember's place and brightness.
+  makeEmberSprites() {
+    const mk = hot => {
+      const R = 16, cv = document.createElement("canvas"); cv.width = cv.height = R * 2; const c = cv.getContext("2d");
+      const g = c.createRadialGradient(R, R, 0, R, R, R);
+      g.addColorStop(0, hot ? "rgba(255, 210, 120, 1)" : "rgba(255, 140, 40, 1)"); g.addColorStop(0.3, "rgba(240, 80, 10, 0.5)"); g.addColorStop(1, "rgba(200, 40, 0, 0)");
+      c.fillStyle = g; c.fillRect(0, 0, R * 2, R * 2); return cv;
+    };
+    this.emberHot = mk(true); this.emberWarm = mk(false);
+  },
   // keep a list at n items (the sliders change how many wisps and embers there are)
   fit(key, n, make) {
     const a = this[key] || (this[key] = []);
@@ -230,7 +289,8 @@ const SOULS = {
     return { x: Math.random() * this.W, y: this.H * (0.15 + Math.random() * 0.95), age: age0 * life, life,
       len: (50 + Math.random() * 90) * k, amp: (5 + Math.random() * 9) * k, freq: 0.035 + Math.random() * 0.04,
       speed: 1.2 + Math.random() * 1.4, ph: Math.random() * 6.3, lean: (Math.random() - 0.5) * 0.5,
-      rise: (6 + Math.random() * 8) * k, w: (1.3 + Math.random() * 1.5) * k, a: 0.6 + Math.random() * 0.3 };
+      rise: (6 + Math.random() * 8) * k, w: (1.3 + Math.random() * 1.5) * k, a: 0.6 + Math.random() * 0.3,
+      v: Math.floor(Math.random() * 12), flip: Math.random() < 0.5 };
   },
   newEmber(anywhere) {
     const k = this.k;
@@ -328,35 +388,24 @@ const SOULS = {
     if (!this.sand || !this.sand.width || !this.sand.height) return;
     const c = this.ctx, d = this.dpr, s = now / 1000;
     this.drawGlowAndSand(c, s);
-    // the smoke, under the faces: thin wisps curling up, drawn small and softened
-    const m = this.smc, S = 1 / 3;
-    m.clearRect(0, 0, this.sm.width, this.sm.height);
-    m.lineCap = "round"; m.lineJoin = "round";
-    for (const w of this.wisps) {
-      const q = w.age / w.life, fade = Math.min(1, Math.sin(Math.PI * q) ** 1.2 * this.P.smokeDark);
-      if (fade < 0.02) continue;
-      const x0 = w.x * S, y0 = (w.y - w.rise * w.age) * S, L = w.len * S;
-      const g = m.createLinearGradient(0, y0, 0, y0 - L);
-      g.addColorStop(0, "rgba(8, 4, 2, 0)");
-      g.addColorStop(0.2, `rgba(8, 4, 2, ${(w.a * fade).toFixed(3)})`);
-      g.addColorStop(0.75, `rgba(8, 4, 2, ${(w.a * fade * 0.5).toFixed(3)})`);
-      g.addColorStop(1, "rgba(8, 4, 2, 0)");
-      m.strokeStyle = g;
-      m.beginPath();
-      for (let j = 0; j <= 12; j++) {
-        const t = j / 12, yy = y0 - L * t;
-        // the curl grows as the thread climbs, and travels up it as the smoke rises
-        const xx = x0 + (Math.sin(t * w.len * w.freq - w.age * w.speed + w.ph) * w.amp * (0.25 + t) + w.lean * w.len * t) * S;
-        if (j) m.lineTo(xx, yy); else m.moveTo(xx, yy);
+    // the smoke, under the faces: wisp sprites, cross-fading between curl stages as the curl climbs
+    if (this.wispSheet) {
+      const WS = this.wispSheet, img = WS.img;
+      c.save(); c.imageSmoothingEnabled = true;
+      for (const w of this.wisps) {
+        const q = w.age / w.life, fade = Math.min(1, Math.sin(Math.PI * q) ** 1.2 * this.P.smokeDark);
+        if (fade < 0.02) continue;
+        const sc = (w.len / WS.L0) * 3 * d, dw = WS.cw * sc * (1 + q * 0.6), dh = WS.ch * sc;
+        const x = w.x * d - dw / 2, y = (w.y - w.rise * w.age) * d - dh + 5 * sc;
+        let ph = ((w.age * w.speed + w.ph) / (Math.PI * 2)) % 1; if (ph < 0) ph += 1;
+        const fp = ph * WS.F, f0 = Math.floor(fp) % WS.F, f1 = (f0 + 1) % WS.F, mix = fp - Math.floor(fp);
+        if (w.flip) { c.setTransform(-1, 0, 0, 1, 2 * (x + dw / 2), 0); }
+        c.globalAlpha = Math.min(1, w.a * fade * 1.4 * (1 - mix)); c.drawImage(img, f0 * WS.cw, w.v * WS.ch, WS.cw, WS.ch, x, y, dw, dh);
+        c.globalAlpha = Math.min(1, w.a * fade * 1.4 * mix); c.drawImage(img, f1 * WS.cw, w.v * WS.ch, WS.cw, WS.ch, x, y, dw, dh);
+        if (w.flip) c.setTransform(1, 0, 0, 1, 0, 0);
       }
-      m.lineWidth = w.w * (1 + t0(q)) * 1.6 * S * 3; m.globalAlpha = 0.45; m.stroke();   // the spreading haze
-      m.lineWidth = w.w * S * 3 * 0.6; m.globalAlpha = 1; m.stroke();                    // the thread
+      c.restore();
     }
-    m.globalAlpha = 1;
-    c.save();
-    if ("filter" in c) c.filter = `blur(${(1.6 * d).toFixed(1)}px)`;
-    c.drawImage(this.sm, 0, 0, this.canvas.width, this.canvas.height);
-    c.restore();
     // fire, behind the souls: licks of flame, then the embers
     c.globalCompositeOperation = "lighter";
     for (const f of this.flames) {
@@ -390,12 +439,9 @@ const SOULS = {
       const q = e.age / e.life, a = this.P.emberBright * Math.min(1, q * 3) * Math.min(1, (1 - q) * 3) * (0.75 + 0.25 * Math.sin(e.age * e.fs + e.fl))   /* a slow glow, not a blink */;
       if (a < 0.03) continue;
       const x = e.x * d, y = e.y * d, r = e.r * d;
-      const g = c.createRadialGradient(x, y, 0, x, y, r * 4);
-      const a1 = Math.min(1, a);
-      g.addColorStop(0, e.hot > 0.5 ? `rgba(255, 210, 120, ${a1.toFixed(3)})` : `rgba(255, 140, 40, ${a1.toFixed(3)})`);
-      g.addColorStop(0.3, `rgba(240, 80, 10, ${Math.min(1, a * 0.5).toFixed(3)})`); g.addColorStop(1, "rgba(200, 40, 0, 0)");
-      c.fillStyle = g; c.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
+      c.globalAlpha = Math.min(1, a); c.drawImage(e.hot > 0.5 ? this.emberHot : this.emberWarm, x - r * 4, y - r * 4, r * 8, r * 8);
     }
+    c.globalAlpha = 1;
     c.globalCompositeOperation = "source-over";
     // the souls, on top of everything (smoke and fire pass behind them), solid
     const P = this.P;
@@ -403,20 +449,18 @@ const SOULS = {
       const size = f.size * P.faceSize, u = 34 * size * d;
       // the groan: the mouth slowly opens wide and sags shut again
       const m = 0.5 - 0.5 * Math.cos(s * f.mw + f.mp);
-      const mouth = u * (0.12 + f.mo * m * 0.6);
       // the eyes slowly squeeze half shut and open again
       const e = 0.5 - 0.5 * Math.cos(s * f.ew + f.ep);
-      const eye = u * (0.27 - 0.13 * e - 0.04 * m);
       const x = f.x + f.ax * P.drift * Math.sin(s * f.wx + f.px), y = f.y + f.ay * P.drift * Math.sin(s * f.wy + f.py);
       const tilt = (f.t0 + f.ra * Math.sin(s * f.rw + f.pr)) * P.rock;
+      const FS = this.faceSheet;
+      const sh = Math.min(FS.SH - 1, Math.floor(f.shape * FS.SH)), mo = Math.round(Math.min(1, f.mo * m / 0.7) * (FS.MO - 1)), ey = Math.round(e * (FS.EY - 1));
+      const k = size / FS.big, dw = FS.fw * k, dh = FS.fh * k;
       c.save();
       c.translate(x * d, y * d);
       c.rotate(tilt);
-      const hw = this.head.width * size, hh = this.head.height * size;
-      c.globalAlpha = Math.min(1, P.faces * P.headSolid);
-      c.drawImage(this.head, -hw / 2, -hh / 2, hw, hh);
       c.globalAlpha = P.faces;
-      this.misery(c, u, eye, mouth, m, f.shape);
+      c.drawImage(FS.img, (mo * FS.EY + ey) * FS.fw, sh * FS.fh, FS.fw, FS.fh, -dw / 2, -dh / 2, dw, dh);
       c.restore();
     }
     c.globalAlpha = Math.min(1, P.vignette);
@@ -428,7 +472,7 @@ const SOULS = {
   tuner() {
     if (document.getElementById("souls-tuner")) return;
     const P = this.P, rows = [
-      ["faces", "Face opacity", 0, 1, 0.01, ""], ["headSolid", "Head solidity", 0, 1.5, 0.05, ""], ["headTone", "Head brightness", 0.4, 1.6, 0.05, "head"],
+      ["faces", "Face opacity", 0, 1, 0.01, ""], ["headSolid", "Head solidity", 0, 1.5, 0.05, "head"], ["headTone", "Head brightness", 0.4, 1.6, 0.05, "head"],
       ["faceSize", "Face size", 0.5, 1.6, 0.05, ""], ["drift", "Float amount", 0, 3, 0.1, ""], ["rock", "Rotation amount", 0, 3, 0.1, ""],
       ["smoke", "Smoke amount", 0, 3, 0.1, "count"], ["smokeDark", "Smoke darkness", 0, 2.5, 0.05, ""],
       ["embers", "Ember amount", 0, 3, 0.1, "count"], ["emberSpeed", "Ember speed", 0.1, 3, 0.05, ""], ["emberBright", "Ember brightness", 0, 2, 0.05, ""],
@@ -457,7 +501,7 @@ const SOULS = {
       const kind = kindOf(k);
       if (kind === "tint") this.tint();
       else if (kind === "glow") this.makeGlow();
-      else if (kind === "head") this.makeHead();
+      else if (kind === "head") { this.makeHead(); this.makeFaceSheet(); }
       else if (k === "smoke") this.fit("wisps", Math.round(Math.max(110, this.W * this.H / 3000) * v), () => this.newWisp(Math.random()));
       else if (k === "embers") this.fit("embers", Math.round(Math.max(25, this.W * this.H / 9000) * v), () => this.newEmber(true));
       else if (kind === "sand") { clearTimeout(sandT); sandT = setTimeout(() => this.build(), 250); }
