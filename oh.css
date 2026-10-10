@@ -1696,10 +1696,12 @@ body.back-artifact .card.back { background: transparent url("back-artifact.webp"
 *::-webkit-scrollbar-corner { background: transparent; }
 
 /* ===== The Souls table: animated soul sand (oh-souls.js draws it on #souls-bg) ===== */
-body.table-souls { background: transparent !important; --ui-rgb: 26, 15, 10; --ui-accent: #6fc9d3; }   /* the sand canvas shows through; the dark colour is on the page root */
+body.table-souls { background: transparent !important; --ui-rgb: 28, 17, 11; --ui-accent: #a87a52; }   /* the sand canvas shows through; the dark colour is on the page root */
 html:has(body.table-souls) { background-color: #160d09; }
 #souls-bg { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; display: none; }
 .seg-tables .sw-souls { background:
-    radial-gradient(ellipse 18% 30% at 30% 45%, rgba(150, 205, 215, 0.45), rgba(0, 0, 0, 0) 70%),
-    radial-gradient(ellipse 14% 24% at 72% 58%, rgba(150, 205, 215, 0.3), rgba(0, 0, 0, 0) 70%),
-    radial-gradient(ellipse at 50% 55%, #4a3326, #2a1c14 70%, #160d09) !important; }
+    radial-gradient(ellipse 5% 9% at 24% 40%, #120804 60%, transparent 70%), radial-gradient(ellipse 5% 9% at 36% 40%, #120804 60%, transparent 70%),
+    radial-gradient(ellipse 5% 14% at 30% 66%, #120804 60%, transparent 70%),
+    radial-gradient(ellipse 5% 9% at 66% 46%, #120804 60%, transparent 70%), radial-gradient(ellipse 5% 9% at 78% 46%, #120804 60%, transparent 70%),
+    radial-gradient(ellipse 5% 12% at 72% 70%, #120804 60%, transparent 70%),
+    radial-gradient(ellipse at 50% 55%, #5a3e29, #33231a 70%, #1c120c) !important; }
