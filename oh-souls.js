@@ -8,8 +8,9 @@ const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in
 // Look settings (the temporary tuning panel changes these live)
 const SOULS_P = { faces: 0.76, headSolid: 0.9, headTone: 0.85, faceSize: 1, drift: 1, rock: 1, smoke: 1.7, smokeDark: 1.55,
   embers: 0.4, emberSpeed: 1, emberBright: 0.45, flames: 2.7, flameSize: 0.7, cracks: 0.9, vignette: 1.35,
-  hue: 7, saturation: 1.3, brightness: 0.85 };
-const SOULS_TUNER = false;   // true shows a sliders panel on the Souls table, for tuning the look
+  hue: 7, saturation: 1.3, brightness: 0.85,
+  glowShow: 0.3, glowBright: 1, glowHeat: 0.35, glowScale: 1, breathAmt: 0.25, breathSecs: 14, patchBreath: 0.3 };
+const SOULS_TUNER = true;    // true shows a sliders panel on the Souls table, for tuning the look
 
 const SOULS = {
   P: SOULS_P,
@@ -118,6 +119,7 @@ const SOULS = {
     }
     c.putImageData(img, 0, 0);
     this.sand = s;
+    this.makeGlow();
     this.shade = this.vignette();
     this.makeHead();
     // smoke: lots of thin wisps curling up out of the sand
@@ -145,6 +147,64 @@ const SOULS = {
     const P = this.P;
     this.canvas.style.filter = (P.hue || P.saturation !== 1 || P.brightness !== 1)
       ? `hue-rotate(${P.hue}deg) saturate(${P.saturation}) brightness(${P.brightness})` : "";
+  },
+  // ---- the glow beneath: two soft mottled images, made once at a small size and drawn smoothly enlarged
+  makeGlow() {
+    const P = this.P, gw = Math.ceil(this.W / 8), gh = Math.ceil(this.H / 8);
+    const one = seed => {
+      let x = seed; const rnd = () => (x = (x * 16807) % 2147483647) / 2147483647;
+      // smooth noise at three scales, added together
+      const layer = (cells, amp) => {
+        const cw = Math.max(2, Math.round(gw / (cells / P.glowScale))), ch = Math.max(2, Math.round(gh / (cells / P.glowScale)));
+        const t = document.createElement("canvas"); t.width = Math.ceil(gw / cw) + 2; t.height = Math.ceil(gh / ch) + 2;
+        const tc = t.getContext("2d"), id = tc.createImageData(t.width, t.height);
+        for (let i = 0; i < t.width * t.height; i++) { const v = rnd() * 255; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+        tc.putImageData(id, 0, 0);
+        return { t, cw, ch, amp };
+      };
+      const layers = [layer(5, 0.6), layer(12, 0.28), layer(28, 0.12)];
+      const cv = document.createElement("canvas"); cv.width = gw; cv.height = gh;
+      const c = cv.getContext("2d");
+      const acc = new Float32Array(gw * gh);
+      for (const L of layers) {
+        const tmp = document.createElement("canvas"); tmp.width = gw; tmp.height = gh;
+        const tc = tmp.getContext("2d"); tc.imageSmoothingEnabled = true; tc.imageSmoothingQuality = "high";
+        tc.drawImage(L.t, -L.cw, -L.ch, L.t.width * L.cw, L.t.height * L.ch);
+        const d = tc.getImageData(0, 0, gw, gh).data;
+        for (let i = 0; i < gw * gh; i++) acc[i] += d[i * 4] / 255 * L.amp;
+      }
+      const out = c.createImageData(gw, gh);
+      for (let i = 0; i < gw * gh; i++) {
+        // stretch the contrast so it's mottled rather than flat, then colour it: dark crimson -> red -> orange
+        let v = Math.max(0, Math.min(1, (acc[i] - 0.3) * 2.2));
+        v = v * v * (3 - 2 * v);
+        const k = Math.min(1, v * P.glowBright);
+        out.data[i * 4] = Math.min(255, 30 + 190 * k);
+        out.data[i * 4 + 1] = Math.min(255, 3 + 25 * k + 110 * Math.max(0, k - 0.5) * (0.4 + P.glowHeat * 1.4));
+        out.data[i * 4 + 2] = Math.min(255, 2 + 20 * Math.max(0, k - 0.75) * P.glowHeat);
+        out.data[i * 4 + 3] = 255;
+      }
+      c.putImageData(out, 0, 0);
+      return cv;
+    };
+    this.glowA = one(31); this.glowB = one(77);
+  },
+  drawGlowAndSand(c, s) {
+    const P = this.P, W = this.canvas.width, H = this.canvas.height;
+    c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = "high";
+    if (this.glowA) {
+      c.drawImage(this.glowA, 0, 0, W, H);
+      // the second glow fades in and out over the first, very slowly, so patches warm and cool in place
+      const f = 0.5 + 0.5 * Math.sin((s / Math.max(2, P.breathSecs * 1.7)) * Math.PI * 2);
+      c.globalAlpha = Math.min(1, f * P.patchBreath * 1.5);
+      if (c.globalAlpha > 0.01) c.drawImage(this.glowB, 0, 0, W, H);
+    }
+    // the sand over it, partly see-through so the warmth comes up from beneath; the glow breathes by the sand
+    // thinning and thickening very slightly
+    const breath = Math.sin((s / Math.max(2, P.breathSecs)) * Math.PI * 2) * P.breathAmt * 0.5;
+    c.globalAlpha = Math.max(0, Math.min(1, 1 - P.glowShow * (1 + breath)));
+    c.drawImage(this.sand, 0, 0);
+    c.restore();
   },
   // keep a list at n items (the sliders change how many wisps and embers there are)
   fit(key, n, make) {
@@ -267,7 +327,7 @@ const SOULS = {
   draw(now) {
     if (!this.sand || !this.sand.width || !this.sand.height) return;
     const c = this.ctx, d = this.dpr, s = now / 1000;
-    c.drawImage(this.sand, 0, 0);
+    this.drawGlowAndSand(c, s);
     // the smoke, under the faces: thin wisps curling up, drawn small and softened
     const m = this.smc, S = 1 / 3;
     m.clearRect(0, 0, this.sm.width, this.sm.height);
@@ -374,6 +434,9 @@ const SOULS = {
       ["embers", "Ember amount", 0, 3, 0.1, "count"], ["emberSpeed", "Ember speed", 0.1, 3, 0.05, ""], ["emberBright", "Ember brightness", 0, 2, 0.05, ""],
       ["flames", "Flame frequency", 0, 4, 0.1, ""], ["flameSize", "Flame size", 0.3, 2.5, 0.05, ""],
       ["cracks", "Crack glow", 0, 3, 0.1, "sand"], ["vignette", "Edge darkening", 0, 1.8, 0.05, ""],
+      ["glowShow", "Glow through the sand", 0, 1, 0.02, ""], ["glowBright", "Glow brightness", 0.2, 2, 0.05, "glow"], ["glowHeat", "Glow heat (red-orange)", 0, 1, 0.05, "glow"],
+      ["glowScale", "Glow patch size", 0.3, 3, 0.05, "glow"], ["breathAmt", "Breathing amount", 0, 1, 0.05, ""], ["breathSecs", "Breathing time (s)", 4, 40, 1, ""],
+      ["patchBreath", "Patches warming/cooling", 0, 1, 0.05, ""],
       ["hue", "Overall hue", -180, 180, 1, "tint"], ["saturation", "Saturation", 0, 2.5, 0.05, "tint"], ["brightness", "Brightness", 0.4, 1.8, 0.05, "tint"]];
     const el = document.createElement("div");
     el.id = "souls-tuner";
@@ -393,6 +456,7 @@ const SOULS = {
       P[k] = v; el.querySelector('[data-v="' + k + '"]').textContent = v;
       const kind = kindOf(k);
       if (kind === "tint") this.tint();
+      else if (kind === "glow") this.makeGlow();
       else if (kind === "head") this.makeHead();
       else if (k === "smoke") this.fit("wisps", Math.round(Math.max(110, this.W * this.H / 3000) * v), () => this.newWisp(Math.random()));
       else if (k === "embers") this.fit("embers", Math.round(Math.max(25, this.W * this.H / 9000) * v), () => this.newEmber(true));
