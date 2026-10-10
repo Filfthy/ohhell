@@ -2058,3 +2058,6 @@ body.style-infernal .bid-token.face-down { color: #d9ac5c; }
 body.style-infernal .bid-token.revealed.on-target::before { filter: drop-shadow(0 0 3px #e8b85a) drop-shadow(0 0 7px rgba(240, 180, 80, 0.75)); }
 body.style-infernal .bid-token.revealed.over::before { filter: saturate(0.25) brightness(0.62) drop-shadow(0 0 3px #e0503a) drop-shadow(0 0 6px rgba(224, 80, 58, 0.7)); }
 body.style-infernal .bid-token { padding-top: 0.1em; box-sizing: border-box; }   /* Cinzel sits its figures a little high */
+/* the player across the table: seal and tricks won sit beside the nameplate, not under it, so the card
+   they play is never hidden under their bid */
+.seat-top .seat-info { flex-direction: row; gap: calc(10px * var(--card-scale)); }
