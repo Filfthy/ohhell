@@ -594,17 +594,17 @@ class CardView {
     div.title = info.name + ": " + info.rule;
 
     if (INFERNAL) {
-      // Infernal: a woodcut figure in a framed panel, with the special's glyph at top left (the Joker is the Fool)
+      // Infernal: a woodcut figure in a framed panel, with its Infernal glyph (special/inf-icon-*.svg) at top left (the Joker is the Fool)
       const L = INFERNAL_SPECIAL[card.role];
       div.classList.add("inf-court-card");
       if (L.name) div.title = L.name + ": " + info.rule;
       const ic = document.createElement("img");   // the special's own glyph, top left only
       ic.className = "sp-corner inf-sp-glyph";
-      ic.src = `special/icon-${card.role}.svg`; ic.alt = ""; ic.draggable = false;
+      ic.src = `special/inf-icon-${card.role}.svg`; ic.alt = ""; ic.draggable = false;
       div.appendChild(ic);
       const jumbo = document.createElement("img");
       jumbo.className = "jumbo-pip jumbo-icon";
-      jumbo.src = `special/icon-${card.role}.svg`; jumbo.alt = ""; jumbo.draggable = false;
+      jumbo.src = `special/inf-icon-${card.role}.svg`; jumbo.alt = ""; jumbo.draggable = false;
       div.appendChild(jumbo);
       const center = document.createElement("div");
       center.className = "face-icon";
