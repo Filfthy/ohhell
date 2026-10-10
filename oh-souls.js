@@ -226,6 +226,49 @@ const SOULS = {
     c.beginPath(); c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); c.fill();
   },
 
+  // A miserable face, drawn into the sand: brows pinched up in the middle, eyes drooping at the outer
+  // corners in sunken sockets, tear streaks, and a mouth whose corners sag as it wails. g = groan (0..1).
+  misery(c, u, eye, mouth, g, shape) {
+    const dark = "rgba(16, 8, 4, 0.82)", lip = "rgba(150, 108, 76, 0.38)";
+    for (const side of [-1, 1]) {
+      const ex = side * u * 0.34, ey = -u * 0.2;
+      // sunken socket: a soft shadow around and below the eye
+      const sock = c.createRadialGradient(ex, ey + u * 0.05, 0, ex, ey + u * 0.05, u * 0.32);
+      sock.addColorStop(0, "rgba(14, 7, 3, 0.45)"); sock.addColorStop(1, "rgba(14, 7, 3, 0)");
+      c.fillStyle = sock; c.fillRect(ex - u * 0.32, ey - u * 0.27, u * 0.64, u * 0.64);
+      // the eye: wider than tall, its outer corner sagging down
+      const droop = -side * (0.5 + 0.15 * shape);
+      const ry = Math.max(0.5, eye * 0.72);
+      c.fillStyle = lip; c.beginPath(); c.ellipse(ex, ey + ry * 0.25, u * 0.2, ry * 1.04, droop, 0, Math.PI * 2); c.fill();
+      c.fillStyle = dark; c.beginPath(); c.ellipse(ex, ey, u * 0.19, ry, droop, 0, Math.PI * 2); c.fill();
+      // the brow: a dark crease, its inner end pulled up (higher still as the groan comes)
+      const lift = u * (0.1 + 0.07 * g);
+      c.strokeStyle = "rgba(20, 10, 5, 0.75)"; c.lineWidth = u * 0.075; c.lineCap = "round";
+      c.beginPath();
+      c.moveTo(ex + side * u * 0.2, ey - u * 0.24);
+      c.quadraticCurveTo(ex, ey - u * 0.3 - lift * 0.4, ex - side * u * 0.2, ey - u * 0.3 - lift);
+      c.stroke();
+      // a tear streak running down from the outer corner
+      c.strokeStyle = "rgba(14, 7, 3, 0.32)"; c.lineWidth = u * 0.05;
+      c.beginPath();
+      c.moveTo(ex + side * u * 0.14, ey + ry * 0.6);
+      c.quadraticCurveTo(ex + side * u * 0.2, ey + u * 0.35, ex + side * u * 0.15, ey + u * (0.6 + 0.1 * shape));
+      c.stroke();
+    }
+    // the mouth: corners dragged down, the top arching up in the middle, opening downward as it wails
+    const w = u * (0.2 + 0.04 * shape - 0.05 * g), top = u * 0.36, h = Math.max(u * 0.12, mouth * 1.6);
+    const path = dy => {
+      c.beginPath();
+      c.moveTo(-w, top + h * 0.45 + dy);
+      c.quadraticCurveTo(0, top - h * 0.25 + dy, w, top + h * 0.45 + dy);
+      c.quadraticCurveTo(w * 1.05, top + h + dy, 0, top + h * 1.08 + dy);
+      c.quadraticCurveTo(-w * 1.05, top + h + dy, -w, top + h * 0.45 + dy);
+      c.closePath();
+    };
+    c.fillStyle = lip; path(u * 0.04); c.fill();
+    c.fillStyle = dark; path(0); c.fill();
+  },
+
   draw(now) {
     if (!this.sand || !this.sand.width || !this.sand.height) return;
     const c = this.ctx, d = this.dpr, s = now / 1000;
@@ -309,7 +352,6 @@ const SOULS = {
       // the eyes slowly squeeze half shut and open again
       const e = 0.5 - 0.5 * Math.cos(s * f.ew + f.ep);
       const eye = u * (0.27 - 0.13 * e - 0.04 * m);
-      const slant = 0.32 + f.shape * 0.25 + 0.12 * m;   // the brows lift as it groans
       const x = f.x + f.ax * P.drift * Math.sin(s * f.wx + f.px), y = f.y + f.ay * P.drift * Math.sin(s * f.wy + f.py);
       const tilt = (f.t0 + f.ra * Math.sin(s * f.rw + f.pr)) * P.rock;
       c.save();
@@ -319,9 +361,7 @@ const SOULS = {
       c.globalAlpha = Math.min(1, P.faces * P.headSolid);
       c.drawImage(this.head, -hw / 2, -hh / 2, hw, hh);
       c.globalAlpha = P.faces;
-      this.hollow(c, -u * 0.36, -u * 0.25, u * 0.19, eye, slant);
-      this.hollow(c, u * 0.36, -u * 0.25, u * 0.19, eye, -slant);
-      this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
+      this.misery(c, u, eye, mouth, m, f.shape);
       c.restore();
     }
     c.globalAlpha = Math.min(1, P.vignette);
