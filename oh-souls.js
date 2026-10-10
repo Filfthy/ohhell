@@ -1,6 +1,6 @@
-// oh-souls.js - the "Souls" table: dark soul sand packed with faces of the damned, pressed into the sand
-// and groaning: each mouth slowly opens and closes and the eyes slowly narrow and widen, every face at
-// its own pace. Drawn on a canvas behind the table; it only runs while the Souls table is chosen, rests
+// oh-souls.js - the "Souls" table: dark soul sand packed with faces of the damned, drifting a little in
+// the sand, rocking slowly (always mostly upright) and groaning: each mouth slowly opens and closes and
+// the eyes slowly narrow and widen, every face at its own pace. Drawn on a canvas behind the table; it only runs while the Souls table is chosen, rests
 // while the tab is hidden, and stays still for anyone who has asked their computer for reduced motion.
 
 const SOULS = {
@@ -23,7 +23,7 @@ const SOULS = {
     if (on) { this.build(); this.loop(); } else cancelAnimationFrame(this.raf);
   },
 
-  // The sand and the faces' heads, drawn once per window size; only the eyes and mouths move.
+  // The sand, drawn once per window size; the faces drift, rock and groan on top of it.
   build() {
     const W = window.innerWidth, H = window.innerHeight;
     if (!W || !H) { this.sand = null; return; }   // no size yet (a background tab): wait for the resize
@@ -50,27 +50,24 @@ const SOULS = {
       c.save(); c.translate(x, y); c.scale(1.8 + rnd(), 0.6 + rnd() * 0.5); c.rotate(rnd() * 0.6 - 0.3); c.translate(-x, -y);
       c.fillRect(x - r, y - r, r * 2, r * 2); c.restore();
     }
-    // the faces: one per cell of a loose grid, so they fill the table without piling up
+    // the faces: one per cell of a tight, loose grid, so they fill the table without piling up
     this.faces = [];
-    const cw = 118 * this.k, ch = 132 * this.k;
+    const cw = 84 * this.k, ch = 96 * this.k;
     for (let row = 0, y0 = -ch * 0.3; y0 < H + ch * 0.3; row++, y0 += ch) {
       for (let x0 = (row % 2) * cw * 0.5 - cw * 0.3; x0 < W + cw * 0.3; x0 += cw) {
-        const f = {
-          x: x0 + (rnd() - 0.5) * cw * 0.45, y: y0 + (rnd() - 0.5) * ch * 0.4,
-          size: (0.85 + rnd() * 0.45) * this.k, tilt: (rnd() - 0.5) * 0.5, shape: rnd(),
-          // slow, each at its own pace: a groan every 5-11 s, the eyes on their own rhythm
-          mw: (Math.PI * 2) / (5 + rnd() * 6), mp: rnd() * Math.PI * 2, mo: 0.35 + rnd() * 0.35,
-          ew: (Math.PI * 2) / (4 + rnd() * 7), ep: rnd() * Math.PI * 2
-        };
-        this.faces.push(f);
-        // the head: a smoothed bulge of lighter sand
-        const u = 34 * f.size * dpr, hx = f.x * dpr, hy = f.y * dpr;
-        c.save(); c.translate(hx, hy); c.rotate(f.tilt);
-        const head = c.createRadialGradient(0, -u * 0.15, 0, 0, 0, u * 1.3);
-        head.addColorStop(0, "rgba(120, 84, 58, 0.55)"); head.addColorStop(0.6, "rgba(96, 66, 46, 0.25)"); head.addColorStop(1, "rgba(96, 66, 46, 0)");
-        c.fillStyle = head;
-        c.beginPath(); c.ellipse(0, 0, u * 1.0, u * 1.3, 0, 0, Math.PI * 2); c.fill();
-        c.restore();
+        const per = lo => (Math.PI * 2) / lo;
+        this.faces.push({
+          x: x0 + (rnd() - 0.5) * cw * 0.4, y: y0 + (rnd() - 0.5) * ch * 0.35,
+          size: (0.72 + rnd() * 0.4) * this.k, shape: rnd(),
+          // drifting a little, each its own way round
+          ax: (4 + rnd() * 8) * this.k, ay: (4 + rnd() * 8) * this.k,
+          wx: per(9 + rnd() * 10), wy: per(11 + rnd() * 10), px: rnd() * 6.3, py: rnd() * 6.3,
+          // rocking slowly, but always mostly upright
+          t0: (rnd() - 0.5) * 0.25, ra: 0.1 + rnd() * 0.18, rw: per(12 + rnd() * 14), pr: rnd() * 6.3,
+          // a slow groan every 5-11 s, the eyes on their own rhythm
+          mw: per(5 + rnd() * 6), mp: rnd() * 6.3, mo: 0.35 + rnd() * 0.35,
+          ew: per(4 + rnd() * 7), ep: rnd() * 6.3
+        });
       }
     }
     // grains
@@ -84,6 +81,15 @@ const SOULS = {
     c.putImageData(img, 0, 0);
     this.sand = s;
     this.shade = this.vignette();
+    const U = 34 * dpr, hs = document.createElement("canvas");
+    hs.width = Math.ceil(U * 2.2); hs.height = Math.ceil(U * 2.8);
+    const hc = hs.getContext("2d");
+    hc.translate(hs.width / 2, hs.height / 2);
+    const head = hc.createRadialGradient(0, -U * 0.15, 0, 0, 0, U * 1.3);
+    head.addColorStop(0, "rgba(120, 84, 58, 0.55)"); head.addColorStop(0.6, "rgba(96, 66, 46, 0.25)"); head.addColorStop(1, "rgba(96, 66, 46, 0)");
+    hc.fillStyle = head;
+    hc.beginPath(); hc.ellipse(0, 0, U * 1.0, U * 1.3, 0, 0, Math.PI * 2); hc.fill();
+    this.head = hs;
     this.draw(performance.now());
   },
   vignette() {
@@ -118,9 +124,13 @@ const SOULS = {
       const e = 0.5 - 0.5 * Math.cos(s * f.ew + f.ep);
       const eye = u * (0.27 - 0.13 * e - 0.04 * m);
       const slant = 0.32 + f.shape * 0.25 + 0.12 * m;   // the brows lift as it groans
+      const x = f.x + f.ax * Math.sin(s * f.wx + f.px), y = f.y + f.ay * Math.sin(s * f.wy + f.py);
+      const tilt = f.t0 + f.ra * Math.sin(s * f.rw + f.pr);
       c.save();
-      c.translate(f.x * d, f.y * d);
-      c.rotate(f.tilt);
+      c.translate(x * d, y * d);
+      c.rotate(tilt);
+      const hw = this.head.width * f.size, hh = this.head.height * f.size;
+      c.drawImage(this.head, -hw / 2, -hh / 2, hw, hh);
       this.hollow(c, -u * 0.36, -u * 0.25, u * 0.19, eye, slant);
       this.hollow(c, u * 0.36, -u * 0.25, u * 0.19, eye, -slant);
       this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
