@@ -2142,3 +2142,5 @@ body.style-infernal #scoreboard #score-table { width: auto; margin-left: auto; }
 body.style-infernal #scoreboard #score-table td { text-align: left; }
 body.style-infernal #scoreboard #score-table td:last-child { text-align: right; padding-left: 0.9em; }
 body.style-infernal #scoreboard:hover { filter: brightness(1.15); }
+/* Infernal tutorial: the coach box is parchment, so suit symbols need no chip of their own - the parchment shows through */
+body.style-infernal #coach .coach-suit { background: none; padding: 0; }
