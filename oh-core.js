@@ -35,7 +35,7 @@ const RANKS = ["2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A"]
 const RANK_VALUES = Object.fromEntries(RANKS.map((r, i) => [r, i + 2]));
 
 // Base sizes for scaling
-const BASE_CARD_WIDTH = 60;  // .card.small
+const BASE_CARD_WIDTH = 64;  // .card.small: the shape of a real playing card (5:7), not 2:3
 const BASE_CARD_HEIGHT = 90;
 const BASE_INDEX_PX = 16;
 const BASE_PIP_PX = 10;

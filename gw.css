@@ -161,7 +161,7 @@
     --pip-size: 10px;
 
     /* small hand cards */
-    --small-card-width:  calc(60px * var(--card-scale));
+    --small-card-width:  calc(64px * var(--card-scale));
     --small-card-height: calc(90px * var(--card-scale));
     --hand-inset-v:      calc(18px * var(--card-scale));
 
