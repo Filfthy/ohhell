@@ -1774,7 +1774,7 @@ class GameController {
     });
 
     // Card back (applied immediately, remembered).
-    const BACKS = ["bugvictim", "hellfire", "classic-blue", "classic-red", "drakeharbour", "artifact"];
+    const BACKS = ["bugvictim", "hellfire", "classic-blue", "classic-red", "drakeharbour", "artifact", "infernal"];
     const applyBack = (k) => {
       BACKS.forEach(x => document.body.classList.remove("back-" + x));
       document.body.classList.add("back-" + k);

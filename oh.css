@@ -1746,3 +1746,6 @@ body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0
 /* the trump coin's drawn symbol sits dead centre (no text baseline) */
 .trump-coin .coin-suit:has(.sg) { display: flex; align-items: center; justify-content: center; line-height: 0; }
 .trump-coin .coin-suit .sg { vertical-align: 0; display: block; }
+/* the Infernal back (its parchment edge is part of the picture) */
+body.back-infernal .card.back { background: transparent url("back-infernal.webp") center / 100% 100% no-repeat; border-color: transparent; }
+.seg-backs .bk-infernal { background: transparent url("back-infernal.webp") center / 100% 100% no-repeat !important; }
