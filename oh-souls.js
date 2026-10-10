@@ -74,10 +74,10 @@ const SOULS = {
       }
       const path = () => { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const q of pts.slice(1)) c.lineTo(q[0], q[1]); };
       c.lineCap = "round"; c.lineJoin = "round";
-      c.save(); c.globalCompositeOperation = "lighter"; c.shadowColor = "rgba(255, 70, 0, 0.6)"; c.shadowBlur = 10 * dpr;
-      path(); c.strokeStyle = "rgba(170, 45, 5, 0.35)"; c.lineWidth = 2.2 * dpr; c.stroke(); c.restore();
-      path(); c.strokeStyle = "rgba(8, 3, 1, 0.8)"; c.lineWidth = 1.1 * dpr; c.stroke();
-      path(); c.save(); c.globalCompositeOperation = "lighter"; c.strokeStyle = "rgba(255, 120, 30, 0.18)"; c.lineWidth = 0.6 * dpr; c.stroke(); c.restore();
+      c.save(); c.globalCompositeOperation = "lighter"; c.shadowColor = "rgba(220, 60, 0, 0.45)"; c.shadowBlur = 16 * dpr;
+      path(); c.strokeStyle = "rgba(150, 40, 5, 0.18)"; c.lineWidth = 3 * dpr; c.stroke(); c.restore();
+      path(); c.strokeStyle = "rgba(8, 3, 1, 0.35)"; c.lineWidth = 1.2 * dpr; c.stroke();
+      path(); c.save(); c.globalCompositeOperation = "lighter"; c.strokeStyle = "rgba(255, 120, 30, 0.08)"; c.lineWidth = 0.6 * dpr; c.stroke(); c.restore();
     }
     // the faces: one per cell of a tight, loose grid, so they fill the table without piling up
     this.faces = [];
@@ -232,7 +232,7 @@ const SOULS = {
     c.drawImage(this.sm, 0, 0, this.canvas.width, this.canvas.height);
     c.restore();
     // the faces, above the smoke but only partly solid, so it shows through them
-    c.globalAlpha = 0.68;
+    c.globalAlpha = 0.9;
     for (const f of this.faces) {
       const u = 34 * f.size * d;
       // the groan: the mouth slowly opens wide and sags shut again
