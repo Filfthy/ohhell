@@ -318,7 +318,11 @@ const TUNES = [
 
   { id: "souls", title: "The Souls Below", meta: "Ambient · for the Souls table · drone, choir, groans, fire",
     desc: "No tune at all: a low drone, a distant choir, the damned groaning and the crackle of fire. Endless.",
-    ambient: true }
+    ambient: true },
+
+  { id: "echoes", title: "Echoes Below", meta: "Ambient · drone, choir, groans, fire · and ghosts of the other tunes",
+    desc: "The Souls Below, but now and then a phrase from one of the other tunes drifts up from somewhere far off: slowed, muffled, half remembered.",
+    ambient: true, echoes: true }
 ];
 
 // ===================================================================== playing
@@ -352,7 +356,7 @@ function play(tune) {
   const el = document.getElementById("t-" + tune.id), bar = el.querySelector(".bar i");
   el.classList.add("playing"); el.querySelector(".play").textContent = "■";
   now = { tune, bus, extra: [] };
-  if (tune.ambient) { ambient(bus, bar); return; }
+  if (tune.ambient) { ambient(bus, bar, tune.echoes); return; }
   const beat = 60 / tune.bpm, n = tune.chords.length;
   let b = 0, at = ctx.currentTime + 0.15;
   const schedule = () => {
@@ -372,7 +376,7 @@ function play(tune) {
   schedule(); now.timer = setInterval(schedule, 100);
 }
 // The Souls Below: a drone that never stops, choir chords drifting through, groans and crackle at random.
-function ambient(bus, bar) {
+function ambient(bus, bar, echoes) {
   const t = ctx.currentTime + 0.1, drone = [];
   [[38, 0.12], [45, 0.07], [26, 0.1]].forEach(([m, v]) => {
     const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = hz(m) * (1 + (Math.random() - 0.5) * 0.004);
@@ -389,9 +393,35 @@ function ambient(bus, bar) {
     while (nextChoir < c + 1) { CH[ci % 4].forEach(n => S.choir(nextChoir, hz(midiOf(n)), 7, 1, S.pan(bus, Math.random() - 0.5))); ci++; nextChoir += 8; }
     while (nextGroan < c + 1) { S.groan(nextGroan, bus); nextGroan += 3 + Math.random() * 6; }
     while (nextCrack < c + 0.5) { S.hit(nextCrack, 0.02 + Math.random() * 0.07, bus, 2500 + Math.random() * 3000, 1, 0.012 + Math.random() * 0.02, "highpass"); nextCrack += 0.05 + Math.random() * 0.4; }
+    if (echoes && nextEcho < c + 1) { echo(nextEcho, ghosts); nextEcho += 22 + Math.random() * 20; }
     bar.style.width = (((c - t) % 32) / 32 * 100) + "%";
   };
+  // the ghosts: everything goes through one muffled, echoing channel that fades with the track
+  let nextEcho = t + 9 + Math.random() * 6, ghosts = null;
+  if (echoes) {
+    ghosts = ctx.createGain(); ghosts.gain.value = 0.55;
+    const muffle = S.filter("lowpass", 1500, 0.7), wet = ctx.createGain(); wet.gain.value = 4;
+    ghosts.connect(muffle); muffle.connect(bus); muffle.connect(wet); wet.connect(S.verb);
+    now.extra.push(() => { const g = ghosts.gain, n = ctx.currentTime; g.cancelScheduledValues(n); g.setValueAtTime(g.value, n); g.linearRampToValueAtTime(0, n + 0.4); });
+    window.__echoNow = () => echo(ctx.currentTime + 0.2, ghosts);
+  }
   loop(); now.timer = setInterval(loop, 100);
+}
+// One ghost: four bars of another tune's melody, slowed to two-thirds speed, moved into D minor to sit over
+// the drone, swelling in and dying away.
+const TO_D = { black: 2, parlour: 0, danse: -5, cardroom: 2 };
+function echo(t, dest) {
+  const tunes = TUNES.filter(x => x.parts && TO_D[x.id] != null), tune = tunes[Math.floor(Math.random() * tunes.length)];
+  const part = tune.parts.filter(p => p.notes.some(b => b.length))[0];
+  const starts = []; for (let i = 0; i + 3 < part.notes.length; i += 4) if (part.notes.slice(i, i + 4).some(b => b.length)) starts.push(i);
+  const from = starts[Math.floor(Math.random() * starts.length)], beat = 60 / (tune.bpm * 0.66), len = 4 * tune.beats * beat;
+  const inst = tune.organ ? "organLead" : part.inst, up = tune.organ && (part.inst === "sax" || part.inst === "bassoon") ? 12 : 0;
+  const env = ctx.createGain(); env.gain.setValueAtTime(0.0001, t);
+  env.gain.exponentialRampToValueAtTime(1, t + len * 0.3); env.gain.setValueAtTime(1, t + len * 0.6); env.gain.exponentialRampToValueAtTime(0.0001, t + len + 1.5);
+  env.connect(S.pan(dest, Math.random() * 1.2 - 0.6));
+  for (let k = 0; k < 4; k++) for (const ev of part.notes[from + k] || []) for (const m of ev.midi)
+    S[inst](t + (k * tune.beats + ev.at) * beat, hz(m + part.shift + up + TO_D[tune.id]), ev.beats * beat * 0.95, 0.75, env);
+  if (now) now.ghost = tune.title;
 }
 
 // ===================================================================== the page
