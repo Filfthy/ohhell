@@ -669,6 +669,9 @@ class CardView {
       div.classList.add("clickable");
     }
 
+    // which of the eight parchment sheets this card is printed on (always the same for the same card)
+    if (card) { let h = 7; for (const ch of cardCode(card) + (card.copy || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0; div.dataset.paper = String(h % 8); }
+
     if (card && card.isSpecial) return this.fillSpecialCard(div, card);
 
     const cornerTop = document.createElement("div");

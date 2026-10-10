@@ -1880,3 +1880,11 @@ body.style-infernal .end-table th { font-family: "Cinzel", Georgia, serif; color
 body.style-infernal .end-table th, body.style-infernal .end-table td { font-size: 15px; border-color: rgba(184, 137, 63, 0.25) !important; }
 body.style-infernal .scorecard-table th { font-family: "Cinzel", Georgia, serif; color: #e8b85a; }
 body.style-infernal .trump-coin .coin-blank { font-size: calc(9.5px * var(--card-scale)); }
+body.suits-infernal .card:not(.back)[data-paper="0"] { background-image: url("img/parchment-card-0.webp"); }
+body.suits-infernal .card:not(.back)[data-paper="1"] { background-image: url("img/parchment-card-1.webp"); }
+body.suits-infernal .card:not(.back)[data-paper="2"] { background-image: url("img/parchment-card-2.webp"); }
+body.suits-infernal .card:not(.back)[data-paper="3"] { background-image: url("img/parchment-card-3.webp"); }
+body.suits-infernal .card:not(.back)[data-paper="4"] { background-image: url("img/parchment-card-4.webp"); }
+body.suits-infernal .card:not(.back)[data-paper="5"] { background-image: url("img/parchment-card-5.webp"); }
+body.suits-infernal .card:not(.back)[data-paper="6"] { background-image: url("img/parchment-card-6.webp"); }
+body.suits-infernal .card:not(.back)[data-paper="7"] { background-image: url("img/parchment-card-7.webp"); }
