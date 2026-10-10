@@ -719,9 +719,10 @@ class CardView {
       center.style.width = "100%";
       center.style.height = "100%";
 
-      if ((card.rank === "J" || card.rank === "Q" || card.rank === "K") && INFERNAL) {
-        // Infernal courts: a woodcut figure standing in a framed panel, the index only at top left
+      if ((card.rank === "J" || card.rank === "Q" || card.rank === "K" || card.rank === "A") && INFERNAL) {
+        // Infernal courts and aces: a woodcut in a framed panel, the index only at top left
         div.classList.add("inf-court-card");
+        if (card.rank === "A") div.classList.add("inf-ace", "inf-ace-" + INFERNAL_SUITS[card.suit]);
         const frame = document.createElement("div");
         frame.className = "inf-court";
         const img = document.createElement("img");
