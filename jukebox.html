@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Oh Hell! Jukebox</title>
+<style>
+  :root { --gold: #e8b85a; --ink: #f4e6c8; --dim: #b89c78; --panel: rgba(30, 14, 8, 0.88); --edge: #8a5a32; --hot: #ff7a2a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font-family: Georgia, "Times New Roman", serif;
+    background: radial-gradient(ellipse at 50% 30%, #4a1a0c 0%, #1e0a05 55%, #090302 100%) fixed; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { text-align: center; margin-bottom: 18px; }
+  header img { width: min(340px, 80vw); filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.7)); }
+  h1 { margin: 4px 0 2px; font-size: 30px; letter-spacing: 0.06em; color: var(--gold); text-shadow: 0 2px 6px #000; }
+  .sub { color: var(--dim); font-style: italic; margin: 0; }
+  .deck { display: grid; gap: 12px; margin-top: 18px; }
+  .track { display: grid; grid-template-columns: 58px 1fr; gap: 14px; align-items: center; padding: 14px 16px;
+    background: var(--panel); border: 1px solid var(--edge); border-radius: 12px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45); transition: border-color 0.2s, box-shadow 0.2s; }
+  .track.playing { border-color: var(--hot); box-shadow: 0 0 0 1px var(--hot), 0 0 24px rgba(255, 110, 30, 0.35); }
+  .play { width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--gold); background: #2a1208; color: var(--gold);
+    font-size: 22px; cursor: pointer; display: grid; place-items: center; }
+  .play:hover { background: #3d1a0c; }
+  .track.playing .play { background: var(--hot); color: #1e0a05; border-color: var(--hot); }
+  .track h2 { margin: 0; font-size: 20px; color: var(--gold); }
+  .track .meta { font-size: 13px; color: var(--dim); margin: 2px 0 6px; letter-spacing: 0.03em; }
+  .track p { margin: 0; font-size: 15px; line-height: 1.4; }
+  .bar { height: 4px; margin-top: 10px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #a8321a, var(--hot)); }
+  .controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; color: var(--dim); font-size: 14px; }
+  .controls input { width: 220px; accent-color: var(--hot); }
+  .note { text-align: center; color: var(--dim); font-size: 13px; margin-top: 18px; font-style: italic; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="logo-ohhell.webp" alt="Oh Hell! Extended">
+    <h1>The Infernal Jukebox</h1>
+    <p class="sub">Sketches for the game's music: press a record to play it</p>
+  </header>
+  <div class="deck" id="deck"></div>
+  <div class="controls"><label for="vol">Volume</label><input id="vol" type="range" min="0" max="1" step="0.01" value="0.7"></div>
+  <p class="note">Everything here is synthesised live in your browser: no recordings, nothing downloaded.</p>
+</main>
+<script>
+// ===================================================================== the synthesiser
+const A4 = 440, NAMES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+function midiOf(n) {   // "C#5", "Bb4", "D3"
+  const m = /^([A-G])([#b]?)(-?\d)$/.exec(n);
+  return 12 * (+m[3] + 1) + NAMES[m[1]] + (m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0);
+}
+const hz = midi => A4 * Math.pow(2, (midi - 69) / 12);
+const CHORD = { "": [0, 4, 7], m: [0, 3, 7], "7": [0, 4, 7, 10], m7: [0, 3, 7, 10], dim: [0, 3, 6] };
+function chordOf(name) {   // "Dm", "A7", "Bb", "Ab7" -> { root (pitch class), tones }
+  const m = /^([A-G][#b]?)(m7|m|7|dim)?$/.exec(name);
+  return { root: (midiOf(m[1] + "4") % 12), tones: CHORD[m[2] || ""] };
+}
+
+class Synth {
+  constructor(ctx) {
+    this.ctx = ctx;
+    this.out = ctx.createGain(); this.out.gain.value = 0.7;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 4; comp.attack.value = 0.01; comp.release.value = 0.25;
+    this.out.connect(comp); comp.connect(ctx.destination);
+    // a dark hall: a generated impulse, longer and darker than a room
+    const len = Math.floor(ctx.sampleRate * 2.8), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+    this.verb = ctx.createConvolver(); this.verb.buffer = ir;
+    const wet = ctx.createGain(); wet.gain.value = 0.22;
+    const tone = ctx.createBiquadFilter(); tone.type = "lowpass"; tone.frequency.value = 3200;
+    this.verb.connect(tone); tone.connect(wet); wet.connect(this.out);
+    // noise for percussion, crackle and breath
+    const nl = ctx.sampleRate * 2; this.noise = ctx.createBuffer(1, nl, ctx.sampleRate);
+    const nd = this.noise.getChannelData(0); for (let i = 0; i < nl; i++) nd[i] = Math.random() * 2 - 1;
+  }
+  // a bus that a tune plays through, so it can be faded out cleanly; send sets how much echoes in the hall
+  bus(send = 1) { const g = this.ctx.createGain(), s = this.ctx.createGain(); s.gain.value = send; g.connect(this.out); g.connect(s); s.connect(this.verb); return g; }
+  pan(dest, p) { if (!p || !this.ctx.createStereoPanner) return dest; const s = this.ctx.createStereoPanner(); s.pan.value = p; s.connect(dest); return s; }
+  osc(type, f, t, stop) { const o = this.ctx.createOscillator(); o.type = type; o.frequency.value = f; o.start(t); o.stop(stop); return o; }
+  amp(t, a, peak, d, stop) {   // attack a, then exponential fall over d (to near silence by stop)
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, Math.max(t + a + 0.01, t + d)); return g;
+  }
+  held(t, a, peak, dur, rel) {   // attack, hold for dur, release
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + Math.max(a, dur));
+    g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(a, dur) + rel); return g;
+  }
+  vibrato(o, t, rate, depth, delay) {
+    const l = this.osc("sine", rate, t, t + 30), g = this.ctx.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(depth, t + delay); l.connect(g); g.connect(o.frequency);
+    return l;
+  }
+  filter(type, f, q = 0.7) { const b = this.ctx.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; }
+
+  // ---- instruments: (t, frequency, duration in seconds, velocity 0..1, destination)
+  harpsichord(t, f, dur, v, dest) {
+    const end = t + Math.min(2, dur + 0.9), lp = this.filter("lowpass", Math.min(9000, f * 14), 1.2);
+    lp.frequency.setValueAtTime(Math.min(9000, f * 14), t); lp.frequency.exponentialRampToValueAtTime(f * 3, t + 0.5);
+    const g = this.amp(t, 0.003, 0.16 * v, Math.min(1.6, dur + 0.7), end);
+    this.osc("sawtooth", f, t, end).connect(lp); const o2 = this.osc("square", f * 2.001, t, end), g2 = this.ctx.createGain(); g2.gain.value = 0.35; o2.connect(g2); g2.connect(lp);
+    lp.connect(g); g.connect(dest);
+  }
+  pizz(t, f, dur, v, dest) {
+    const end = t + 0.7, lp = this.filter("lowpass", 700 + f * 1.5, 1), g = this.amp(t, 0.004, 0.5 * v, 0.55, end);
+    this.osc("triangle", f, t, end).connect(lp); this.osc("sine", f, t, end).connect(lp); lp.connect(g); g.connect(dest);
+  }
+  bassoon(t, f, dur, v, dest) {
+    const end = t + dur + 0.25, o = this.osc("sawtooth", f, t, end), lp = this.filter("lowpass", 500 + f * 1.4, 2.5);
+    const nasal = this.filter("peaking", 1100, 2); nasal.gain.value = 6;
+    this.vibrato(o, t, 5, f * 0.006, 0.3).stop(end);
+    const g = this.held(t, 0.05, 0.2 * v, dur, 0.12); o.connect(lp); lp.connect(nasal); nasal.connect(g); g.connect(dest);
+  }
+  reed(t, f, dur, v, dest) {   // bandoneon-ish: two reeds slightly out of tune with each other
+    const end = t + dur + 0.2, lp = this.filter("lowpass", 1900, 1.2), g = this.held(t, 0.025, 0.1 * v, dur * 0.92, 0.07);
+    this.osc("sawtooth", f * 1.004, t, end).connect(lp); this.osc("square", f * 0.996, t, end).connect(lp); lp.connect(g); g.connect(dest);
+  }
+  violin(t, f, dur, v, dest) {
+    const end = t + dur + 0.3, o = this.osc("sawtooth", f, t, end), lp = this.filter("lowpass", 3400, 0.9), hp = this.filter("highpass", 260);
+    const body = this.filter("peaking", 2600, 1.5); body.gain.value = 5;
+    this.vibrato(o, t, 5.6, f * 0.009, 0.18).stop(end);
+    const g = this.held(t, 0.07, 0.13 * v, dur, 0.16); o.connect(hp); hp.connect(lp); lp.connect(body); body.connect(g); g.connect(dest);
+  }
+  xylo(t, f, dur, v, dest) {
+    const end = t + 0.6;
+    [[1, 0.32], [3.93, 0.09], [9.2, 0.03]].forEach(([k, a]) => {
+      const g = this.amp(t, 0.002, a * v, k > 1 ? 0.12 : 0.4, end); this.osc("sine", f * k, t, end).connect(g); g.connect(dest);
+    });
+  }
+  piano(t, f, dur, v, dest) {   // a slightly out-of-tune saloon upright
+    const end = t + Math.min(3, dur + 1.2), lp = this.filter("lowpass", Math.min(5000, f * 8), 0.8), g = this.amp(t, 0.004, 0.17 * v, Math.min(2.6, dur + 1.0), end);
+    this.osc("triangle", f, t, end).connect(lp); this.osc("triangle", f * 1.007, t, end).connect(lp);
+    const h = this.osc("sine", f * 2, t, end), hg = this.ctx.createGain(); hg.gain.value = 0.3; h.connect(hg); hg.connect(lp);
+    lp.connect(g); g.connect(dest);
+  }
+  hit(t, v, dest, f = 1800, q = 3, d = 0.07, type = "bandpass") {   // a knock, a brush, a crackle
+    const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.playbackRate.value = 0.8 + Math.random() * 0.4;
+    const b = this.filter(type, f, q), g = this.amp(t, 0.002, v, d, t + d + 0.05);
+    s.connect(b); b.connect(g); g.connect(dest); s.start(t, Math.random() * 1.5, d + 0.05);
+  }
+  sax(t, f, dur, v, dest) {   // a smoky saxophone: reedy, scooping up into each note, with a wide vibrato
+    const end = t + dur + 0.3, o = this.osc("sawtooth", f, t, end), o2 = this.osc("square", f * 1.002, t, end);
+    o.frequency.setValueAtTime(f * 0.965, t); o.frequency.exponentialRampToValueAtTime(f, t + 0.07);
+    this.vibrato(o, t, 5.2, f * 0.012, 0.28).stop(end);
+    const mix = this.ctx.createGain(), g2 = this.ctx.createGain(); g2.gain.value = 0.35; o.connect(mix); o2.connect(g2); g2.connect(mix);
+    const lp = this.filter("lowpass", 2300, 1), reed = this.filter("peaking", 1350, 1.3); reed.gain.value = 8;
+    const g = this.held(t, 0.05, 0.1 * v, dur, 0.14); mix.connect(lp); lp.connect(reed); reed.connect(g); g.connect(dest);
+  }
+  tuba(t, f, dur, v, dest) {
+    const end = t + 0.9, lp = this.filter("lowpass", 260 + f, 1.2), g = this.amp(t, 0.02, 0.32 * v, Math.min(0.6, dur + 0.25), end);
+    this.osc("sawtooth", f, t, end).connect(lp); this.osc("sine", f, t, end).connect(g); lp.connect(g); g.connect(dest);
+  }
+  strings(t, f, dur, v, dest) {
+    const end = t + dur + 0.3, lp = this.filter("lowpass", 1600, 0.8), g = this.held(t, 0.04, 0.045 * v, dur, 0.18);
+    this.osc("sawtooth", f * 0.996, t, end).connect(lp); this.osc("sawtooth", f * 1.004, t, end).connect(lp); lp.connect(g); g.connect(dest);
+  }
+  pad(t, f, dur, v, dest) {   // a wide, slowly breathing synth pad
+    const end = t + dur + 3, lp = this.filter("lowpass", 400, 1.5), g = this.held(t, 1.6, 0.032 * v, dur, 2.6);
+    lp.frequency.setValueAtTime(380, t); lp.frequency.linearRampToValueAtTime(1150, t + dur * 0.55); lp.frequency.linearRampToValueAtTime(520, t + dur + 2);
+    [-0.006, 0, 0.006].forEach(k => this.osc("sawtooth", f * (1 + k), t, end).connect(lp)); lp.connect(g); g.connect(dest);
+  }
+  pluck(t, f, dur, v, dest) {   // a soft synth pluck for arpeggios
+    const end = t + 0.7, lp = this.filter("lowpass", 2400, 4), g = this.amp(t, 0.003, 0.07 * v, 0.5, end);
+    lp.frequency.setValueAtTime(2600, t); lp.frequency.exponentialRampToValueAtTime(320, t + 0.28);
+    this.osc("square", f, t, end).connect(lp); lp.connect(g); g.connect(dest);
+  }
+  sub(t, f, dur, v, dest) {
+    const end = t + dur + 1.2, g = this.held(t, 0.35, 0.24 * v, dur, 1);
+    this.osc("sine", f, t, end).connect(g); g.connect(dest);
+  }
+  rumble(t, v, dest) {   // something huge moving far below
+    const s = this.ctx.createBufferSource(); s.buffer = this.noise; s.loop = true;
+    const lp = this.filter("lowpass", 160, 1), g = this.ctx.createGain(), len = 6;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + len * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    s.connect(lp); lp.connect(g); g.connect(dest); s.start(t); s.stop(t + len + 0.1);
+  }
+  choir(t, f, dur, v, dest) {   // "aah": two detuned saws through three vowel formants
+    const end = t + dur + 2.2, g = this.held(t, 1.4, 0.05 * v, dur, 2), mix = this.ctx.createGain();
+    [0.996, 1.004].forEach(k => { const o = this.osc("sawtooth", f * k, t, end); this.vibrato(o, t, 4.3 + Math.random(), f * 0.005, 0.8).stop(end); o.connect(mix); });
+    [[700, 1], [1150, 0.55], [2800, 0.22]].forEach(([ff, a]) => { const b = this.filter("bandpass", ff, 7), ga = this.ctx.createGain(); ga.gain.value = a; mix.connect(b); b.connect(ga); ga.connect(g); });
+    g.connect(dest);
+  }
+  groan(t, dest) {   // a distant soul: a low voice sliding down through "oh"
+    const len = 2.6 + Math.random() * 1.8, end = t + len + 0.5, f0 = 130 + Math.random() * 70;
+    const o = this.osc("sawtooth", f0, t, end); o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f0 * 0.62, t + len);
+    this.vibrato(o, t, 3.5, f0 * 0.02, 0.4).stop(end);
+    const g = this.ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035, t + len * 0.35); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    const mix = this.ctx.createGain(); o.connect(mix);
+    [[450, 1], [800, 0.6]].forEach(([ff, a]) => { const b = this.filter("bandpass", ff, 6), ga = this.ctx.createGain(); ga.gain.value = a; mix.connect(b); b.connect(ga); ga.connect(g); });
+    g.connect(this.pan(dest, Math.random() * 1.6 - 0.8));
+  }
+}
+
+// ===================================================================== writing music down
+// A bar is written "D5:1 F5:0.5 r:0.5 A4+Eb5:1" - note:beats, r for a rest, + for notes together.
+function parseBar(str) {
+  const ev = []; let at = 0;
+  for (const tok of str.trim().split(/\s+/)) {
+    if (!tok) continue;
+    const [n, d] = tok.split(":"), beats = +d;
+    if (n !== "r") ev.push({ at, beats, midi: n.split("+").map(midiOf) });
+    at += beats;
+  }
+  return ev;
+}
+const bars = s => s.split("|").map(parseBar);
+
+// ===================================================================== the tunes
+const TUNES = [
+  { id: "black", title: "Waltz in Black", meta: "Grand waltz · C minor · saxophone, strings, tuba, violin",
+    desc: "After Shostakovich's Second Waltz, only darker: a slow, sweeping ballroom waltz for a ball nobody leaves.",
+    bpm: 150, beats: 3, send: 1.4, gain: 1.7,
+    chords: ("Cm Cm Cm G7 G7 G7 G7 Cm Cm Cm C7 Fm Fm Cm G7 Cm " +
+             "Ab Ab Fm Fm Cm Cm D7 G7 Ab Ab Fm G7 Cm G7 Cm Cm").split(" "),
+    parts: [
+      { inst: "sax", vel: 1, shift: -12, notes: bars(
+        "G4:2 C5:1 | Eb5:3 | D5:1 Eb5:1 F5:1 | D5:3 | B4:2 D5:1 | F5:3 | Eb5:1 D5:1 C5:1 | C5:2 r:1 |" +
+        "G4:2 C5:1 | Eb5:3 | E5:1 G5:1 Bb5:1 | Ab5:3 | Ab5:1 G5:1 F5:1 | Eb5:2 C5:1 | D5:2 B4:1 | C5:3 |" +
+        "C5:2 Eb5:1 | Ab5:3 | G5:1 F5:1 Eb5:1 | F5:3 | Eb5:1 D5:1 C5:1 | G5:3 | F#5:2 A5:1 | G5:3 |" +
+        "C6:2 Ab5:1 | Eb5:3 | F5:1 Ab5:1 C6:1 | D6:2 B5:1 | C6:2 G5:1 | F5:1 D5:1 B4:1 | C5:3 | r:3") },
+      { inst: "violin", vel: 0.55, shift: 0, notes: bars(
+        "r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 |" +
+        "C5:2 Eb5:1 | Ab5:3 | G5:1 F5:1 Eb5:1 | F5:3 | Eb5:1 D5:1 C5:1 | G5:3 | F#5:2 A5:1 | G5:3 |" +
+        "C6:2 Ab5:1 | Eb5:3 | F5:1 Ab5:1 C6:1 | D6:2 B5:1 | C6:2 G5:1 | F5:1 D5:1 B4:1 | C5:3 | r:3") }
+    ],
+    // the big oom-pah-pah: tuba on the downbeat, strings on two and three, a soft snare tap, a crash at each section
+    accomp(S, bus, t, b, ch, beat) {
+      S.tuba(t, hz(36 + ch.root - (ch.root > 4 ? 12 : 0)), beat, 0.95, bus);
+      for (const k of [1, 2]) for (const tone of ch.tones) S.strings(t + k * beat, hz(55 + ((ch.root + tone + 5) % 12)), beat * 0.55, 0.8, S.pan(bus, 0.15 * (k === 1 ? -1 : 1)));
+      S.hit(t + beat, 0.04, bus, 3200, 2, 0.05); S.hit(t + 2 * beat, 0.035, bus, 3200, 2, 0.05);
+      if (b === 0 || b === 16) S.hit(t, 0.07, bus, 5200, 0.7, 2.2, "highpass");
+    } },
+
+  { id: "below", title: "So Far Below", meta: "Slow and eerie · D minor · pads, sub bass, distant piano, synth",
+    desc: "In the spirit of the Nether: vast, dark and lonely, with a piano a long way off. Could suit the Souls table.",
+    bpm: 66, beats: 4, send: 3,
+    chords: "Dm Dm Bb Bb Gm Gm A A Dm Dm Bb Bb Gm Gm A A".split(" "),
+    parts: [{ inst: "piano", vel: 0.55, shift: 0, notes: bars(
+      "A5:3 r:1 | F5:2 E5:2 | D5:4 | r:4 | G5:3 r:1 | F5:2 D5:2 | E5:4 | C#5:4 |" +
+      "D6:3 r:1 | C6:2 Bb5:2 | A5:4 | r:4 | Bb5:3 r:1 | A5:2 G5:2 | A5:4 | r:4") }],
+    // a pad and sub bass held across each two-bar chord, a quiet arpeggio drifting side to side, a rumble now and then
+    accomp(S, bus, t, b, ch, beat) {
+      if (b % 2 === 0) {
+        for (const tone of ch.tones.slice(0, 3)) S.pad(t, hz(50 + ((ch.root + tone + 10) % 12)), beat * 8, 1, S.pan(bus, (tone - 3) / 10));
+        S.sub(t, hz(26 + ch.root + (ch.root > 6 ? 0 : 12)), beat * 7.5, 1, bus);
+      }
+      const arp = [0, 2, 1, 2, 3, 2, 1, 2].map(i => 62 + ((ch.root + [0, ch.tones[1], 7, 12][i] + 10) % 12) + (i === 3 ? 12 : 0));
+      arp.forEach((n, i) => S.pluck(t + i * beat / 2, hz(n), beat / 2, 0.8 - (i % 2) * 0.3, S.pan(bus, i % 2 ? 0.5 : -0.5)));
+      if (b === 0 || b === 9) S.rumble(t + beat, 0.09, bus);
+      if (b % 4 === 3) S.hit(t + beat * 2.5, 0.05, bus, 900 + Math.random() * 600, 18, 1.4);   // a far-off metallic ring
+    } },
+
+  { id: "parlour", title: "The Devil's Parlour", meta: "Waltz · D minor · harpsichord, bassoon, pizzicato",
+    desc: "A sly, slightly crooked waltz for a card room run by the Devil himself. My suggestion for the main game music.",
+    bpm: 138, beats: 3,
+    chords: "Dm Dm A7 A7 Dm Dm Gm A7 Dm Dm Gm Gm Dm A7 Dm Dm Bb Bb F F Gm A7 Dm A7 Dm Dm Gm Gm Dm A7 Dm Dm".split(" "),
+    parts: [
+      { inst: "bassoon", vel: 1, shift: -12, notes: bars(
+        "A4:1 D5:1 E5:1 | F5:2 E5:1 | C#5:1 E5:1 G5:1 | G5:1 F5:1 E5:1 | A4:1 D5:1 F5:1 | A5:2 G5:1 | Bb5:1 G5:1 E5:1 | C#5:2 r:1 |" +
+        "A4:1 D5:1 E5:1 | F5:2 G5:1 | Bb5:1 A5:1 G5:1 | D5:2 Bb4:1 | A4:1 F5:1 E5:1 | E5:1 G5:1 C#5:1 | D5:3 | r:3 |" +
+        "r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 |" +
+        "A4:1 D5:1 E5:1 | F5:2 G5:1 | Bb5:1 A5:1 G5:1 | D5:2 Bb4:1 | A4:1 F5:1 E5:1 | E5:1 G5:1 C#5:1 | D5:3 | r:3") },
+      { inst: "harpsichord", vel: 0.9, shift: 0, notes: bars(
+        "r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 |" +
+        "D5:1 F5:1 Bb5:1 | A5:2 F5:1 | C5:1 F5:1 A5:1 | C6:2 A5:1 | G5:1 Bb5:1 D6:1 | C#6:1 A5:1 G5:1 | F5:1 E5:1 D5:1 | E5:1 C#5:1 A4:1 |" +
+        "A5:1 D6:1 E6:1 | F6:2 G6:1 | Bb6:1 A6:1 G6:1 | D6:2 Bb5:1 | A5:1 F6:1 E6:1 | E6:1 G6:1 C#6:1 | D6:3 | r:3") }
+    ],
+    // oom-pah-pah: a plucked bass note, then two crisp harpsichord chords
+    accomp(S, bus, t, b, ch, beat) {
+      S.pizz(t, hz(36 + ch.root), beat, 0.9, bus);
+      for (const k of [1, 2]) for (const tone of ch.tones.slice(0, 3)) S.harpsichord(t + k * beat, hz(60 + ((ch.root + tone) % 12)), beat * 0.25, 0.45, S.pan(bus, 0.25));
+    } },
+
+  { id: "tango", title: "Bub's Tango", meta: "Tango · A minor · bandoneon, upright piano, pizzicato",
+    desc: "Smouldering and a little theatrical: the music for a dealer who knows exactly what you're holding.",
+    bpm: 112, beats: 2, gain: 0.75,
+    chords: "Am Am E7 E7 Am Am Dm E7 Dm Dm Am Am E7 E7 Am Am".split(" "),
+    parts: [{ inst: "reed", vel: 1, shift: 0, notes: bars(
+      "E5:0.75 E5:0.25 E5:0.5 F5:0.5 | E5:1 r:0.5 C5:0.5 | B4:0.75 B4:0.25 B4:0.5 C5:0.5 | B4:1 r:0.5 G#4:0.5 |" +
+      "A4:0.5 C5:0.5 E5:0.5 A5:0.5 | A5:0.75 G5:0.25 F5:0.5 E5:0.5 | D5:0.5 F5:0.5 A5:0.5 F5:0.5 | E5:1.5 r:0.5 |" +
+      "F5:0.75 F5:0.25 F5:0.5 E5:0.5 | D5:0.5 A4:0.5 D5:0.5 F5:0.5 | E5:0.75 E5:0.25 E5:0.5 D5:0.5 | C5:0.5 A4:0.5 C5:0.5 E5:0.5 |" +
+      "D5:0.5 B4:0.5 G#4:0.5 B4:0.5 | E5:0.5 D5:0.5 C5:0.5 B4:0.5 | A4:0.5 E4:0.25 A4:0.25 C5:0.5 E5:0.5 | A5:1 r:1") }],
+    // the habanera: long-short-long-long in the bass, a stab of piano chord, a knock on the off-beats
+    accomp(S, bus, t, b, ch, beat) {
+      const r = 36 + ch.root, f = r + 7;
+      [[0, r, 0.75], [0.75, f, 0.25], [1, r + 12, 0.5], [1.5, f, 0.5]].forEach(([at, n, d]) => S.pizz(t + at * beat, hz(n), d * beat, 0.95, bus));
+      for (const at of [0, 1]) for (const tone of ch.tones) S.piano(t + at * beat, hz(57 + ((ch.root + tone + 3) % 12) - 3 + 0), beat * 0.2, 0.5, S.pan(bus, -0.2));
+      S.hit(t + 0.75 * beat, 0.12, bus, 1600, 4, 0.06); S.hit(t + 1.5 * beat, 0.09, bus, 2200, 4, 0.05);
+    } },
+
+  { id: "danse", title: "Danse of the Damned", meta: "Danse macabre · G minor · violin, xylophone, pizzicato",
+    desc: "Skeletons at midnight: a fiddler tuning to the devil's interval, then a jig with rattling bones.",
+    bpm: 168, beats: 3,
+    chords: "D7 D7 D7 D7 Gm Gm D7 D7 Gm Gm Cm D7 Eb Eb Cm Cm Gm D7 Gm Gm".split(" "),
+    parts: [
+      { inst: "violin", vel: 1, shift: 0, notes: bars(
+        "A4+Eb5:1 r:2 | A4+Eb5:1 r:2 | A4+Eb5:1 r:2 | A4+Eb5:2 r:1 |" +
+        "G5:1 r:0.5 D5:0.5 G5:1 | Bb5:2 A5:1 | F#5:1 r:0.5 D5:0.5 F#5:1 | A5:2 G5:1 |" +
+        "G5:0.5 A5:0.5 Bb5:0.5 C6:0.5 D6:1 | D6:1 Bb5:1 G5:1 | Eb6:1 D6:1 C6:1 | D6:3 |" +
+        "Eb6:1 Bb5:1 G5:1 | Eb5:1 G5:1 Bb5:1 | C6:1 G5:1 Eb5:1 | D5:1 Eb5:1 C5:1 |" +
+        "Bb4:1 D5:1 G5:1 | F#5:1 A5:1 C6:1 | Bb5:1 A5:1 F#5:1 | G5:2 r:1") }
+    ],
+    // a plucked bass, and bones (xylophone) rattling through the chord
+    accomp(S, bus, t, b, ch, beat) {
+      S.pizz(t, hz(31 + ch.root + (ch.root < 5 ? 12 : 0)), beat, 0.9, bus);
+      if (b < 4) { S.xylo(t + 1.5 * beat, hz(74), beat * 0.4, 0.5, S.pan(bus, 0.4)); return; }
+      const tones = ch.tones.slice(0, 3).map(x => 72 + ((ch.root + x) % 12));
+      [1, 1.5, 2, 2.5].forEach((at, i) => S.xylo(t + at * beat, hz(tones[i % 3] + (i === 3 ? 12 : 0)), beat * 0.4, 0.55, S.pan(bus, 0.35)));
+    } },
+
+  { id: "cardroom", title: "Old Nick's Card Room", meta: "Slow swing · C minor · saloon piano, walking bass, brushes",
+    desc: "Late, smoky and in no hurry: the band that plays after the last hand has been dealt.",
+    bpm: 92, beats: 4, swing: 0.64, gain: 0.8,
+    chords: "Cm Cm Fm Fm Cm Cm G7 G7 Ab7 Ab7 Cm Cm Fm G7 Cm G7".split(" "),
+    parts: [{ inst: "piano", vel: 1, shift: 0, notes: bars(
+      "G4:1 Eb5:1 D5:0.5 C5:0.5 Bb4:1 | C5:3 r:1 | F4:1 Ab4:1 C5:0.5 Eb5:0.5 D5:1 | C5:3 r:1 |" +
+      "G4:0.5 C5:0.5 Eb5:0.5 G5:0.5 F5:1 Eb5:1 | D5:1 C5:1 Bb4:1 G4:1 | B4:1 D5:1 F5:1 Ab5:1 | G5:4 |" +
+      "Gb5:1 Eb5:1 C5:0.5 Eb5:0.5 Gb5:1 | F5:2 Eb5:1 C5:1 | G5:1 Eb5:0.5 C5:0.5 G4:1 C5:1 | Eb5:3 r:1 |" +
+      "Ab5:1 F5:1 C5:1 Ab4:1 | B4:1 D5:1 F5:1 G5:1 | Eb5:1 D5:1 C5:2 | r:4") }],
+    // walking bass (chord tones, then a step into the next chord), soft chords on 2 and 4, brushes
+    accomp(S, bus, t, b, ch, beat, next) {
+      const r = 36 + ch.root, walk = [r, r + ch.tones[1], r + 7, 36 + next.root + (next.root > ch.root ? -1 : 1)];
+      walk.forEach((n, i) => S.pizz(t + i * beat, hz(n), beat, 0.85, bus));
+      for (const at of [1, 3]) for (const tone of ch.tones) S.piano(t + at * beat, hz(55 + ((ch.root + tone + 5) % 12)), beat * 0.3, 0.32, S.pan(bus, -0.3));
+      for (let i = 0; i < 4; i++) { S.hit(t + i * beat, i % 2 ? 0.05 : 0.025, bus, 7000, 0.7, 0.12, "highpass"); S.hit(t + (i + 0.64) * beat, 0.02, bus, 7000, 0.7, 0.05, "highpass"); }
+    } },
+
+  { id: "souls", title: "The Souls Below", meta: "Ambient · for the Souls table · drone, choir, groans, fire",
+    desc: "No tune at all: a low drone, a distant choir, the damned groaning and the crackle of fire. Endless.",
+    ambient: true }
+];
+
+// ===================================================================== playing
+let ctx = null, S = null, now = null;
+function stop() {
+  if (!now) return;
+  clearInterval(now.timer); (now.extra || []).forEach(f => f());
+  const g = now.bus.gain, t = ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + 0.4);
+  const bus = now.bus; setTimeout(() => bus.disconnect(), 600);
+  document.querySelectorAll(".track").forEach(el => el.classList.remove("playing"));
+  document.querySelectorAll(".play").forEach(el => (el.textContent = "▶"));
+  document.querySelectorAll(".bar i").forEach(el => (el.style.width = "0"));
+  now = null;
+}
+function play(tune) {
+  if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); S = new Synth(ctx); S.out.gain.value = +document.getElementById("vol").value; }
+  if (ctx.state === "suspended") ctx.resume();
+  stop();
+  const bus = S.bus(tune.send || 1); bus.gain.value = tune.gain || 1;
+  const el = document.getElementById("t-" + tune.id), bar = el.querySelector(".bar i");
+  el.classList.add("playing"); el.querySelector(".play").textContent = "■";
+  now = { tune, bus, extra: [] };
+  if (tune.ambient) { ambient(bus, bar); return; }
+  const beat = 60 / tune.bpm, n = tune.chords.length;
+  let b = 0, at = ctx.currentTime + 0.15;
+  const schedule = () => {
+    while (at < ctx.currentTime + 0.6) {
+      const i = b % n, ch = chordOf(tune.chords[i]), next = chordOf(tune.chords[(i + 1) % n]);
+      tune.accomp(S, bus, at, i, ch, beat, next);
+      for (const p of tune.parts) for (const ev of p.notes[i] || []) {
+        let pos = ev.at;
+        if (tune.swing && Math.abs(pos % 1 - 0.5) < 0.01) pos = Math.floor(pos) + tune.swing;   // lazy off-beats
+        for (const m of ev.midi) S[p.inst](at + pos * beat, hz(m + p.shift), ev.beats * beat * 0.95, p.vel, bus);
+      }
+      const start = at; setTimeout(() => { if (now && now.bus === bus) bar.style.width = ((i + 1) / n * 100) + "%"; }, Math.max(0, (start - ctx.currentTime) * 1000));
+      at += tune.beats * beat; b++;
+    }
+  };
+  schedule(); now.timer = setInterval(schedule, 100);
+}
+// The Souls Below: a drone that never stops, choir chords drifting through, groans and crackle at random.
+function ambient(bus, bar) {
+  const t = ctx.currentTime + 0.1, drone = [];
+  [[38, 0.12], [45, 0.07], [26, 0.1]].forEach(([m, v]) => {
+    const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.value = hz(m) * (1 + (Math.random() - 0.5) * 0.004);
+    const lp = S.filter("lowpass", 380, 2), lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.frequency.value = 0.04 + Math.random() * 0.04; lg.gain.value = 180; lfo.connect(lg); lg.connect(lp.frequency);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 4);
+    o.connect(lp); lp.connect(g); g.connect(bus); o.start(t); lfo.start(t); drone.push(o, lfo);
+  });
+  now.extra.push(() => drone.forEach(o => { try { o.stop(ctx.currentTime + 0.5); } catch (e) {} }));
+  const CH = [["D3", "F3", "A3", "D4"], ["Bb2", "F3", "Bb3", "D4"], ["G2", "D3", "G3", "Bb3"], ["A2", "E3", "A3", "C#4"]];
+  let ci = 0, nextChoir = t + 2, nextGroan = t + 4, nextCrack = t, ticks = 0;
+  const loop = () => {
+    const c = ctx.currentTime;
+    while (nextChoir < c + 1) { CH[ci % 4].forEach(n => S.choir(nextChoir, hz(midiOf(n)), 7, 1, S.pan(bus, Math.random() - 0.5))); ci++; nextChoir += 8; }
+    while (nextGroan < c + 1) { S.groan(nextGroan, bus); nextGroan += 3 + Math.random() * 6; }
+    while (nextCrack < c + 0.5) { S.hit(nextCrack, 0.02 + Math.random() * 0.07, bus, 2500 + Math.random() * 3000, 1, 0.012 + Math.random() * 0.02, "highpass"); nextCrack += 0.05 + Math.random() * 0.4; }
+    bar.style.width = (((c - t) % 32) / 32 * 100) + "%";
+  };
+  loop(); now.timer = setInterval(loop, 100);
+}
+
+// ===================================================================== the page
+document.getElementById("deck").innerHTML = TUNES.map(t => `<article class="track" id="t-${t.id}">
+  <button class="play" type="button" aria-label="Play ${t.title}">▶</button>
+  <div><h2>${t.title}</h2><div class="meta">${t.meta}</div><p>${t.desc}</p><div class="bar"><i></i></div></div></article>`).join("");
+TUNES.forEach(t => document.querySelector(`#t-${t.id} .play`).addEventListener("click", () => (now && now.tune === t ? stop() : play(t))));
+document.getElementById("vol").addEventListener("input", e => { if (S) S.out.gain.value = +e.target.value; });
+// for testing: render a tune offline
+window.__render = async (id, secs) => {
+  const off = new OfflineAudioContext(2, 44100 * secs, 44100), s = new Synth(off), tune = TUNES.find(x => x.id === id), bus = s.bus(tune.send || 1); bus.gain.value = tune.gain || 1;
+  if (!tune.ambient) {
+    const beat = 60 / tune.bpm; let at = 0.05, b = 0;
+    while (at < secs) { const i = b % tune.chords.length, ch = chordOf(tune.chords[i]), next = chordOf(tune.chords[(i + 1) % tune.chords.length]);
+      tune.accomp(s, bus, at, i, ch, beat, next);
+      for (const p of tune.parts) for (const ev of p.notes[i] || []) for (const m of ev.midi) s[p.inst](at + ev.at * beat, hz(m + p.shift), ev.beats * beat * 0.95, p.vel, bus);
+      at += tune.beats * beat; b++; }
+  }
+  const buf = await off.startRendering(), d = buf.getChannelData(0);
+  let peak = 0, sum = 0; for (const x of d) { peak = Math.max(peak, Math.abs(x)); sum += x * x; }
+  return { peak: +peak.toFixed(3), rms: +Math.sqrt(sum / d.length).toFixed(4), bars: tune.chords ? tune.chords.length : 0, partBars: tune.parts ? tune.parts.map(p => p.notes.length) : [] };
+};
+</script>
+</body>
+</html>
