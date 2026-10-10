@@ -8,8 +8,8 @@ const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in
 // Look settings (the temporary tuning panel changes these live)
 const SOULS_P = { faces: 0.76, headSolid: 0.9, headTone: 0.85, faceSize: 1, drift: 1, rock: 1, smoke: 1.7, smokeDark: 1.55,
   embers: 0.4, emberSpeed: 1, emberBright: 0.45, flames: 2.7, flameSize: 0.7, cracks: 0.9, vignette: 1.35,
-  hue: 0, saturation: 1, brightness: 1 };
-const SOULS_TUNER = true;    // true shows a sliders panel on the Souls table, for tuning the look
+  hue: 7, saturation: 1.3, brightness: 0.85 };
+const SOULS_TUNER = false;   // true shows a sliders panel on the Souls table, for tuning the look
 
 const SOULS = {
   P: SOULS_P,
