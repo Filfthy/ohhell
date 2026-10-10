@@ -115,7 +115,7 @@ const SOULS = {
     const hc = hs.getContext("2d");
     hc.translate(hs.width / 2, hs.height / 2);
     const head = hc.createRadialGradient(0, -U * 0.15, 0, 0, 0, U * 1.3);
-    head.addColorStop(0, "rgba(120, 84, 58, 0.55)"); head.addColorStop(0.6, "rgba(96, 66, 46, 0.25)"); head.addColorStop(1, "rgba(96, 66, 46, 0)");
+    head.addColorStop(0, "rgba(116, 80, 55, 1)"); head.addColorStop(0.62, "rgba(90, 60, 41, 0.95)"); head.addColorStop(0.8, "rgba(70, 46, 32, 0.6)"); head.addColorStop(1, "rgba(60, 40, 28, 0)");
     hc.fillStyle = head;
     hc.beginPath(); hc.ellipse(0, 0, U * 1.0, U * 1.3, 0, 0, Math.PI * 2); hc.fill();
     this.head = hs;
@@ -270,8 +270,8 @@ const SOULS = {
       c.fillStyle = g; c.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
     }
     c.globalCompositeOperation = "source-over";
-    // the souls, on top of everything (smoke and fire pass behind them), nearly solid
-    c.globalAlpha = 0.9;
+    // the souls, on top of everything (smoke and fire pass behind them), solid
+    c.globalAlpha = 1;
     for (const f of this.faces) {
       const u = 34 * f.size * d;
       // the groan: the mouth slowly opens wide and sags shut again
