@@ -5,7 +5,13 @@
 
 const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in its life
 
+// Look settings (the temporary tuning panel changes these live)
+const SOULS_P = { faces: 0.95, headSolid: 1, headTone: 1, faceSize: 1, drift: 1, rock: 1, smoke: 1, smokeDark: 1,
+  embers: 1, emberSpeed: 1, emberBright: 1, flames: 1, flameSize: 1, cracks: 1, vignette: 1 };
+const SOULS_TUNER = true;   // TEMPORARY: the sliders panel on the Souls table
+
 const SOULS = {
+  P: SOULS_P,
   canvas: null, ctx: null, sand: null, faces: [], active: false, raf: 0, last: 0, W: 0, H: 0, dpr: 1, k: 1,
   still: !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches),
 
@@ -22,6 +28,7 @@ const SOULS = {
     }
     if (!this.canvas) return;
     this.canvas.style.display = on ? "block" : "none";
+    const tn = document.getElementById("souls-tuner"); if (tn) tn.style.display = on ? "" : "none";
     if (on) { this.build(); this.loop(); } else cancelAnimationFrame(this.raf);
   },
 
@@ -74,10 +81,11 @@ const SOULS = {
       }
       const path = () => { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const q of pts.slice(1)) c.lineTo(q[0], q[1]); };
       c.lineCap = "round"; c.lineJoin = "round";
-      c.save(); c.globalCompositeOperation = "lighter"; c.shadowColor = "rgba(220, 60, 0, 0.45)"; c.shadowBlur = 16 * dpr;
-      path(); c.strokeStyle = "rgba(150, 40, 5, 0.18)"; c.lineWidth = 3 * dpr; c.stroke(); c.restore();
-      path(); c.strokeStyle = "rgba(8, 3, 1, 0.35)"; c.lineWidth = 1.2 * dpr; c.stroke();
-      path(); c.save(); c.globalCompositeOperation = "lighter"; c.strokeStyle = "rgba(255, 120, 30, 0.08)"; c.lineWidth = 0.6 * dpr; c.stroke(); c.restore();
+      const K = this.P.cracks;
+      c.save(); c.globalCompositeOperation = "lighter"; c.shadowColor = `rgba(220, 60, 0, ${Math.min(1, 0.45 * K)})`; c.shadowBlur = 16 * dpr;
+      path(); c.strokeStyle = `rgba(150, 40, 5, ${Math.min(1, 0.18 * K)})`; c.lineWidth = 3 * dpr; c.stroke(); c.restore();
+      path(); c.strokeStyle = `rgba(8, 3, 1, ${Math.min(1, 0.35 * K)})`; c.lineWidth = 1.2 * dpr; c.stroke();
+      path(); c.save(); c.globalCompositeOperation = "lighter"; c.strokeStyle = `rgba(255, 120, 30, ${Math.min(1, 0.08 * K)})`; c.lineWidth = 0.6 * dpr; c.stroke(); c.restore();
     }
     // the faces: one per cell of a tight, loose grid, so they fill the table without piling up
     this.faces = [];
@@ -110,15 +118,7 @@ const SOULS = {
     c.putImageData(img, 0, 0);
     this.sand = s;
     this.shade = this.vignette();
-    const U = 34 * dpr, hs = document.createElement("canvas");
-    hs.width = Math.ceil(U * 2.2); hs.height = Math.ceil(U * 2.8);
-    const hc = hs.getContext("2d");
-    hc.translate(hs.width / 2, hs.height / 2);
-    const head = hc.createRadialGradient(0, -U * 0.15, 0, 0, 0, U * 1.3);
-    head.addColorStop(0, "rgba(116, 80, 55, 1)"); head.addColorStop(0.62, "rgba(90, 60, 41, 0.95)"); head.addColorStop(0.8, "rgba(70, 46, 32, 0.6)"); head.addColorStop(1, "rgba(60, 40, 28, 0)");
-    hc.fillStyle = head;
-    hc.beginPath(); hc.ellipse(0, 0, U * 1.0, U * 1.3, 0, 0, Math.PI * 2); hc.fill();
-    this.head = hs;
+    this.makeHead();
     // smoke: lots of thin wisps curling up out of the sand
     // they're drawn on a small layer (a third of the size) and softened as it's laid down, so they look
     // hazy and diffuse rather than drawn
@@ -126,17 +126,34 @@ const SOULS = {
     this.sm.width = Math.ceil(W / 3); this.sm.height = Math.ceil(H / 3);
     this.smc = this.sm.getContext("2d");
     this.wisps = [];
-    const nw = Math.max(110, Math.round(W * H / 3000));
-    for (let i = 0; i < nw; i++) this.wisps.push(this.newWisp(rnd() ));
+    this.fit("wisps", Math.round(Math.max(110, W * H / 3000) * this.P.smoke), () => this.newWisp(Math.random()));
     // embers drifting up, and now and then a lick of flame from a crack in the sand
     this.embers = [];
-    for (let i = 0; i < Math.max(25, Math.round(W * H / 9000)); i++) this.embers.push(this.newEmber(true));
+    this.fit("embers", Math.round(Math.max(25, W * H / 9000) * this.P.embers), () => this.newEmber(true));
     this.flames = [];
     this.flameEvery = 1100000 / (W * H);   // seconds between new licks: about 3 at once on a big screen
+    if (SOULS_TUNER) this.tuner();
     this.flameT = 0;
     this.draw(performance.now());
   },
 
+  // keep a list at n items (the sliders change how many wisps and embers there are)
+  fit(key, n, make) {
+    const a = this[key] || (this[key] = []);
+    while (a.length < n) a.push(make());
+    if (a.length > n) a.length = Math.max(0, n);
+  },
+  makeHead() {
+    const U = 34 * this.dpr, hs = document.createElement("canvas"), T = this.P.headTone;
+    hs.width = Math.ceil(U * 2.2); hs.height = Math.ceil(U * 2.8);
+    const hc = hs.getContext("2d"), col = (r, g, b, a) => `rgba(${Math.min(255, Math.round(r * T))}, ${Math.min(255, Math.round(g * T))}, ${Math.min(255, Math.round(b * T))}, ${a})`;
+    hc.translate(hs.width / 2, hs.height / 2);
+    const head = hc.createRadialGradient(0, -U * 0.15, 0, 0, 0, U * 1.3);
+    head.addColorStop(0, col(116, 80, 55, 1)); head.addColorStop(0.62, col(90, 60, 41, 0.95)); head.addColorStop(0.8, col(70, 46, 32, 0.6)); head.addColorStop(1, col(60, 40, 28, 0));
+    hc.fillStyle = head;
+    hc.beginPath(); hc.ellipse(0, 0, U * 1.0, U * 1.3, 0, 0, Math.PI * 2); hc.fill();
+    this.head = hs;
+  },
   // A wisp: a thin thread of smoke rising from one spot, curling as it goes; it lives a while, then
   // fades and another rises somewhere else. age0 lets the first ones start part-way through.
   newWisp(age0 = 0) {
@@ -162,15 +179,17 @@ const SOULS = {
   stepFire(dt) {
     for (let i = 0; i < this.embers.length; i++) {
       const e = this.embers[i];
-      e.age += dt; e.y -= e.vy * dt; e.x += (e.vx + Math.sin(e.age * 0.8 + e.fl) * 4 * this.k) * dt;
+      const v = dt * this.P.emberSpeed;
+      e.age += v; e.y -= e.vy * v; e.x += (e.vx + Math.sin(e.age * 0.8 + e.fl) * 4 * this.k) * v;
       if (e.age >= e.life || e.y < -10) this.embers[i] = this.newEmber(false);
     }
-    this.flameT += dt;
+    this.flameT += dt * this.P.flames;
     while (this.flameT >= this.flameEvery) { this.flameT -= this.flameEvery; this.flames.push(this.newFlame()); }
     for (const f of this.flames) f.age += dt;
     this.flames = this.flames.filter(f => f.age < f.life);
     for (const f of this.flames) if (Math.random() < dt * 3) this.embers.push(Object.assign(this.newEmber(false), { x: f.x, y: f.y - 10 * this.k, life: 1.5 + Math.random() * 2, hot: 1 }));
-    if (this.embers.length > 400) this.embers.splice(0, this.embers.length - 400);
+    const cap = Math.max(400, Math.round(Math.max(25, this.W * this.H / 9000) * this.P.embers * 1.5));
+    if (this.embers.length > cap) this.embers.splice(0, this.embers.length - cap);
   },
   stepSmoke(dt) {
     for (let i = 0; i < this.wisps.length; i++) {
@@ -207,7 +226,7 @@ const SOULS = {
     m.clearRect(0, 0, this.sm.width, this.sm.height);
     m.lineCap = "round"; m.lineJoin = "round";
     for (const w of this.wisps) {
-      const q = w.age / w.life, fade = Math.sin(Math.PI * q) ** 1.2;
+      const q = w.age / w.life, fade = Math.min(1, Math.sin(Math.PI * q) ** 1.2 * this.P.smokeDark);
       if (fade < 0.02) continue;
       const x0 = w.x * S, y0 = (w.y - w.rise * w.age) * S, L = w.len * S;
       const g = m.createLinearGradient(0, y0, 0, y0 - L);
@@ -241,7 +260,7 @@ const SOULS = {
       glow.addColorStop(0, `rgba(255, 110, 20, ${(0.22 * life).toFixed(3)})`); glow.addColorStop(1, "rgba(255, 60, 0, 0)");
       c.fillStyle = glow; c.fillRect(x0 - 34 * this.k * d, y0 - 34 * this.k * d, 68 * this.k * d, 68 * this.k * d);
       for (const t of f.tongues) {
-        const h = t.h * life * d, w = t.w * d, bx = x0 + t.dx * d;
+        const h = t.h * life * d * this.P.flameSize, w = t.w * d * Math.sqrt(this.P.flameSize), bx = x0 + t.dx * d;
         const sway = Math.sin(s * t.sp + t.ph) * w * 0.9, tipx = bx + sway * 1.6;
         // fades in from the sand, brightest low down, thinning to nothing at the tip
         const g = c.createLinearGradient(0, y0 + w, 0, y0 - h);
@@ -261,19 +280,20 @@ const SOULS = {
       }
     }
     for (const e of this.embers) {
-      const q = e.age / e.life, a = Math.min(1, q * 3) * Math.min(1, (1 - q) * 3) * (0.75 + 0.25 * Math.sin(e.age * e.fs + e.fl))   /* a slow glow, not a blink */;
+      const q = e.age / e.life, a = this.P.emberBright * Math.min(1, q * 3) * Math.min(1, (1 - q) * 3) * (0.75 + 0.25 * Math.sin(e.age * e.fs + e.fl))   /* a slow glow, not a blink */;
       if (a < 0.03) continue;
       const x = e.x * d, y = e.y * d, r = e.r * d;
       const g = c.createRadialGradient(x, y, 0, x, y, r * 4);
-      g.addColorStop(0, e.hot > 0.5 ? `rgba(255, 210, 120, ${a.toFixed(3)})` : `rgba(255, 140, 40, ${a.toFixed(3)})`);
-      g.addColorStop(0.3, `rgba(240, 80, 10, ${(a * 0.5).toFixed(3)})`); g.addColorStop(1, "rgba(200, 40, 0, 0)");
+      const a1 = Math.min(1, a);
+      g.addColorStop(0, e.hot > 0.5 ? `rgba(255, 210, 120, ${a1.toFixed(3)})` : `rgba(255, 140, 40, ${a1.toFixed(3)})`);
+      g.addColorStop(0.3, `rgba(240, 80, 10, ${Math.min(1, a * 0.5).toFixed(3)})`); g.addColorStop(1, "rgba(200, 40, 0, 0)");
       c.fillStyle = g; c.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
     }
     c.globalCompositeOperation = "source-over";
     // the souls, on top of everything (smoke and fire pass behind them), solid
-    c.globalAlpha = 0.95;
+    const P = this.P;
     for (const f of this.faces) {
-      const u = 34 * f.size * d;
+      const size = f.size * P.faceSize, u = 34 * size * d;
       // the groan: the mouth slowly opens wide and sags shut again
       const m = 0.5 - 0.5 * Math.cos(s * f.mw + f.mp);
       const mouth = u * (0.12 + f.mo * m * 0.6);
@@ -281,20 +301,71 @@ const SOULS = {
       const e = 0.5 - 0.5 * Math.cos(s * f.ew + f.ep);
       const eye = u * (0.27 - 0.13 * e - 0.04 * m);
       const slant = 0.32 + f.shape * 0.25 + 0.12 * m;   // the brows lift as it groans
-      const x = f.x + f.ax * Math.sin(s * f.wx + f.px), y = f.y + f.ay * Math.sin(s * f.wy + f.py);
-      const tilt = f.t0 + f.ra * Math.sin(s * f.rw + f.pr);
+      const x = f.x + f.ax * P.drift * Math.sin(s * f.wx + f.px), y = f.y + f.ay * P.drift * Math.sin(s * f.wy + f.py);
+      const tilt = (f.t0 + f.ra * Math.sin(s * f.rw + f.pr)) * P.rock;
       c.save();
       c.translate(x * d, y * d);
       c.rotate(tilt);
-      const hw = this.head.width * f.size, hh = this.head.height * f.size;
+      const hw = this.head.width * size, hh = this.head.height * size;
+      c.globalAlpha = Math.min(1, P.faces * P.headSolid);
       c.drawImage(this.head, -hw / 2, -hh / 2, hw, hh);
+      c.globalAlpha = P.faces;
       this.hollow(c, -u * 0.36, -u * 0.25, u * 0.19, eye, slant);
       this.hollow(c, u * 0.36, -u * 0.25, u * 0.19, eye, -slant);
       this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
       c.restore();
     }
-    c.globalAlpha = 1;
+    c.globalAlpha = Math.min(1, P.vignette);
     c.drawImage(this.shade, 0, 0);
+    c.globalAlpha = 1;
+  },
+
+  // TEMPORARY: sliders for tuning the look (only while SOULS_TUNER is on)
+  tuner() {
+    if (document.getElementById("souls-tuner")) return;
+    const P = this.P, rows = [
+      ["faces", "Face opacity", 0, 1, 0.01, ""], ["headSolid", "Head solidity", 0, 1.5, 0.05, ""], ["headTone", "Head brightness", 0.4, 1.6, 0.05, "head"],
+      ["faceSize", "Face size", 0.5, 1.6, 0.05, ""], ["drift", "Float amount", 0, 3, 0.1, ""], ["rock", "Rotation amount", 0, 3, 0.1, ""],
+      ["smoke", "Smoke amount", 0, 3, 0.1, "count"], ["smokeDark", "Smoke darkness", 0, 2.5, 0.05, ""],
+      ["embers", "Ember amount", 0, 3, 0.1, "count"], ["emberSpeed", "Ember speed", 0.1, 3, 0.05, ""], ["emberBright", "Ember brightness", 0, 2, 0.05, ""],
+      ["flames", "Flame frequency", 0, 4, 0.1, ""], ["flameSize", "Flame size", 0.3, 2.5, 0.05, ""],
+      ["cracks", "Crack glow", 0, 3, 0.1, "sand"], ["vignette", "Edge darkening", 0, 1.8, 0.05, ""]];
+    const el = document.createElement("div");
+    el.id = "souls-tuner";
+    el.style.cssText = "position:fixed;left:8px;top:8px;z-index:40000;background:rgba(20,10,6,0.92);color:#f1dcae;border:1px solid #a87a52;border-radius:8px;padding:6px 10px 8px;font:12px/1.3 system-ui,sans-serif;width:260px;max-height:94vh;overflow-y:auto;overflow-x:hidden;box-sizing:border-box";
+    el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b>Souls tuning (temporary)</b>'
+      + '<button type="button" data-t="hide" style="margin:0;padding:1px 7px;font-size:12px">-</button></div><div data-t="body">'
+      + rows.map(([k, label, lo, hi, st]) => '<label style="display:grid;grid-template-columns:100px 1fr 34px;gap:4px;align-items:center">' + label
+        + '<input type="range" min="' + lo + '" max="' + hi + '" step="' + st + '" value="' + P[k] + '" data-k="' + k + '"><span data-v="' + k + '">' + P[k] + '</span></label>').join("")
+      + '<div style="display:flex;gap:6px;margin-top:6px"><button type="button" data-t="copy" style="margin:0;padding:3px 8px;font-size:12px">Copy values</button>'
+      + '<button type="button" data-t="reset" style="margin:0;padding:3px 8px;font-size:12px">Reset</button></div><div data-t="msg" style="min-height:1.2em;margin-top:3px;opacity:0.85"></div></div>';
+    document.body.appendChild(el);
+    el.style.display = this.active ? "" : "none";
+    const defaults = Object.assign({}, P);
+    let sandT = 0;
+    const kindOf = k => rows.find(x => x[0] === k)[5];
+    const apply = (k, v) => {
+      P[k] = v; el.querySelector('[data-v="' + k + '"]').textContent = v;
+      const kind = kindOf(k);
+      if (kind === "head") this.makeHead();
+      else if (k === "smoke") this.fit("wisps", Math.round(Math.max(110, this.W * this.H / 3000) * v), () => this.newWisp(Math.random()));
+      else if (k === "embers") this.fit("embers", Math.round(Math.max(25, this.W * this.H / 9000) * v), () => this.newEmber(true));
+      else if (kind === "sand") { clearTimeout(sandT); sandT = setTimeout(() => this.build(), 250); }
+      if (this.still) this.draw(performance.now());
+    };
+    el.querySelectorAll("input[type=range]").forEach(r => r.addEventListener("input", () => apply(r.dataset.k, +r.value)));
+    ["pointerdown", "mousedown", "keydown"].forEach(ev => el.addEventListener(ev, e => e.stopPropagation()));
+    el.addEventListener("click", e => {
+      e.stopPropagation();
+      const t = e.target.dataset && e.target.dataset.t;
+      if (t === "hide") { const b = el.querySelector('[data-t="body"]'); b.style.display = b.style.display ? "" : "none"; e.target.textContent = b.style.display ? "+" : "-"; }
+      if (t === "reset") el.querySelectorAll("input[type=range]").forEach(r => { r.value = defaults[r.dataset.k]; apply(r.dataset.k, defaults[r.dataset.k]); });
+      if (t === "copy") {
+        const txt = "Souls: " + rows.map(([k, label]) => label + " " + P[k]).join(", ");
+        const msg = el.querySelector('[data-t="msg"]');
+        (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => { msg.textContent = "Copied - paste it to Claude"; }, () => { msg.textContent = txt; });
+      }
+    });
   },
 
   loop() {
