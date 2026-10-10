@@ -90,45 +90,28 @@ const SOULS = {
     hc.fillStyle = head;
     hc.beginPath(); hc.ellipse(0, 0, U * 1.0, U * 1.3, 0, 0, Math.PI * 2); hc.fill();
     this.head = hs;
-    // smoke: a few puff shapes, each a cluster of soft dark blots so they look wispy, not round
-    this.puffs = [];
-    for (let v = 0; v < 3; v++) {
-      const P = Math.ceil(110 * dpr), pc = document.createElement("canvas");
-      pc.width = pc.height = P;
-      const px = pc.getContext("2d");
-      for (let i = 0; i < 26; i++) {
-        const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * P * 0.28;
-        const x = P / 2 + Math.cos(a) * r * 1.2, y = P / 2 + Math.sin(a) * r * 0.8, br = P * (0.08 + rnd() * 0.16);
-        const g = px.createRadialGradient(x, y, 0, x, y, br);
-        g.addColorStop(0, `rgba(10, 5, 3, ${0.16 + rnd() * 0.14})`); g.addColorStop(1, "rgba(10, 5, 3, 0)");
-        px.fillStyle = g; px.fillRect(x - br, y - br, br * 2, br * 2);
-      }
-      this.puffs.push(pc);
-    }
-    // vents in the sand that the smoke seeps from
-    this.vents = [];
-    for (let i = 0; i < Math.max(4, Math.round(W * H / 110000)); i++)
-      this.vents.push({ x: rnd() * W, y: H * (0.3 + rnd() * 0.8), every: 0.12 + rnd() * 0.1, t: rnd(), ph: rnd() * 6.3, lean: (rnd() - 0.5) * 10 });
-    this.smoke = [];
-    for (let i = 0; i < 40; i++) this.stepSmoke(0.25);   // start with the smoke already rising
+    // smoke: lots of thin wisps curling up out of the sand
+    this.wisps = [];
+    const nw = Math.max(36, Math.round(W * H / 13000));
+    for (let i = 0; i < nw; i++) this.wisps.push(this.newWisp(rnd() ));
     this.draw(performance.now());
   },
 
-  // Each vent lets out a puff now and then; puffs rise, sway, spread and thin away.
+  // A wisp: a thin thread of smoke rising from one spot, curling as it goes; it lives a while, then
+  // fades and another rises somewhere else. age0 lets the first ones start part-way through.
+  newWisp(age0 = 0) {
+    const k = this.k, life = 6 + Math.random() * 6;
+    return { x: Math.random() * this.W, y: this.H * (0.15 + Math.random() * 0.95), age: age0 * life, life,
+      len: (50 + Math.random() * 90) * k, amp: (5 + Math.random() * 9) * k, freq: 0.035 + Math.random() * 0.04,
+      speed: 1.2 + Math.random() * 1.4, ph: Math.random() * 6.3, lean: (Math.random() - 0.5) * 0.5,
+      rise: (6 + Math.random() * 8) * k, w: (1.3 + Math.random() * 1.5) * k, a: 0.5 + Math.random() * 0.3 };
+  },
   stepSmoke(dt) {
-    const k = this.k;
-    for (const v of this.vents) {
-      v.t += dt;
-      if (v.t >= v.every) {
-        v.t -= v.every;
-        // puffs from one vent share its slow sway, so together they make one wavering thread
-        this.smoke.push({ x: v.x + (Math.random() - 0.5) * 4 * k, y: v.y, age: 0, life: 7 + Math.random() * 3, vent: v,
-          vy: (16 + Math.random() * 6) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 0.25,
-          peak: 0.2 + Math.random() * 0.1, kind: Math.floor(Math.random() * 3) });
-      }
+    for (let i = 0; i < this.wisps.length; i++) {
+      const w = this.wisps[i];
+      w.age += dt;
+      if (w.age >= w.life) this.wisps[i] = this.newWisp(0);
     }
-    for (const p of this.smoke) { p.age += dt; p.y -= p.vy * dt; p.rot += p.vr * dt; }
-    this.smoke = this.smoke.filter(p => p.age < p.life);
   },
   vignette() {
     const v = document.createElement("canvas");
@@ -174,19 +157,29 @@ const SOULS = {
       this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
       c.restore();
     }
-    // dark smoke drifting up over the faces
-    for (const p of this.smoke) {
-      const q = p.age / p.life;
-      const a = p.peak * Math.sin(Math.PI * q) ** 1.3;
-      if (a < 0.01) continue;
-      const img = this.puffs[p.kind], sz = img.width * (0.22 + q * 0.75) * this.k;
-      // the thread wavers more the higher it rises, and leans a little with its vent
-      const v = p.vent, rise = p.age;
-      const x = (p.x + (Math.sin(s * 0.5 + v.ph - rise * 0.9) * 22 + v.lean * rise * 0.3) * q * this.k) * d, y = p.y * d;
-      c.save(); c.globalAlpha = a; c.translate(x, y); c.rotate(Math.sin(p.rot) * 0.4); c.scale(0.7, 1.9);
-      c.drawImage(img, -sz / 2, -sz / 2, sz, sz);
-      c.restore();
+    // thin dark wisps of smoke curling up over the faces
+    c.lineCap = "round"; c.lineJoin = "round";
+    for (const w of this.wisps) {
+      const q = w.age / w.life, fade = Math.sin(Math.PI * q) ** 1.2;
+      if (fade < 0.02) continue;
+      const x0 = w.x * d, y0 = (w.y - w.rise * w.age) * d, L = w.len * d;
+      const g = c.createLinearGradient(0, y0, 0, y0 - L);
+      g.addColorStop(0, "rgba(8, 4, 2, 0)");
+      g.addColorStop(0.2, `rgba(8, 4, 2, ${(w.a * fade).toFixed(3)})`);
+      g.addColorStop(0.75, `rgba(8, 4, 2, ${(w.a * fade * 0.5).toFixed(3)})`);
+      g.addColorStop(1, "rgba(8, 4, 2, 0)");
+      c.strokeStyle = g;
+      c.beginPath();
+      for (let j = 0; j <= 14; j++) {
+        const t = j / 14, yy = y0 - L * t;
+        // the curl grows as the thread climbs, and travels up it as the smoke rises
+        const xx = x0 + (Math.sin(t * L * w.freq / d - w.age * w.speed + w.ph) * w.amp * (0.25 + t) + w.lean * L * t) * d / 1;
+        if (j) c.lineTo(xx, yy); else c.moveTo(xx, yy);
+      }
+      c.lineWidth = w.w * 4 * d; c.globalAlpha = 0.3; c.stroke();     // a soft halo
+      c.lineWidth = w.w * d; c.globalAlpha = 1; c.stroke();            // the thread itself
     }
+    c.globalAlpha = 1;
     c.drawImage(this.shade, 0, 0);
   },
 
