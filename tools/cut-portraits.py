@@ -1,7 +1,7 @@
 # Cuts the opponent portraits out of infernal/infernal-opponents-sheet-1/2.png (4 x 2 grids, transparent
 # backgrounds) into img/opp-<name>.webp, keeping only each portrait's own shape: thin slivers of the
 # neighbouring portraits that cross into a cell are dropped.
-from PIL import Image
+from PIL import Image, ImageChops
 
 NAMES = [["lilith", "persephone", "lamia", "loki", "old-nick", "bub", "cerberus", "brimstone"],
          ["hellga", "davy-jones", "banshee", "faust", "morgana", "jezebel", "player"]]
@@ -55,11 +55,70 @@ def longest_run(flags):
     return bs, bs + best
 
 
+def sheet_masks(sheet, cols, rows):
+    """Which pixels belong to which portrait, following the drawings rather than the grid: every connected
+    piece of the sheet goes to the cell holding most of it, so hair that strays over a grid line stays with its
+    owner. (A piece that really spans two portraits - joined where they touch - is split along the grid.)"""
+    from PIL import ImageFilter
+    w, h = sheet.size; cw, ch = w // cols, h // rows
+    a = sheet.getchannel("A"); px = a.load()
+    label = [0] * (w * h); comps = [None]; sizes = [0]; seeds = [None]
+    for y0 in range(h):
+        for x0 in range(w):
+            if label[y0 * w + x0] or px[x0, y0] <= 100: continue
+            cid = len(comps); label[y0 * w + x0] = cid; stack = [(x0, y0)]; cells = {}
+            while stack:
+                x, y = stack.pop()
+                cell = min(cols - 1, x // cw) + cols * min(rows - 1, y // ch); cells[cell] = cells.get(cell, 0) + 1
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not label[ny * w + nx] and px[nx, ny] > 100:
+                        label[ny * w + nx] = cid; stack.append((nx, ny))
+            ranked = sorted(cells.items(), key=lambda t: -t[1])
+            split = len(ranked) > 1 and ranked[1][1] > 0.15 * ranked[0][1] and ranked[1][1] > 2000
+            # a split piece is only shared among the portraits it really belongs to (cells holding a good part of it)
+            comps.append([c for c, k in ranked if k > 2000] if split else ranked[0][0])
+            sizes.append(sum(cells.values())); seeds.append((x0, y0))
+    masks = [Image.new("L", (w, h), 0) for _ in range(cols * rows)]
+    mpx = [m.load() for m in masks]
+    # the figures themselves first; small loose bits (a stray lock of hair) wait
+    small = {cid for cid in range(1, len(comps)) if sizes[cid] < 20000 and not isinstance(comps[cid], list)}
+    def paint(only):
+        for y in range(h):
+            for x in range(w):
+                cid = label[y * w + x]
+                if not cid or (cid in small) != only: continue
+                owner = comps[cid]
+                if isinstance(owner, list):
+                    cell = min(cols - 1, x // cw) + cols * min(rows - 1, y // ch)
+                    if cell not in owner:   # the nearest of its own portraits' cells
+                        def gap(c):
+                            cx0, cy0 = (c % cols) * cw, (c // cols) * ch
+                            return max(cx0 - x, 0, x - cx0 - cw) + max(cy0 - y, 0, y - cy0 - ch)
+                        cell = min(owner, key=gap)
+                    owner = cell
+                mpx[owner][x, y] = 255
+    paint(False)
+    # each loose bit goes to the nearest figure: grow every figure outwards a step at a time, and a bit belongs
+    # to whichever reaches it first
+    grown = [m.copy() for m in masks]; pending = set(small)
+    for _ in range(80):
+        if not pending: break
+        grown = [g.filter(ImageFilter.MaxFilter(3)) for g in grown]
+        for cid in list(pending):
+            for i, g in enumerate(grown):
+                if g.getpixel(seeds[cid]):
+                    comps[cid] = i; pending.discard(cid); break
+    paint(True)
+    # take in the soft edge round each shape (the faint pixels the cut above left out)
+    return [m.filter(ImageFilter.MaxFilter(5)) for m in masks]
+
+
 for s, names in enumerate(NAMES):
     sheet = Image.open(f"infernal/infernal-opponents-sheet-{s + 1}.png").convert("RGBA")
-    cw, ch = sheet.width // 4, sheet.height // 2
+    masks = sheet_masks(sheet, 4, 2)
     for i, n in enumerate(names):
-        c = sheet.crop(((i % 4) * cw, (i // 4) * ch, (i % 4 + 1) * cw, (i // 4 + 1) * ch))
+        c = sheet.copy(); c.putalpha(ImageChops.multiply(sheet.getchannel("A"), masks[i]))
+        c = c.crop(masks[i].getbbox())
         c = keep_portrait(c)
         side = max(c.size)
         sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
