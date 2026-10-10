@@ -1800,7 +1800,7 @@ body.style-infernal .icon-btn { color: #e8c88a !important; }
 body.style-infernal .seat-info .name-label {
   font-family: "Cinzel", Georgia, serif; font-style: normal; font-weight: 700; letter-spacing: 0.02em;
   color: var(--inf-ink); -webkit-text-stroke: 0; text-shadow: none;
-  background: url("img/parchment-plate.webp?v=2") center / 100% 100% no-repeat, #e3c48b;
+  background: url("img/parchment-plate.webp?v=3") center / 100% 100% no-repeat, #e3c48b;
   border: 0; border-radius: 3px; padding: 0.12em 0.85em 0.14em;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(110, 60, 20, 0.35);
 }
@@ -1946,7 +1946,7 @@ body.style-infernal .tut-offer-panel, body.style-infernal #instructions-panel, b
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55) !important;
 }
 /* every button: a parchment tile with dark ink */
-body.style-infernal button:not(.linkish):not(.style-reset):not(.tab-btn), body.style-infernal .seg label > span, body.style-infernal .bv-play {
+body.style-infernal button:not(.linkish):not(.style-reset):not(.tab-btn), body.style-infernal .seg label > span:not(.sw):not(.bk), body.style-infernal .bv-play {
   background: url("img/parchment-card-5.webp") center / 260% 260%, #e3c48b !important;
   color: #3a1206 !important; border: 1px solid #6e4318 !important; text-shadow: none !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.65), inset 0 0 7px rgba(110, 50, 15, 0.35) !important;
@@ -1956,7 +1956,7 @@ body.style-infernal button:not(.linkish):not(.style-reset):not(.tab-btn):hover, 
 }
 body.style-infernal button:disabled { filter: grayscale(0.6) brightness(0.6); }
 /* options: the unchosen ones sit back, the chosen one is inked in crimson and glows like an ember */
-body.style-infernal .seg label > span { filter: brightness(0.72) saturate(0.85); }
+body.style-infernal .seg label > span:not(.sw):not(.bk) { filter: brightness(0.72) saturate(0.85); }
 body.style-infernal .seg input:checked + span {
   filter: none; color: #8e1712 !important; font-weight: 800; border: 1px solid #8e1712 !important;
   box-shadow: 0 0 10px 1px rgba(255, 100, 25, 0.55), inset 0 0 0 1px rgba(142, 23, 18, 0.5), inset 0 0 7px rgba(110, 50, 15, 0.35) !important;
@@ -1973,7 +1973,7 @@ body.style-infernal .icon-btn { color: #3a1206 !important; }
 body.style-infernal .tab-btn { background: transparent !important; border: 0 !important; border-bottom: 2px solid transparent !important; color: rgba(232, 200, 138, 0.7) !important; }
 body.style-infernal .tab-btn.active { color: #e8c88a !important; border-bottom-color: #b8302a !important; }
 body.style-infernal .seat-stats .stat, body.style-infernal .seat-stats .stat-muted { background: rgba(6, 3, 2, 0.6); }
-body.style-infernal .seg input:checked + span,
+body.style-infernal .seg input:checked + span:not(.sw):not(.bk),
 body.style-infernal #btn-play, body.style-infernal #btn-tutorial, body.style-infernal #btn-end-next, body.style-infernal #oh-modal-close,
 body.style-infernal #btn-offer-tutorial, body.style-infernal #btn-quit-no, body.style-infernal #btn-scorecard-close, body.style-infernal #btn-close-results,
 body.style-infernal .bv-close, body.style-infernal .bv-games-btn, body.style-infernal .bv-share-buttons button, body.style-infernal .icon-btn,
@@ -1982,3 +1982,9 @@ body.style-infernal #bid-buttons .bid-btn:not(:disabled) {
 }
 body.style-infernal .tab-btn.active { background: transparent !important; }
 body.style-infernal #btn-tutorial, body.style-infernal #btn-tutorial small { color: #3a1206 !important; }
+/* swatches keep their own pictures; the chosen one gets the ember ring */
+body.style-infernal .seg input:checked + .sw, body.style-infernal .seg input:checked + .bk { filter: none; box-shadow: 0 0 0 2px #e8603c, 0 0 10px 2px rgba(255, 100, 25, 0.6) !important; }
+/* popups over the game are a little more solid, so the cards behind don't fight the text */
+body.style-infernal .tut-offer-panel, body.style-infernal #end-panel, body.style-infernal .scorecard-panel, body.style-infernal #instructions-panel { background: rgba(6, 3, 2, 0.82) !important; }
+/* nameplate ink: deep oxblood, as in the mockup */
+body.style-infernal .seat-info .name-label { color: #5e0008 !important; }
