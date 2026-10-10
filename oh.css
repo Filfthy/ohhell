@@ -2002,3 +2002,34 @@ body.style-infernal #bid-buttons .bid-btn:not(:disabled):hover {
   box-shadow: 0 0 12px 2px rgba(255, 110, 30, 0.6), inset 0 0 7px rgba(110, 50, 15, 0.35) !important;
 }
 body.style-infernal #deck-area .deck-col > div:first-child { font-family: "Cinzel", Georgia, serif; color: #e8c88a; opacity: 0.85; }
+
+/* ===== Infernal parchment controls, done properly: an unstretched speck-free tile, browned at the edges by an
+   inner shadow so every button and the coach note brown the same way whatever their size ===== */
+body.style-infernal {
+  --inf-parch: url("img/parchment-tile.webp") center / 360px 360px repeat, #f2d39a;
+  --inf-parch-edge: inset 0 0 0 1px rgba(110, 55, 18, 0.55), inset 0 0 6px 1px rgba(150, 82, 30, 0.6), inset 0 0 16px 2px rgba(175, 105, 40, 0.3);
+}
+body.style-infernal button:not(.linkish):not(.style-reset):not(.tab-btn), body.style-infernal .seg label > span:not(.sw):not(.bk), body.style-infernal .bv-play,
+body.style-infernal .seg input:checked + span:not(.sw):not(.bk),
+body.style-infernal #btn-play, body.style-infernal #btn-tutorial, body.style-infernal #btn-end-next, body.style-infernal #oh-modal-close,
+body.style-infernal #btn-offer-tutorial, body.style-infernal #btn-quit-no, body.style-infernal #btn-scorecard-close, body.style-infernal #btn-close-results,
+body.style-infernal .bv-close, body.style-infernal .bv-games-btn, body.style-infernal .bv-share-buttons button, body.style-infernal .icon-btn,
+body.style-infernal #bid-buttons .bid-btn:not(:disabled) {
+  background: var(--inf-parch) !important; border: 0 !important;
+  box-shadow: var(--inf-parch-edge), 0 2px 5px rgba(0, 0, 0, 0.6) !important;
+}
+body.style-infernal button:not(.linkish):not(.style-reset):not(.tab-btn):hover, body.style-infernal .seg label:hover > span:not(.sw):not(.bk), body.style-infernal .bv-play:hover,
+body.style-infernal #btn-play:hover, body.style-infernal #btn-tutorial:hover, body.style-infernal #btn-end-next:hover, body.style-infernal #oh-modal-close:hover,
+body.style-infernal #btn-offer-tutorial:hover, body.style-infernal #btn-quit-no:hover, body.style-infernal #btn-scorecard-close:hover, body.style-infernal #btn-close-results:hover,
+body.style-infernal .bv-close:hover, body.style-infernal .bv-games-btn:hover, body.style-infernal .icon-btn:hover, body.style-infernal #bid-buttons .bid-btn:not(:disabled):hover {
+  background: var(--inf-parch) !important;
+  box-shadow: var(--inf-parch-edge), 0 0 12px 2px rgba(255, 110, 30, 0.6) !important;
+}
+body.style-infernal .seg input:checked + span:not(.sw):not(.bk) {
+  box-shadow: inset 0 0 0 1px rgba(142, 23, 18, 0.8), inset 0 0 6px 1px rgba(150, 82, 30, 0.6), inset 0 0 16px 2px rgba(175, 105, 40, 0.3), 0 0 10px 1px rgba(255, 100, 25, 0.55) !important;
+}
+body.style-infernal #coach {
+  background: var(--inf-parch) !important; border: 0 !important;
+  box-shadow: inset 0 0 0 1px rgba(110, 55, 18, 0.55), inset 0 0 10px 2px rgba(150, 82, 30, 0.6), inset 0 0 28px 4px rgba(175, 105, 40, 0.3), 0 10px 26px rgba(0, 0, 0, 0.7) !important;
+}
+body.style-infernal #coach .coach-skip { background: none !important; box-shadow: none !important; color: #6e2a10 !important; padding-left: 0; padding-right: 0; }
