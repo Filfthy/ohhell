@@ -1990,3 +1990,15 @@ body.style-infernal .tut-offer-panel, body.style-infernal #end-panel, body.style
 body.style-infernal .seat-info .name-label { color: #5e0008 !important; }
 /* table and card-back swatches keep their own pictures; the chosen one gets an ember ring */
 body.style-infernal .seg input:checked + .sw, body.style-infernal .seg input:checked + .bk { filter: none; box-shadow: 0 0 0 2px #e8603c, 0 0 10px 2px rgba(255, 100, 25, 0.6) !important; }
+/* the trump box fits the coin, so its "Trump" caption sits just under it (a turned-up card keeps the full height) */
+#trump-slot:has(.trump-coin) { min-height: 0; }
+#deck-area .deck-col:has(.trump-coin) > div:first-child { top: calc(100% + 4px * var(--card-scale)); }
+/* Infernal: every button keeps its parchment on hover and gets the fiery outer glow */
+body.style-infernal #btn-play:hover, body.style-infernal #btn-tutorial:hover, body.style-infernal #btn-end-next:hover, body.style-infernal #oh-modal-close:hover,
+body.style-infernal #btn-offer-tutorial:hover, body.style-infernal #btn-quit-no:hover, body.style-infernal #btn-scorecard-close:hover, body.style-infernal #btn-close-results:hover,
+body.style-infernal .bv-close:hover, body.style-infernal .bv-play:hover, body.style-infernal .bv-games-btn:hover, body.style-infernal .icon-btn:hover,
+body.style-infernal #bid-buttons .bid-btn:not(:disabled):hover {
+  background: url("img/parchment-card-5.webp") center / 260% 260%, #e3c48b !important; color: #8e1712 !important;
+  box-shadow: 0 0 12px 2px rgba(255, 110, 30, 0.6), inset 0 0 7px rgba(110, 50, 15, 0.35) !important;
+}
+body.style-infernal #deck-area .deck-col > div:first-child { font-family: "Cinzel", Georgia, serif; color: #e8c88a; opacity: 0.85; }
