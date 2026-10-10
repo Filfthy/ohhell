@@ -2034,3 +2034,9 @@ body.style-infernal #coach {
 }
 body.style-infernal #coach .coach-skip { background: none !important; box-shadow: none !important; color: #6e2a10 !important; padding-left: 0; padding-right: 0; }
 body.style-infernal .trump-coin .coin-suit .sg { width: 1.25em; height: 1.25em; }
+/* the coin's glyph centred by eye: halfway between its outline and its visual weight (the flame and horns are bottom-heavy) */
+body.style-infernal .trump-coin .coin-suit.s-heart .sg { transform: translate(-0.4%, -3.3%); }
+body.style-infernal .trump-coin .coin-suit.s-club .sg { transform: translate(0, -5.1%); }
+body.style-infernal .trump-coin .coin-suit.s-diamond .sg { transform: translate(0, -0.5%); }
+/* Infernal suit colours are the cards' own pip colours, on the coin and the indices alike */
+body.suits-infernal { --sc-heart: #a82025; --sc-diamond: #164f9c; --sc-club: #1f7a3a; --sc-spade: #71338b; }
