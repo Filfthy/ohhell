@@ -231,31 +231,7 @@ const SOULS = {
     if ("filter" in c) c.filter = `blur(${(1.6 * d).toFixed(1)}px)`;
     c.drawImage(this.sm, 0, 0, this.canvas.width, this.canvas.height);
     c.restore();
-    // the faces, above the smoke but only partly solid, so it shows through them
-    c.globalAlpha = 0.9;
-    for (const f of this.faces) {
-      const u = 34 * f.size * d;
-      // the groan: the mouth slowly opens wide and sags shut again
-      const m = 0.5 - 0.5 * Math.cos(s * f.mw + f.mp);
-      const mouth = u * (0.12 + f.mo * m * 0.6);
-      // the eyes slowly squeeze half shut and open again
-      const e = 0.5 - 0.5 * Math.cos(s * f.ew + f.ep);
-      const eye = u * (0.27 - 0.13 * e - 0.04 * m);
-      const slant = 0.32 + f.shape * 0.25 + 0.12 * m;   // the brows lift as it groans
-      const x = f.x + f.ax * Math.sin(s * f.wx + f.px), y = f.y + f.ay * Math.sin(s * f.wy + f.py);
-      const tilt = f.t0 + f.ra * Math.sin(s * f.rw + f.pr);
-      c.save();
-      c.translate(x * d, y * d);
-      c.rotate(tilt);
-      const hw = this.head.width * f.size, hh = this.head.height * f.size;
-      c.drawImage(this.head, -hw / 2, -hh / 2, hw, hh);
-      this.hollow(c, -u * 0.36, -u * 0.25, u * 0.19, eye, slant);
-      this.hollow(c, u * 0.36, -u * 0.25, u * 0.19, eye, -slant);
-      this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
-      c.restore();
-    }
-    c.globalAlpha = 1;
-    // fire, glowing through everything: licks of flame, then the embers
+    // fire, behind the souls: licks of flame, then the embers
     c.globalCompositeOperation = "lighter";
     for (const f of this.flames) {
       const q = f.age / f.life, life = Math.sin(Math.PI * Math.min(1, q * 1.15)) ** 0.8;
@@ -294,6 +270,30 @@ const SOULS = {
       c.fillStyle = g; c.fillRect(x - r * 4, y - r * 4, r * 8, r * 8);
     }
     c.globalCompositeOperation = "source-over";
+    // the souls, on top of everything (smoke and fire pass behind them), nearly solid
+    c.globalAlpha = 0.9;
+    for (const f of this.faces) {
+      const u = 34 * f.size * d;
+      // the groan: the mouth slowly opens wide and sags shut again
+      const m = 0.5 - 0.5 * Math.cos(s * f.mw + f.mp);
+      const mouth = u * (0.12 + f.mo * m * 0.6);
+      // the eyes slowly squeeze half shut and open again
+      const e = 0.5 - 0.5 * Math.cos(s * f.ew + f.ep);
+      const eye = u * (0.27 - 0.13 * e - 0.04 * m);
+      const slant = 0.32 + f.shape * 0.25 + 0.12 * m;   // the brows lift as it groans
+      const x = f.x + f.ax * Math.sin(s * f.wx + f.px), y = f.y + f.ay * Math.sin(s * f.wy + f.py);
+      const tilt = f.t0 + f.ra * Math.sin(s * f.rw + f.pr);
+      c.save();
+      c.translate(x * d, y * d);
+      c.rotate(tilt);
+      const hw = this.head.width * f.size, hh = this.head.height * f.size;
+      c.drawImage(this.head, -hw / 2, -hh / 2, hw, hh);
+      this.hollow(c, -u * 0.36, -u * 0.25, u * 0.19, eye, slant);
+      this.hollow(c, u * 0.36, -u * 0.25, u * 0.19, eye, -slant);
+      this.hollow(c, 0, u * 0.42 + mouth * 0.3, u * (0.17 + 0.05 * f.shape - 0.03 * m), mouth, 0);
+      c.restore();
+    }
+    c.globalAlpha = 1;
     c.drawImage(this.shade, 0, 0);
   },
 
