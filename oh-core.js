@@ -10,6 +10,7 @@ const SUITS = ["♠", "♥", "♦", "♣"];
 // colour - Flame for hearts, Trident for diamonds, Horns for clubs, Pentagram for spades. The cards'
 // own suits never change; only how they're shown. The symbols are in index.html's #suit-symbols.
 let INFERNAL = false;
+const INFERNAL_SUITS = { "♥": "flames", "♦": "tridents", "♣": "horns", "♠": "pentagrams" };
 const INFERNAL_ICON = { "♥": "s-flame", "♦": "s-trident", "♣": "s-horns", "♠": "s-pentagram" };
 const INFERNAL_NAME = { hearts: "flames", diamonds: "tridents", clubs: "horns", spades: "pentagrams",
   heart: "flame", diamond: "trident", club: "horn", spade: "pentagram" };
@@ -690,7 +691,17 @@ class CardView {
       center.style.width = "100%";
       center.style.height = "100%";
 
-      if (card.rank === "J" || card.rank === "Q" || card.rank === "K") {
+      if ((card.rank === "J" || card.rank === "Q" || card.rank === "K") && INFERNAL) {
+        // Infernal courts: a woodcut figure standing in a framed panel, the index only at top left
+        div.classList.add("inf-court-card");
+        const frame = document.createElement("div");
+        frame.className = "inf-court";
+        const img = document.createElement("img");
+        img.src = `img/inf-${card.rank}-${INFERNAL_SUITS[card.suit]}.webp`;
+        img.alt = ""; img.draggable = false;
+        frame.appendChild(img);
+        center.appendChild(frame);
+      } else if (card.rank === "J" || card.rank === "Q" || card.rank === "K") {
         // Traditional double-headed court art (court/KH.svg etc.). The suit is
         // shown by the corner indices only, so nothing covers the figures.
         const img = document.createElement("img");
