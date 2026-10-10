@@ -186,7 +186,7 @@
   /* Firefox */
   scrollbar-width: thin;
   scrollbar-color:
-    rgba(30,192,0,0.9)
+    rgba(var(--ui-accent-rgb), 0.9)
     rgba(6,47,26,0.85);
 }
 
@@ -203,7 +203,7 @@
 #instructions-panel .instructions-content::-webkit-scrollbar-thumb {
   background: linear-gradient(
     to bottom,
-    rgba(30,192,0,1),
+    rgba(var(--ui-accent-rgb), 1),
     rgba(20,140,0,1)
   );
   border-radius: 8px;
@@ -669,17 +669,17 @@ body.suitcolors-rbbo {
 
     /* override global button styling */
     background: rgba(0, 0, 0, 0.5);
-    border: 1px solid #00ff00;
+    border: 1px solid var(--ui-accent);
     color: #ffffff;
   }
 
   #controls .icon-btn:hover {
     background: rgba(0, 0, 0, 0.5);
-    filter: drop-shadow(0 0 6px rgba(0, 255, 0, 0.22));
+    filter: drop-shadow(0 0 6px rgba(var(--ui-accent-rgb), 0.22));
   }
 
   #controls .icon-btn:focus-visible {
-    outline: 1px solid #00ff00;
+    outline: 1px solid var(--ui-accent);
     outline-offset: 2px;
   }
 
@@ -908,7 +908,7 @@ body.overlay-active #player-name {
   max-height: 92vh;
   background: rgba(var(--ui-rgb, 3, 32, 18), 0.96);
   border-radius: 16px;
-  border: 2px solid var(--ui-accent, #1EC000);
+  border: 2px solid var(--ui-accent);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
   padding: 22px 26px 18px;
   box-sizing: border-box;
@@ -937,7 +937,7 @@ body.overlay-active #player-name {
   margin-top: 6px;
   font-size: 13px;
   letter-spacing: 0.08em;
-  color: #1EC000;
+  color: var(--ui-accent);
   opacity: 0.95;
 }
 
@@ -972,8 +972,8 @@ body.overlay-active #player-name {
   border-collapse: collapse;
   table-layout: fixed;
   background: radial-gradient(circle at 10% 0%,
-              rgba(30,192,0,0.20) 0,
-              rgba(4,27,16,0.95) 55%);
+              rgba(var(--ui-accent-rgb), 0.20) 0,
+              rgba(var(--ui-rgb), 0.95) 55%);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   overflow: hidden;
@@ -1012,18 +1012,18 @@ body.overlay-active #player-name {
 
 #btn-end-close{
   background: transparent;
-  border: 1px solid #1EC000;
-  color: #1EC000;
+  border: 1px solid var(--ui-accent);
+  color: var(--ui-accent);
   font-size: 14px;
   padding-inline: 14px;
 }
 
 #btn-end-close:hover{
-  background: rgba(30,192,0,0.16);
+  background: rgba(var(--ui-accent-rgb), 0.16);
 }
 
 #btn-end-next{
-  background: #1EC000;
+  background: var(--ui-accent);
   color: #021408;
   font-weight: 700;
   font-size: 14px;
@@ -1031,7 +1031,7 @@ body.overlay-active #player-name {
 }
 
 #btn-end-next:hover{
-  background: #23e000;
+  background: var(--ui-accent-hi);
 }
   /* === START OVERLAY === */
 
@@ -1056,7 +1056,7 @@ body.overlay-active #player-name {
     max-height: var(--panel-height);
     background: rgba(var(--ui-rgb, 3, 32, 18), 0.96);
     border-radius: 16px;
-    border: 2px solid var(--ui-accent, #1EC000);
+    border: 2px solid var(--ui-accent);
     box-shadow: 0 14px 40px rgba(0, 0, 0, 0.85);
     padding: calc(var(--scale-factor) * 2.5) calc(var(--scale-factor) * 3) calc(var(--scale-factor) * 2);
     box-sizing: border-box;
@@ -1119,18 +1119,18 @@ body.overlay-active #player-name {
   }
 
   .start-panel-content::-webkit-scrollbar-thumb {
-    background: rgba(30, 192, 0, 0.5);
+    background: rgba(var(--ui-accent-rgb), 0.5);
     border-radius: 4px;
   }
 
   .start-panel-content::-webkit-scrollbar-thumb:hover {
-    background: rgba(30, 192, 0, 0.7);
+    background: rgba(var(--ui-accent-rgb), 0.7);
   }
 
   /* Firefox scrollbar */
   .start-panel-content {
     scrollbar-width: thin;
-    scrollbar-color: rgba(30, 192, 0, 0.5) rgba(0, 0, 0, 0.3);
+    scrollbar-color: rgba(var(--ui-accent-rgb), 0.5) rgba(0, 0, 0, 0.3);
   }
 
   /* Fixed footer at bottom */
@@ -1174,7 +1174,7 @@ body.overlay-active #player-name {
   .start-copyright {
     font-size: 1em;
     letter-spacing: 0.08em;
-    color: #1EC000;
+    color: var(--ui-accent);
   }
 
   .start-copyright-group {
@@ -1187,7 +1187,7 @@ body.overlay-active #player-name {
   .start-artwork-credit {
     font-size: 1em;
     letter-spacing: 0.05em;
-    color: #1EC000;
+    color: var(--ui-accent);
     opacity: 0.85;
   }
 
@@ -1219,7 +1219,7 @@ body.overlay-active #player-name {
     max-width: 100%;
     padding: 0.43em 0.57em;
     border-radius: 4px;
-    border: 1px solid #1EC000;
+    border: 1px solid var(--ui-accent);
     background: rgba(0, 0, 0, 0.4);
     color: #fdf6e3;
     font-size: 1em;
@@ -1227,9 +1227,9 @@ body.overlay-active #player-name {
 
   #player-name-input:focus {
     outline: none;
-    border-color: #1EC000;
+    border-color: var(--ui-accent);
     background: rgba(0, 0, 0, 0.55);
-    box-shadow: 0 0 0 0.12em rgba(30, 192, 0, 0.35);
+    box-shadow: 0 0 0 0.12em rgba(var(--ui-accent-rgb), 0.35);
   }
 
   #player-name-input:focus-visible {
@@ -1260,8 +1260,8 @@ body.overlay-active #player-name {
     border: 1px solid rgba(255,255,255,0.12);
     padding: 0.3em 0.3em 0.15em;
     background: radial-gradient(circle at 10% 0%,
-                rgba(30,192,0,0.20) 0,
-                rgba(4,27,16,0.95) 55%);
+                rgba(var(--ui-accent-rgb), 0.20) 0,
+                rgba(var(--ui-rgb), 0.95) 55%);
   }
 
   .opponent-row {
@@ -1286,7 +1286,7 @@ body.overlay-active #player-name {
   }
 
   .opponent-row input[type="radio"] {
-    accent-color: #1EC000;
+    accent-color: var(--ui-accent);
     cursor: pointer;
   }
 
@@ -1341,7 +1341,7 @@ body.overlay-active #player-name {
   }
 
   .firstdeal-option input[type="radio"] {
-    accent-color: #1EC000;
+    accent-color: var(--ui-accent);
     cursor: pointer;
   }
 
@@ -1431,31 +1431,31 @@ body.overlay-active #player-name {
 
   #btn-quick,
   #btn-match {
-    background: #1EC000;
+    background: var(--ui-accent);
     color: #021408;
     font-weight: 600;
   }
 
   #btn-quick:hover,
   #btn-match:hover {
-    background: #23e000;
+    background: var(--ui-accent-hi);
   }
 
   #btn-instructions {
     background: transparent;
-    border: 1px solid #1EC000;
-    color: #1EC000;
+    border: 1px solid var(--ui-accent);
+    color: var(--ui-accent);
     font-size: 1em;
     padding-inline: 0.7em;
     padding-block: 0.4em;
   }
 
   #btn-instructions:hover {
-    background: rgba(30,192,0,0.16);
+    background: rgba(var(--ui-accent-rgb), 0.16);
   }
 
   #btn-instructions-done {
-    background: #1EC000;
+    background: var(--ui-accent);
     color: #021408;
     font-weight: 700;
     border: 0;
@@ -1467,7 +1467,7 @@ body.overlay-active #player-name {
   }
 
   #btn-instructions-done:hover {
-    background: #23e000;
+    background: var(--ui-accent-hi);
   }
 
   /* Legacy .instructions-panel rules removed. Use the in-panel
@@ -1486,7 +1486,7 @@ body.overlay-active #player-name {
   #results-panel #results-winner {
     font-size: 2.5em;
     margin: 0;
-    color: #1EC000;
+    color: var(--ui-accent);
     font-weight: 700;
   }
 
@@ -1519,11 +1519,11 @@ body.overlay-active #player-name {
   #results-panel #results-match-table th,
   #results-panel #results-match-table td {
     padding: 0.35em 0.75em;
-    border: 1px solid rgba(30,192,0,0.16);
+    border: 1px solid rgba(var(--ui-accent-rgb), 0.16);
   }
 
   #results-panel #results-match-table th {
-    background: rgba(30,192,0,0.2);
+    background: rgba(var(--ui-accent-rgb), 0.2);
     font-weight: 700;
   }
 
@@ -1546,7 +1546,7 @@ body.overlay-active #player-name {
 
     /* nicer scrollbars (green scheme) */
     scrollbar-width: thin;
-    scrollbar-color: rgba(30,192,0,0.9) rgba(0,0,0,0.35);
+    scrollbar-color: rgba(var(--ui-accent-rgb), 0.9) rgba(0,0,0,0.35);
   }
 
   #results-panel #results-match-table tbody::-webkit-scrollbar {
@@ -1561,7 +1561,7 @@ body.overlay-active #player-name {
   #results-panel #results-match-table tbody::-webkit-scrollbar-thumb {
     background: linear-gradient(
       to bottom,
-      rgba(30,192,0,1),
+      rgba(var(--ui-accent-rgb), 1),
       rgba(20,140,0,1)
     );
     border-radius: 8px;
@@ -1647,7 +1647,7 @@ body.overlay-active #player-name {
     right: calc(100% / 28);
     top: 50%;
     height: 0;
-    border-top: 2px solid rgba(30,192,0,0.55);
+    border-top: 2px solid rgba(var(--ui-accent-rgb), 0.55);
     transform: translateY(-50%);
     pointer-events: none;
   }
@@ -1656,12 +1656,12 @@ body.overlay-active #player-name {
     width: 0;
     height: 0.9em;
     margin: 0 auto;
-    border-left: 2px solid rgba(30,192,0,0.65);
+    border-left: 2px solid rgba(var(--ui-accent-rgb), 0.65);
   }
 
   #results-panel .results-ruler .ruler-tick-mid {
     height: 1.15em;
-    border-left-color: rgba(30,192,0,0.95);
+    border-left-color: rgba(var(--ui-accent-rgb), 0.95);
   }
 
   #results-panel .results-ruler .ruler-bottom {
@@ -1694,16 +1694,16 @@ body.overlay-active #player-name {
   #results-panel .results-buttons button {
     padding: 0.8em 1.5em;
     font-size: 1.1em;
-    background: rgba(30,192,0,0.2);
-    border: 2px solid #1EC000;
-    color: #1EC000;
+    background: rgba(var(--ui-accent-rgb), 0.2);
+    border: 2px solid var(--ui-accent);
+    color: var(--ui-accent);
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
   }
 
   #results-panel .results-buttons button:hover {
-    background: rgba(30,192,0,0.35);
+    background: rgba(var(--ui-accent-rgb), 0.35);
   }
 
   /* Hide the logo row when instructions are shown so the title area
