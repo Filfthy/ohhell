@@ -2108,3 +2108,26 @@ body.style-infernal .seat-info .name-label .portrait.flip { --fx: -1; }
 }
 /* your name row sits in front of your hand, so a card's corner never hides your seal or "bidding…" */
 #player-seat-info { z-index: 310; }
+/* Portrait reactions - each plays once and stops (classes added by react() in oh-app.js). They use the separate
+   translate/rotate properties and the filter, so the mirroring is untouched. --lean is 1 or -1: towards the table. */
+body.style-infernal .seat-info .name-label .portrait { transform-origin: center bottom; }
+@keyframes rLean { 0%, 100% { translate: 0 0; rotate: 0deg; } 35% { translate: calc(var(--lean) * 5px * var(--card-scale)) 0; rotate: calc(var(--lean) * 3deg); } }
+@keyframes rWin  { 0%, 100% { translate: 0 0; } 30% { translate: 0 calc(-7px * var(--card-scale)); } 60% { translate: 0 calc(-5px * var(--card-scale)); } }
+@keyframes rBust {
+  0%, 100% { translate: 0 0; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); }
+  10% { translate: calc(-3px * var(--card-scale)) 0; } 20% { translate: calc(3px * var(--card-scale)) 0; }
+  30% { translate: calc(-2px * var(--card-scale)) 0; } 40% { translate: calc(2px * var(--card-scale)) 0; }
+  25%, 55% { filter: brightness(0.55) saturate(0.6) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); }
+  50% { translate: 0 0; }
+}
+@keyframes rExact {
+  0%, 100% { filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); }
+  35% { filter: brightness(1.15) drop-shadow(0 0 4px rgba(255, 214, 120, 0.95)) drop-shadow(0 0 14px rgba(240, 180, 70, 0.8)); }
+}
+body.style-infernal .name-label .portrait.r-lean  { animation: rLean 0.55s ease-out; }
+body.style-infernal .name-label .portrait.r-win   { animation: rWin 0.7s ease-out; }
+body.style-infernal .name-label .portrait.r-bust  { animation: rBust 0.75s ease-out; }
+body.style-infernal .name-label .portrait.r-exact { animation: rExact 1.2s ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  body.style-infernal .name-label .portrait.r-lean, body.style-infernal .name-label .portrait.r-win { animation: none; }
+}

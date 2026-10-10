@@ -209,6 +209,7 @@ class GameController {
     const file = PORTRAIT_VIEWS[who] ? `${who}-${onRight ? "l" : "r"}` : who;
     if (p.dataset.file !== file) { p.dataset.file = file; p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${file}.webp")`; }
     p.classList.toggle("on-right", onRight);
+    p.style.setProperty("--lean", onRight ? "-1" : "1");   // which way is "towards the table" for a reaction
     p.classList.toggle("flip", onRight && !PORTRAIT_VIEWS[who] && !PORTRAIT_FRONT[who]);
   }
 
@@ -415,7 +416,9 @@ class GameController {
 
     for (let seat = 0; seat < g.numPlayers; seat++) {
       const els = this.seatEls[seat];
-      els.name.textContent = this.seatName(seat);
+      // (only rewritten when it changes, so the portrait inside the plate isn't pulled out mid-reaction)
+      const name = this.seatName(seat);
+      if (els.nameText !== name) { els.name.textContent = name; els.nameText = name; }
       this.setPortrait(seat, els);
 
       const bid = g.bids ? g.bids[seat] : null;
@@ -1014,6 +1017,41 @@ class GameController {
     else this.continueBidding(this.epoch);
   }
 
+  // A portrait's one-off reaction (Infernal style): "lean" as they play a card, "win" as they take a trick,
+  // "bust" the moment they go over their bid or can no longer make it, "exact" at round end if they made it.
+  // Each plays once and stops.
+  react(seat, kind) {
+    const p = this.seatEls[seat] && this.seatEls[seat].portrait;
+    if (!p || !document.body.classList.contains("style-infernal")) return;
+    // a lean never cuts short a bigger reaction (the trick's winner leads straight away)
+    if (kind === "lean" && (p.classList.contains("r-win") || p.classList.contains("r-bust") || p.classList.contains("r-exact"))) return;
+    p.classList.remove("r-lean", "r-win", "r-bust", "r-exact");
+    void p.offsetWidth;
+    p.classList.add("r-" + kind);
+    clearTimeout(p._react);
+    p._react = setTimeout(() => p.classList.remove("r-" + kind), { lean: 600, win: 750, bust: 800, exact: 1250 }[kind]);
+  }
+
+  // After each trick: the winner lifts, unless that trick (or the tricks running out) has just sunk someone,
+  // who shudders instead - once per round each.
+  reactToTrick(winner) {
+    const g = this.game;
+    if (this.bustRound !== g.roundIndex) { this.bustRound = g.roundIndex; this.bustSeen = {}; }
+    const left = g.handSize - g.tricksPlayed;
+    let winnerSank = false;
+    for (let s = 0; s < g.numPlayers; s++) {
+      const bid = g.bids ? g.bids[s] : null;
+      if (bid == null || this.bustSeen[s]) continue;
+      const won = g.won[s] || 0;
+      if (won > bid || bid - won > left) {
+        this.bustSeen[s] = true;
+        this.react(s, "bust");
+        if (s === winner) winnerSank = true;
+      }
+    }
+    if (!winnerSank) this.react(winner, "win");
+  }
+
   flashStats(seat) {
     this.render();
     const el = this.seatEls[seat] && this.seatEls[seat].stats;
@@ -1050,6 +1088,8 @@ class GameController {
     }
 
     if (g.phase === "roundEnd" || g.phase === "gameOver") {
+      const r = g.history[g.history.length - 1];
+      if (r) for (let s = 0; s < g.numPlayers; s++) if (r.bids[s] === r.won[s]) this.react(s, "exact");
       await wait(400);
       if (ep !== this.epoch) return;
       this.showRoundSummary();
@@ -1100,6 +1140,7 @@ class GameController {
     this.hiddenTrickSeat = seat;
     this.render();
     this.sfxFlick();
+    this.react(seat, "lean");
 
     const rot = TRICK_OFFSETS[this.seatPos(seat)].rot;
     await this.flyCard({
@@ -1163,6 +1204,7 @@ class GameController {
 
     this.render();
     this.flashStats(res.winner);
+    this.reactToTrick(res.winner);
     if (this.tut) {
       await this.coach("trick" + (this.game.tricksPlayed - 1));
       if (ep !== this.epoch) return;
