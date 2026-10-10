@@ -9,7 +9,8 @@ const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in
 const SOULS_P = { faces: 0.76, headSolid: 0.6, headTone: 1, faceSize: 1, drift: 1, rock: 1, smoke: 1.7, smokeDark: 1.55,
   embers: 1.5, emberSpeed: 1, emberBright: 0.45, flames: 2.7, flameSize: 0.7, cracks: 0.9, vignette: 1.35,
   hue: 5, saturation: 1.3, brightness: 0.85,
-  glowShow: 0.46, glowBright: 0.3, glowHeat: 0.35, glowScale: 0.4, breathAmt: 1, breathSecs: 8, patchBreath: 1 };
+  glowShow: 0.46, glowBright: 0.3, glowHeat: 0.35, glowScale: 0.4, breathAmt: 1, breathSecs: 8, patchBreath: 1,
+  ripple: 3.5, rippleSize: 85, rippleSpeed: 0.25 };
 const SOULS_TUNER = false;   // true shows a sliders panel on the Souls table, for tuning the look
 
 const SOULS = {
@@ -43,6 +44,9 @@ const SOULS = {
     this.k = Math.max(0.55, Math.min(1.1, Math.min(W, H) / 820));   // faces scale with the screen (smaller on phones)
     this.canvas.width = Math.round(W * dpr);
     this.canvas.height = Math.round(H * dpr);
+    // the souls are drawn on a layer of their own first, so it can be laid down with a heat-haze ripple
+    this.fl = document.createElement("canvas"); this.fl.width = this.canvas.width; this.fl.height = this.canvas.height;
+    this.flc = this.fl.getContext("2d");
     const s = document.createElement("canvas");
     s.width = this.canvas.width; s.height = this.canvas.height;
     const c = s.getContext("2d");
@@ -386,7 +390,7 @@ const SOULS = {
 
   draw(now) {
     if (!this.sand || !this.sand.width || !this.sand.height) return;
-    const c = this.ctx, d = this.dpr, s = now / 1000;
+    let c = this.ctx; const d = this.dpr, s = now / 1000;
     this.drawGlowAndSand(c, s);
     // the smoke, under the faces: wisp sprites, cross-fading between curl stages as the curl climbs
     if (this.wispSheet) {
@@ -444,7 +448,9 @@ const SOULS = {
     c.globalAlpha = 1;
     c.globalCompositeOperation = "source-over";
     // the souls, on top of everything (smoke and fire pass behind them), solid
-    const P = this.P;
+    const P = this.P, rip = P.ripple > 0.05 && this.flc;
+    const main = c;
+    if (rip) { c = this.flc; c.clearRect(0, 0, this.fl.width, this.fl.height); }
     for (const f of this.faces) {
       const size = f.size * P.faceSize, u = 34 * size * d;
       // the groan: the mouth slowly opens wide and sags shut again
@@ -462,6 +468,18 @@ const SOULS = {
       c.globalAlpha = P.faces;
       c.drawImage(FS.img, (mo * FS.EY + ey) * FS.fw, sh * FS.fh, FS.fw, FS.fh, -dw / 2, -dh / 2, dw, dh);
       c.restore();
+    }
+    if (rip) {
+      // heat haze: lay the souls layer down in thin bands, each nudged sideways by a slow wave rising up the
+      // screen (two waves mixed so it never looks regular)
+      c = main;
+      const FW = this.fl.width, FH = this.fl.height, band = Math.max(2, Math.round(3 * d)), lam = P.rippleSize * d, amp = P.ripple * d;
+      const t = s * P.rippleSpeed;
+      for (let y = 0; y < FH; y += band) {
+        const h = Math.min(band, FH - y), q = y / lam;
+        const dx = amp * (0.7 * Math.sin((q + t) * 6.283) + 0.3 * Math.sin((q * 2.3 + t * 1.7) * 6.283 + 1.3));
+        c.drawImage(this.fl, 0, y, FW, h, dx, y, FW, h);
+      }
     }
     c.globalAlpha = Math.min(1, P.vignette);
     c.drawImage(this.shade, 0, 0);
@@ -481,6 +499,7 @@ const SOULS = {
       ["glowShow", "Glow through the sand", 0, 1, 0.02, ""], ["glowBright", "Glow brightness", 0.2, 2, 0.05, "glow"], ["glowHeat", "Glow heat (red-orange)", 0, 1, 0.05, "glow"],
       ["glowScale", "Glow patch size", 0.3, 3, 0.05, "glow"], ["breathAmt", "Breathing amount", 0, 1, 0.05, ""], ["breathSecs", "Breathing time (s)", 4, 40, 1, ""],
       ["patchBreath", "Patches warming/cooling", 0, 1, 0.05, ""],
+      ["ripple", "Soul ripple strength", 0, 12, 0.25, ""], ["rippleSize", "Ripple wave size", 20, 300, 5, ""], ["rippleSpeed", "Ripple speed", 0, 2, 0.05, ""],
       ["hue", "Overall hue", -180, 180, 1, "tint"], ["saturation", "Saturation", 0, 2.5, 0.05, "tint"], ["brightness", "Brightness", 0.4, 1.8, 0.05, "tint"]];
     const el = document.createElement("div");
     el.id = "souls-tuner";
