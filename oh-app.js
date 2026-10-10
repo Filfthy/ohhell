@@ -1558,7 +1558,7 @@ class GameController {
       html += `</tr>`;
     });
     if (!g.history.length) html += `<tr><td colspan="${n + 2}">No rounds finished yet.</td></tr>`;
-    html += `</tbody></table><div class="scorecard-key">bid/won · <b>running total</b> · green = exact bid</div>`;
+    html += `</tbody></table><div class="scorecard-key">bid/won · <b>running total</b> · ${document.body.classList.contains("style-infernal") ? "gold" : "green"} = exact bid</div>`;
     document.querySelector("#scorecard .scorecard-body").innerHTML = html;
     document.getElementById("scorecard").style.display = "flex";
   }

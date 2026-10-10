@@ -1869,3 +1869,13 @@ body.style-infernal .dealer-chip { background: radial-gradient(circle at 35% 30%
 .style-row .seg-style label > span { overflow: hidden; text-overflow: ellipsis; }
 .style-row .style-reset { flex: 0 0 auto; white-space: nowrap; }
 @media (max-height: 520px) { .style-row .style-reset { display: none; } }
+/* rules page, round summary, scorecard in the Infernal style */
+body.style-infernal #instructions-panel .instructions-content h3 { color: #e8b85a !important; border-color: rgba(184, 137, 63, 0.35) !important; }
+body.style-infernal #instructions-panel .instructions-content b { color: #f1dcae; }
+body.style-infernal #instructions-panel .instructions-content { scrollbar-color: #b8893f rgba(0, 0, 0, 0.35) !important; border-color: rgba(184, 137, 63, 0.6) !important; }
+body.style-infernal #instructions-panel .instructions-content::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.35) !important; }
+body.style-infernal #instructions-panel .instructions-content::-webkit-scrollbar-thumb { background: #b8893f !important; }
+body.style-infernal .end-table { background: rgba(0, 0, 0, 0.28) !important; border-color: rgba(184, 137, 63, 0.4) !important; font-variant-numeric: lining-nums tabular-nums; }
+body.style-infernal .end-table th { font-family: "Cinzel", Georgia, serif; color: #e8b85a; }
+body.style-infernal .end-table th, body.style-infernal .end-table td { font-size: 15px; border-color: rgba(184, 137, 63, 0.25) !important; }
+body.style-infernal .scorecard-table th { font-family: "Cinzel", Georgia, serif; color: #e8b85a; }
