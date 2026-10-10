@@ -42,6 +42,8 @@ const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub
 // look in towards the table.
 const PORTRAIT_FACING = { lamia: "r", loki: "r", "old-nick": "r", hellga: "r", "davy-jones": "r", banshee: "r", faust: "r",
   persephone: "l", morgana: "l" };
+// Portraits drawn in three views (img/opp-<name>-l/c/r.webp), shown as they are rather than mirrored
+const PORTRAIT_VIEWS = { "old-nick": true };
 // Opponent card size relative to yours; recalculated for screen shape and
 // player count (see updateOppScale).
 let OPP_CARD_SCALE = 0.85;
@@ -206,9 +208,11 @@ class GameController {
     const onRight = pos === "right" || pos === "topright";   // the outer side; everyone looks in to the middle
     const looksRight = !onRight;
     const face = PORTRAIT_FACING[who];
-    if (p.dataset.who !== who) { p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${who}.webp")`; }
+    // a portrait drawn in three views shows the one that looks in (straight ahead from across the table)
+    const file = PORTRAIT_VIEWS[who] ? `${who}-${pos === "top" ? "c" : looksRight ? "r" : "l"}` : who;
+    if (p.dataset.file !== file) { p.dataset.file = file; p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${file}.webp")`; }
     p.classList.toggle("on-right", onRight);
-    p.classList.toggle("flip", !!face && face !== (looksRight ? "r" : "l"));
+    p.classList.toggle("flip", !PORTRAIT_VIEWS[who] && !!face && face !== (looksRight ? "r" : "l"));
   }
 
   seatName(seat) {

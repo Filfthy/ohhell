@@ -66,3 +66,15 @@ for s, names in enumerate(NAMES):
         sq.paste(c, ((side - c.width) // 2, side - c.height))      # sitting on the bottom edge
         sq.resize((240, 240), Image.LANCZOS).save(f"img/opp-{n}.webp", "WEBP", quality=86, method=6)
         print(n, c.size)
+
+# Old Nick also comes in three views (looking left, ahead, right): img/opp-old-nick-l/c/r.webp. The game
+# shows whichever looks in towards the middle from his seat, instead of mirroring the single portrait.
+sheet = Image.open("infernal/old-nick-three-views.png").convert("RGBA")
+cw = sheet.width // 3
+for i, v in enumerate("lcr"):
+    c = keep_portrait(sheet.crop((i * cw, 0, (i + 1) * cw, sheet.height)))
+    side = max(c.size)
+    sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    sq.paste(c, ((side - c.width) // 2, side - c.height))
+    sq.resize((240, 240), Image.LANCZOS).save(f"img/opp-old-nick-{v}.webp", "WEBP", quality=86, method=6)
+    print("old-nick", v, c.size)
