@@ -11,6 +11,10 @@ const SUITS = ["♠", "♥", "♦", "♣"];
 // own suits never change; only how they're shown. The symbols are in index.html's #suit-symbols.
 let INFERNAL = false;
 const INFERNAL_SUITS = { "♥": "flames", "♦": "tridents", "♣": "horns", "♠": "pentagrams" };
+const INFERNAL_SPECIAL = {
+  SUN: { letter: "S", color: "#b5650f" }, MOON: { letter: "M", color: "#1d55a8" },
+  DRAGON: { letter: "D", color: "#a3201e" }, JOKER: { letter: "F", color: "#6b3a8f", name: "The Fool (Joker)" }
+};
 const INFERNAL_ICON = { "♥": "s-flame", "♦": "s-trident", "♣": "s-horns", "♠": "s-pentagram" };
 const INFERNAL_NAME = { hearts: "flames", diamonds: "tridents", clubs: "horns", spades: "pentagrams",
   heart: "flame", diamond: "trident", club: "horn", spade: "pentagram" };
@@ -588,6 +592,31 @@ class CardView {
     const info = SPECIAL_LOOK[card.role];
     div.classList.add("special", "special-" + card.role.toLowerCase());
     div.title = info.name + ": " + info.rule;
+
+    if (INFERNAL) {
+      // Infernal: a woodcut figure in a framed panel, with a letter at top left (the Joker is the Fool)
+      const L = INFERNAL_SPECIAL[card.role];
+      div.classList.add("inf-court-card");
+      if (L.name) div.title = L.name + ": " + info.rule;
+      const corner = document.createElement("div");
+      corner.className = "corner sp-letter";
+      corner.style.color = L.color;
+      corner.innerHTML = `<span class="rank">${L.letter}</span>`;
+      div.appendChild(corner);
+      const jumbo = document.createElement("img");
+      jumbo.className = "jumbo-pip jumbo-icon";
+      jumbo.src = `special/icon-${card.role}.svg`; jumbo.alt = ""; jumbo.draggable = false;
+      div.appendChild(jumbo);
+      const center = document.createElement("div");
+      center.className = "face-icon";
+      center.style.cssText = "position:absolute;top:0;left:0;width:100%;height:100%";
+      const frame = document.createElement("div");
+      frame.className = "inf-court";
+      const img = document.createElement("img");
+      img.src = `img/inf-${card.role}.webp`; img.alt = ""; img.draggable = false;
+      frame.appendChild(img); center.appendChild(frame); div.appendChild(center);
+      return div;
+    }
 
     for (const cls of ["sp-corner", "sp-corner bottom"]) {
       const ic = document.createElement("img");
