@@ -8,8 +8,9 @@ const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in
 // Look settings (the temporary tuning panel changes these live)
 const SOULS_P = { faces: 0.76, headSolid: 0.9, headTone: 0.85, faceSize: 1, drift: 1, rock: 1, smoke: 1.7, smokeDark: 1.55,
   embers: 0.4, emberSpeed: 1, emberBright: 0.45, flames: 2.7, flameSize: 0.7, cracks: 0.9, vignette: 1.35,
-  hue: 7, saturation: 1.3, brightness: 0.85 };
-const SOULS_TUNER = false;   // true shows a sliders panel on the Souls table, for tuning the look
+  hue: 7, saturation: 1.3, brightness: 0.85,
+  coalGlow: 0.55, coalHeat: 0.35, coalSpeed: 1, coalSize: 1, coalGaps: 1, coalFlares: 1 };
+const SOULS_TUNER = true;    // true shows a sliders panel on the Souls table, for tuning the look
 
 const SOULS = {
   P: SOULS_P,
@@ -118,6 +119,7 @@ const SOULS = {
     }
     c.putImageData(img, 0, 0);
     this.sand = s;
+    this.makeCoals();
     this.shade = this.vignette();
     this.makeHead();
     // smoke: lots of thin wisps curling up out of the sand
@@ -145,6 +147,84 @@ const SOULS = {
     const P = this.P;
     this.canvas.style.filter = (P.hue || P.saturation !== 1 || P.brightness !== 1)
       ? `hue-rotate(${P.hue}deg) saturate(${P.saturation}) brightness(${P.brightness})` : "";
+  },
+  // ---- the coal bed: irregular charcoal lumps packed together, drawn once with see-through gaps and cracks;
+  // underneath them a slowly shifting heat field glows red through orange.
+  makeCoals() {
+    const P = this.P, d = this.dpr, W = this.canvas.width, H = this.canvas.height;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const c = cv.getContext("2d");
+    let seed = 23;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const cell = 46 * this.k * d * P.coalSize, gap = Math.max(0.6, P.coalGaps) * 2.2 * d;
+    for (let y = -cell; y < H + cell; y += cell * 0.82) {
+      for (let x = -cell + (Math.round(y / cell) % 2) * cell * 0.5; x < W + cell; x += cell) {
+        const cx = x + (rnd() - 0.5) * cell * 0.45, cy = y + (rnd() - 0.5) * cell * 0.4;
+        const rx = cell * (0.5 + rnd() * 0.18) - gap, ry = cell * (0.42 + rnd() * 0.16) - gap, rot = rnd() * Math.PI;
+        // an irregular lump: a wobbly closed curve
+        const n = 9, pts = [];
+        for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2, w = 0.78 + rnd() * 0.3; pts.push([Math.cos(a) * rx * w, Math.sin(a) * ry * w]); }
+        c.save(); c.translate(cx, cy); c.rotate(rot);
+        c.beginPath();
+        for (let i = 0; i <= n; i++) { const [ax, ay] = pts[i % n], [bx, by] = pts[(i + 1) % n]; const mx = (ax + bx) / 2, my = (ay + by) / 2; if (!i) c.moveTo(mx, my); else c.quadraticCurveTo(ax, ay, mx, my); }
+        c.closePath();
+        const shade = 10 + rnd() * 14;
+        const g = c.createRadialGradient(-rx * 0.3, -ry * 0.35, 0, 0, 0, Math.max(rx, ry));
+        g.addColorStop(0, `rgb(${shade + 22}, ${shade + 18}, ${shade + 16})`); g.addColorStop(0.55, `rgb(${shade}, ${shade - 2}, ${shade - 3})`); g.addColorStop(1, "rgba(4, 2, 2, 0.75)");
+        c.fillStyle = g; c.fill();
+        // cracks across some lumps, cut right through so the glow shows in them
+        if (rnd() < 0.45) {
+          c.globalCompositeOperation = "destination-out"; c.lineWidth = 1.1 * d; c.lineCap = "round";
+          c.beginPath(); let px = (rnd() - 0.5) * rx, py = (rnd() - 0.5) * ry; c.moveTo(px, py);
+          for (let j = 0; j < 3; j++) { px += (rnd() - 0.5) * rx * 0.8; py += (rnd() - 0.5) * ry * 0.8; c.lineTo(px, py); }
+          c.strokeStyle = "rgba(0,0,0,0.85)"; c.stroke(); c.globalCompositeOperation = "source-over";
+        }
+        c.restore();
+      }
+    }
+    this.coals = cv;
+    // the heat field is worked out on a small grid and smoothed up to full size
+    this.heatW = Math.ceil(this.W / 26); this.heatH = Math.ceil(this.H / 26);
+    this.heat = document.createElement("canvas"); this.heat.width = this.heatW; this.heat.height = this.heatH;
+    this.heatCtx = this.heat.getContext("2d"); this.heatImg = this.heatCtx.createImageData(this.heatW, this.heatH);
+    this.blobs = [];
+    for (let i = 0; i < 9; i++) this.blobs.push({ x: Math.random(), y: Math.random(), r: 0.12 + Math.random() * 0.2, vx: (Math.random() - 0.5) * 0.012, vy: (Math.random() - 0.5) * 0.012, ph: Math.random() * 6.3, w: 0.08 + Math.random() * 0.12 });
+    this.flares = [];
+  },
+  drawCoals(c, s) {
+    if (!this.coals) return;
+    const P = this.P, w = this.heatW, h = this.heatH, img = this.heatImg.data, t = s * P.coalSpeed;
+    // drift the hot patches and now and then flare a spot
+    for (const b of this.blobs) { b.x = (b.x + b.vx * 0.04 * P.coalSpeed + 1.2) % 1.2 - 0.1; b.y = (b.y + b.vy * 0.04 * P.coalSpeed + 1.2) % 1.2 - 0.1; }
+    if (Math.random() < 0.012 * P.coalFlares * P.coalSpeed) this.flares.push({ x: Math.random(), y: Math.random(), t0: t, len: 1.5 + Math.random() * 2.5 });
+    this.flares = this.flares.filter(f => t - f.t0 < f.len);
+    const aspect = this.W / this.H;
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+      const x = i / w, y = j / h;
+      let v = 0.32 + 0.1 * Math.sin(x * 9 + t * 0.35) * Math.sin(y * 7 - t * 0.27);   // a gentle base breathing
+      for (const b of this.blobs) {
+        const dx = (x - b.x) * aspect, dy = y - b.y, d2 = (dx * dx + dy * dy) / (b.r * b.r);
+        if (d2 < 4) v += Math.exp(-d2) * (0.45 + 0.35 * Math.sin(t * b.w * 6.28 + b.ph));
+      }
+      for (const f of this.flares) {
+        const q = (t - f.t0) / f.len, dx = (x - f.x) * aspect, dy = y - f.y, d2 = (dx * dx + dy * dy) / 0.004;
+        if (d2 < 6) v += Math.exp(-d2) * Math.sin(Math.PI * q) * 0.9;
+      }
+      v = Math.max(0, Math.min(1.4, v)) * P.coalGlow;
+      // dark crimson -> red -> orange as it heats; coalHeat pushes it towards orange
+      const k = Math.min(1, v * (0.7 + P.coalHeat));
+      const r = 40 + 200 * k, g = 4 + 20 * k + 95 * Math.max(0, k - 0.45) * (0.6 + P.coalHeat), bl = 2 + 18 * Math.max(0, k - 0.7);
+      const a = Math.min(1, v * 1.1), o = (j * w + i) * 4;
+      img[o] = r; img[o + 1] = g; img[o + 2] = bl; img[o + 3] = 255 * a;
+    }
+    this.heatCtx.putImageData(this.heatImg, 0, 0);
+    c.fillStyle = "#070302"; c.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    c.save(); c.imageSmoothingEnabled = true; c.imageSmoothingQuality = "high";
+    c.drawImage(this.heat, 0, 0, this.canvas.width, this.canvas.height); c.restore();
+    c.drawImage(this.coals, 0, 0);
+    // a faint glow over the lumps' edges from the fire beneath
+    c.save(); c.globalCompositeOperation = "lighter"; c.globalAlpha = 0.18;
+    c.drawImage(this.heat, 0, 0, this.canvas.width, this.canvas.height); c.restore();
   },
   // keep a list at n items (the sliders change how many wisps and embers there are)
   fit(key, n, make) {
@@ -267,7 +347,7 @@ const SOULS = {
   draw(now) {
     if (!this.sand || !this.sand.width || !this.sand.height) return;
     const c = this.ctx, d = this.dpr, s = now / 1000;
-    c.drawImage(this.sand, 0, 0);
+    this.drawCoals(c, s);
     // the smoke, under the faces: thin wisps curling up, drawn small and softened
     const m = this.smc, S = 1 / 3;
     m.clearRect(0, 0, this.sm.width, this.sm.height);
@@ -374,6 +454,8 @@ const SOULS = {
       ["embers", "Ember amount", 0, 3, 0.1, "count"], ["emberSpeed", "Ember speed", 0.1, 3, 0.05, ""], ["emberBright", "Ember brightness", 0, 2, 0.05, ""],
       ["flames", "Flame frequency", 0, 4, 0.1, ""], ["flameSize", "Flame size", 0.3, 2.5, 0.05, ""],
       ["cracks", "Crack glow", 0, 3, 0.1, "sand"], ["vignette", "Edge darkening", 0, 1.8, 0.05, ""],
+      ["coalGlow", "Coal glow", 0, 1.6, 0.05, ""], ["coalHeat", "Coal heat (red-orange)", 0, 1, 0.05, ""], ["coalSpeed", "Glow shifting speed", 0, 3, 0.1, ""],
+      ["coalFlares", "Coal flares", 0, 4, 0.1, ""], ["coalSize", "Coal size", 0.5, 2, 0.05, "sand"], ["coalGaps", "Gaps between coals", 0.3, 3, 0.1, "sand"],
       ["hue", "Overall hue", -180, 180, 1, "tint"], ["saturation", "Saturation", 0, 2.5, 0.05, "tint"], ["brightness", "Brightness", 0.4, 1.8, 0.05, "tint"]];
     const el = document.createElement("div");
     el.id = "souls-tuner";
