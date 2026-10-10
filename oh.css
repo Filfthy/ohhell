@@ -2144,3 +2144,10 @@ body.style-infernal #scoreboard #score-table td:last-child { text-align: right; 
 body.style-infernal #scoreboard:hover { filter: brightness(1.15); }
 /* Infernal tutorial: the coach box is parchment, so suit symbols need no chip of their own - the parchment shows through */
 body.style-infernal #coach .coach-suit { background: none; padding: 0; }
+/* Infernal seat lines ("bid placed", "Won 2"…): no bubble, just the words with a thin dark outline. On target and
+   over still show by colour. */
+body.style-infernal .seat-stats .stat, body.style-infernal .seat-stats .stat-muted {
+  background: none !important; border: none !important; box-shadow: none !important; padding-left: 0.2em; padding-right: 0.2em;
+  text-shadow: 0 0 1px #000, 0 0 2px #000, 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, 0.8);
+}
+body.style-infernal .seat-stats .stat-muted { opacity: 0.9; }
