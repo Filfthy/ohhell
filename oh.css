@@ -1936,3 +1936,49 @@ body.style-infernal #btn-tutorial, body.style-infernal .icon-btn, body.style-inf
 body.style-infernal .seg input:checked + span { background: linear-gradient(180deg, #a3241a 0%, #6e1209 100%) !important; border-color: var(--inf-gold) !important; color: #f6d68c !important; }
 body.style-infernal .tab-btn.active { background: rgba(130, 20, 12, 0.45) !important; border-color: var(--inf-gold) !important; color: var(--inf-gold) !important; }
 body.style-infernal .seat-stats .stat, body.style-infernal .seat-stats .stat-muted { background: rgba(13, 5, 4, 0.85); border-color: rgba(212, 166, 78, 0.5); }
+
+/* ===== Infernal, take three: black panels, mostly see-through, and parchment controls ===== */
+body.style-infernal #scoreboard, body.style-infernal #bid-panel, body.style-infernal #end-panel, body.style-infernal #start-panel,
+body.style-infernal .tut-offer-panel, body.style-infernal #instructions-panel, body.style-infernal .scorecard-panel {
+  background: rgba(6, 3, 2, 0.58) !important;
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  border: 1px solid rgba(212, 166, 78, 0.55) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55) !important;
+}
+/* every button: a parchment tile with dark ink */
+body.style-infernal button:not(.linkish):not(.style-reset):not(.tab-btn), body.style-infernal .seg label > span, body.style-infernal .bv-play {
+  background: url("img/parchment-card-5.webp") center / 260% 260%, #e3c48b !important;
+  color: #3a1206 !important; border: 1px solid #6e4318 !important; text-shadow: none !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.65), inset 0 0 7px rgba(110, 50, 15, 0.35) !important;
+}
+body.style-infernal button:not(.linkish):not(.style-reset):not(.tab-btn):hover, body.style-infernal .seg label:hover > span, body.style-infernal .bv-play:hover {
+  box-shadow: 0 0 12px 2px rgba(255, 110, 30, 0.6), inset 0 0 7px rgba(110, 50, 15, 0.35) !important; color: #8e1712 !important;
+}
+body.style-infernal button:disabled { filter: grayscale(0.6) brightness(0.6); }
+/* options: the unchosen ones sit back, the chosen one is inked in crimson and glows like an ember */
+body.style-infernal .seg label > span { filter: brightness(0.72) saturate(0.85); }
+body.style-infernal .seg input:checked + span {
+  filter: none; color: #8e1712 !important; font-weight: 800; border: 1px solid #8e1712 !important;
+  box-shadow: 0 0 10px 1px rgba(255, 100, 25, 0.55), inset 0 0 0 1px rgba(142, 23, 18, 0.5), inset 0 0 7px rgba(110, 50, 15, 0.35) !important;
+}
+/* the main buttons: same parchment, bold crimson ink */
+body.style-infernal #btn-play, body.style-infernal #btn-end-next, body.style-infernal #oh-modal-close, body.style-infernal #btn-offer-tutorial,
+body.style-infernal #btn-quit-no, body.style-infernal #btn-scorecard-close, body.style-infernal #btn-close-results {
+  color: #8e1712 !important; font-weight: 800;
+}
+body.style-infernal #btn-play small { color: #5a2a10 !important; opacity: 1; }
+/* corner icons: dark ink on parchment */
+body.style-infernal .icon-btn { color: #3a1206 !important; }
+/* tabs: plain gold lettering on the black, the open one underlined in crimson */
+body.style-infernal .tab-btn { background: transparent !important; border: 0 !important; border-bottom: 2px solid transparent !important; color: rgba(232, 200, 138, 0.7) !important; }
+body.style-infernal .tab-btn.active { color: #e8c88a !important; border-bottom-color: #b8302a !important; }
+body.style-infernal .seat-stats .stat, body.style-infernal .seat-stats .stat-muted { background: rgba(6, 3, 2, 0.6); }
+body.style-infernal .seg input:checked + span,
+body.style-infernal #btn-play, body.style-infernal #btn-tutorial, body.style-infernal #btn-end-next, body.style-infernal #oh-modal-close,
+body.style-infernal #btn-offer-tutorial, body.style-infernal #btn-quit-no, body.style-infernal #btn-scorecard-close, body.style-infernal #btn-close-results,
+body.style-infernal .bv-close, body.style-infernal .bv-games-btn, body.style-infernal .bv-share-buttons button, body.style-infernal .icon-btn,
+body.style-infernal #bid-buttons .bid-btn:not(:disabled) {
+  background: url("img/parchment-card-5.webp") center / 260% 260%, #e3c48b !important;
+}
+body.style-infernal .tab-btn.active { background: transparent !important; }
+body.style-infernal #btn-tutorial, body.style-infernal #btn-tutorial small { color: #3a1206 !important; }
