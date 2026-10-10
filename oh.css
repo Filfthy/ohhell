@@ -1743,3 +1743,6 @@ body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0
 .card.inf-num .inf-court { inset: 0; border: none; border-radius: 0; }
 .card.inf-num .inf-court::after { content: ""; position: absolute; inset: 3% 4%; border: 1px solid rgba(110, 70, 30, 0.6); border-radius: 3px; }
 .card.inf-num .inf-court img { left: 0; top: 0; right: auto; width: 100%; height: 100%; object-fit: fill; transform: none; }
+/* the trump coin's drawn symbol sits dead centre (no text baseline) */
+.trump-coin .coin-suit:has(.sg) { display: flex; align-items: center; justify-content: center; line-height: 0; }
+.trump-coin .coin-suit .sg { vertical-align: 0; display: block; }

@@ -517,7 +517,7 @@ class GameController {
       sym.className = "coin-suit " + this.cardView.cardColorClass({ suit: face });
       sym.innerHTML = suitMark(face);
       coin.appendChild(sym);
-      coin.title = "Trump: " + face;
+      coin.title = "Trump: " + (INFERNAL ? suitWords({ "♠": "spades", "♥": "hearts", "♦": "diamonds", "♣": "clubs" }[face]) : face);
     } else {
       coin.innerHTML = `<span class="coin-blank">No<br>trump</span>`;
       coin.title = "No trump this round";
