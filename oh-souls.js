@@ -126,7 +126,7 @@ const SOULS = {
     this.sm.width = Math.ceil(W / 3); this.sm.height = Math.ceil(H / 3);
     this.smc = this.sm.getContext("2d");
     this.wisps = [];
-    const nw = Math.max(70, Math.round(W * H / 5000));
+    const nw = Math.max(110, Math.round(W * H / 3000));
     for (let i = 0; i < nw; i++) this.wisps.push(this.newWisp(rnd() ));
     // embers drifting up, and now and then a lick of flame from a crack in the sand
     this.embers = [];
@@ -144,12 +144,12 @@ const SOULS = {
     return { x: Math.random() * this.W, y: this.H * (0.15 + Math.random() * 0.95), age: age0 * life, life,
       len: (50 + Math.random() * 90) * k, amp: (5 + Math.random() * 9) * k, freq: 0.035 + Math.random() * 0.04,
       speed: 1.2 + Math.random() * 1.4, ph: Math.random() * 6.3, lean: (Math.random() - 0.5) * 0.5,
-      rise: (6 + Math.random() * 8) * k, w: (1.3 + Math.random() * 1.5) * k, a: 0.5 + Math.random() * 0.3 };
+      rise: (6 + Math.random() * 8) * k, w: (1.3 + Math.random() * 1.5) * k, a: 0.6 + Math.random() * 0.3 };
   },
   newEmber(anywhere) {
     const k = this.k;
     return { x: Math.random() * this.W, y: Math.random() * this.H * 1.05,   // born anywhere, so they spread evenly
-      vy: (10 + Math.random() * 22) * k, vx: (Math.random() - 0.5) * 8 * k, r: (0.8 + Math.random() * 1.6) * k,
+      vy: (4 + Math.random() * 8) * k, vx: (Math.random() - 0.5) * 4 * k, r: (0.8 + Math.random() * 1.6) * k,
       age: anywhere ? Math.random() * 6 : 0, life: 5 + Math.random() * 6, fl: Math.random() * 6.3, fs: 0.6 + Math.random() * 1.4, hot: Math.random() };
   },
   // a lick of flame: a few tongues rising from one spot, flaring up and dying back over a second or two
@@ -162,7 +162,7 @@ const SOULS = {
   stepFire(dt) {
     for (let i = 0; i < this.embers.length; i++) {
       const e = this.embers[i];
-      e.age += dt; e.y -= e.vy * dt; e.x += (e.vx + Math.sin(e.age * 1.7 + e.fl) * 6 * this.k) * dt;
+      e.age += dt; e.y -= e.vy * dt; e.x += (e.vx + Math.sin(e.age * 0.8 + e.fl) * 4 * this.k) * dt;
       if (e.age >= e.life || e.y < -10) this.embers[i] = this.newEmber(false);
     }
     this.flameT += dt;
