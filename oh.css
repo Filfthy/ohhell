@@ -2075,14 +2075,14 @@ body.suits-infernal .card:not(.back)[data-crease]::after, body.back-infernal .ca
 .card[data-crease="5"]::after { background-image: url("img/crease-5.webp?v=2"); }
 .card[data-crease="6"]::after { background-image: url("img/crease-6.webp?v=2"); }
 .card[data-crease="7"]::after { background-image: url("img/crease-7.webp?v=2"); }
-/* Infernal portraits: each player's bust, all one size, beside their nameplate on the outer side and tucked
-   behind the plate's end (never under the name), looking in towards the middle of the table
+/* Infernal portraits: each player's bust, all one size, beside their nameplate on the outer side, overlapping
+   in front of the plate's end (never over the name), looking in towards the middle of the table
    (img/opp-*.webp, cut by tools/cut-portraits.py) */
 .portrait { display: none; }
 body.style-infernal .seat-info { isolation: isolate; }
 body.style-infernal .seat-info .name-label { position: relative; }
 body.style-infernal .seat-info .name-label .portrait {
-  display: block; position: absolute; z-index: -1; bottom: -10%; right: calc(100% - 12px * var(--card-scale));
+  display: block; position: absolute; z-index: 1; bottom: -10%; right: calc(100% - 12px * var(--card-scale));
   width: calc(84px * var(--card-scale)); aspect-ratio: 1; transform: scaleX(var(--fx, 1));
   background: center bottom / contain no-repeat; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); pointer-events: none;
 }
