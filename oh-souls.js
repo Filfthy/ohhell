@@ -241,12 +241,13 @@ const SOULS = {
       const ry = Math.max(0.5, eye * 0.72);
       c.fillStyle = lip; c.beginPath(); c.ellipse(ex, ey + ry * 0.25, u * 0.2, ry * 1.04, droop, 0, Math.PI * 2); c.fill();
       c.fillStyle = dark; c.beginPath(); c.ellipse(ex, ey, u * 0.19, ry, droop, 0, Math.PI * 2); c.fill();
-      // the brow: a dark crease, its inner end pulled up (higher still as the groan comes)
-      const lift = u * (0.1 + 0.07 * g);
-      c.strokeStyle = "rgba(20, 10, 5, 0.75)"; c.lineWidth = u * 0.075; c.lineCap = "round";
+      // the brow: a faint crease, gently curved (arching over the eye), its inner end raised a little
+      // more as the groan comes; lighter and thinner than the eyes and mouth
+      const lift = u * (0.06 + 0.05 * g);
+      c.strokeStyle = "rgba(24, 12, 6, 0.42)"; c.lineWidth = u * 0.05; c.lineCap = "round";
       c.beginPath();
-      c.moveTo(ex + side * u * 0.2, ey - u * 0.24);
-      c.quadraticCurveTo(ex, ey - u * 0.3 - lift * 0.4, ex - side * u * 0.2, ey - u * 0.3 - lift);
+      c.moveTo(ex + side * u * 0.2, ey - u * 0.22);
+      c.quadraticCurveTo(ex + side * u * 0.03, ey - u * 0.3 - lift * 0.55, ex - side * u * 0.19, ey - u * 0.31 - lift);
       c.stroke();
       // a tear streak running down from the outer corner
       c.strokeStyle = "rgba(14, 7, 3, 0.32)"; c.lineWidth = u * 0.05;
