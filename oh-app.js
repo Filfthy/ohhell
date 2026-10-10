@@ -36,7 +36,7 @@ const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135
 
 // Opponents are drawn at random from this pool for each game.
 const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub",
-  "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Banshee",
+  "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Banshee", "Faust",
   "Morgana", "Jezebel"];
 // Opponent card size relative to yours; recalculated for screen shape and
 // player count (see updateOppScale).

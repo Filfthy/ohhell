@@ -39,18 +39,45 @@ const SOULS = {
     const c = s.getContext("2d");
     let seed = 11;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const base = c.createRadialGradient(s.width * 0.5, s.height * 0.55, 0, s.width * 0.5, s.height * 0.55, Math.max(s.width, s.height) * 0.7);
-    base.addColorStop(0, "#47311f"); base.addColorStop(0.6, "#33231a"); base.addColorStop(1, "#1c120c");
-    c.fillStyle = base; c.fillRect(0, 0, s.width, s.height);
-    // swirls in the sand
-    for (let i = 0; i < 40; i++) {
-      const x = rnd() * s.width, y = rnd() * s.height, r = (60 + rnd() * 200) * dpr;
+    // Volcanic soul sand: layers of soft colour cloud (charred black, oxblood, burnt umber, dull ochre)
+    // at three scales, so it has depth instead of one flat brown; then glowing cracks and old scorch marks.
+    c.fillStyle = "#1f120c"; c.fillRect(0, 0, s.width, s.height);
+    const cloud = (cell, palette, alpha) => {
+      const cw = Math.ceil(s.width / cell) + 2, chh = Math.ceil(s.height / cell) + 2;
+      const t = document.createElement("canvas"); t.width = cw; t.height = chh;
+      const tc = t.getContext("2d"), id = tc.createImageData(cw, chh);
+      for (let i = 0; i < cw * chh; i++) {
+        const col = palette[Math.floor(rnd() * palette.length)];
+        id.data[i * 4] = col[0]; id.data[i * 4 + 1] = col[1]; id.data[i * 4 + 2] = col[2]; id.data[i * 4 + 3] = col[3] * 255;
+      }
+      tc.putImageData(id, 0, 0);
+      c.save(); c.globalAlpha = alpha; c.imageSmoothingEnabled = true; c.imageSmoothingQuality = "high";
+      c.drawImage(t, -cell, -cell, cw * cell, chh * cell); c.restore();
+    };
+    cloud(260 * dpr, [[18, 9, 6, 1], [58, 22, 14, 1], [74, 44, 24, 1], [40, 24, 16, 1], [26, 14, 10, 1], [88, 30, 16, 1]], 1);
+    cloud(80 * dpr, [[10, 5, 3, 1], [92, 58, 32, 1], [64, 24, 14, 1], [36, 20, 12, 1], [0, 0, 0, 0]], 0.5);
+    cloud(22 * dpr, [[8, 4, 2, 1], [110, 72, 42, 1], [52, 30, 18, 1], [0, 0, 0, 0], [0, 0, 0, 0]], 0.3);
+    // scorch marks
+    for (let i = 0; i < 18; i++) {
+      const x = rnd() * s.width, y = rnd() * s.height, r = (40 + rnd() * 120) * dpr;
       const g = c.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, rnd() < 0.45 ? "rgba(112, 78, 54, 0.14)" : "rgba(10, 5, 3, 0.2)");
-      g.addColorStop(1, "rgba(0, 0, 0, 0)");
-      c.fillStyle = g;
-      c.save(); c.translate(x, y); c.scale(1.8 + rnd(), 0.6 + rnd() * 0.5); c.rotate(rnd() * 0.6 - 0.3); c.translate(-x, -y);
-      c.fillRect(x - r, y - r, r * 2, r * 2); c.restore();
+      g.addColorStop(0, "rgba(4, 2, 1, 0.45)"); g.addColorStop(1, "rgba(4, 2, 1, 0)");
+      c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    // cracks with a dull ember glow in them
+    for (let i = 0; i < Math.max(6, Math.round(W * H / 90000)); i++) {
+      let x = rnd() * s.width, y = rnd() * s.height, ang = rnd() * Math.PI * 2;
+      const pts = [[x, y]];
+      for (let j = 0, n = 6 + Math.floor(rnd() * 10); j < n; j++) {
+        ang += (rnd() - 0.5) * 1.1; const step = (10 + rnd() * 22) * dpr;
+        x += Math.cos(ang) * step; y += Math.sin(ang) * step; pts.push([x, y]);
+      }
+      const path = () => { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const q of pts.slice(1)) c.lineTo(q[0], q[1]); };
+      c.lineCap = "round"; c.lineJoin = "round";
+      c.save(); c.globalCompositeOperation = "lighter"; c.shadowColor = "rgba(255, 70, 0, 0.6)"; c.shadowBlur = 10 * dpr;
+      path(); c.strokeStyle = "rgba(170, 45, 5, 0.35)"; c.lineWidth = 2.2 * dpr; c.stroke(); c.restore();
+      path(); c.strokeStyle = "rgba(8, 3, 1, 0.8)"; c.lineWidth = 1.1 * dpr; c.stroke();
+      path(); c.save(); c.globalCompositeOperation = "lighter"; c.strokeStyle = "rgba(255, 120, 30, 0.18)"; c.lineWidth = 0.6 * dpr; c.stroke(); c.restore();
     }
     // the faces: one per cell of a tight, loose grid, so they fill the table without piling up
     this.faces = [];
@@ -121,9 +148,9 @@ const SOULS = {
   },
   newEmber(anywhere) {
     const k = this.k;
-    return { x: Math.random() * this.W, y: anywhere ? Math.random() * this.H : this.H * (0.3 + Math.random() * 0.75),
+    return { x: Math.random() * this.W, y: Math.random() * this.H * 1.05,   // born anywhere, so they spread evenly
       vy: (10 + Math.random() * 22) * k, vx: (Math.random() - 0.5) * 8 * k, r: (0.8 + Math.random() * 1.6) * k,
-      age: 0, life: 3 + Math.random() * 5, fl: Math.random() * 6.3, fs: 6 + Math.random() * 10, hot: Math.random() };
+      age: anywhere ? Math.random() * 6 : 0, life: 5 + Math.random() * 6, fl: Math.random() * 6.3, fs: 0.6 + Math.random() * 1.4, hot: Math.random() };
   },
   // a lick of flame: a few tongues rising from one spot, flaring up and dying back over a second or two
   newFlame() {
@@ -258,7 +285,7 @@ const SOULS = {
       }
     }
     for (const e of this.embers) {
-      const q = e.age / e.life, a = Math.min(1, q * 5) * (1 - q) * (0.6 + 0.4 * Math.sin(e.age * e.fs + e.fl));
+      const q = e.age / e.life, a = Math.min(1, q * 3) * Math.min(1, (1 - q) * 3) * (0.75 + 0.25 * Math.sin(e.age * e.fs + e.fl))   /* a slow glow, not a blink */;
       if (a < 0.03) continue;
       const x = e.x * d, y = e.y * d, r = e.r * d;
       const g = c.createRadialGradient(x, y, 0, x, y, r * 4);
