@@ -231,51 +231,116 @@ function parseBar(str) {
   return ev;
 }
 const bars = s => s.split("|").map(parseBar);
+const rests = (n, beats) => Array(n).fill("r:" + beats).join(" | ");
+const sectionOf = (tune, b) => { let name = ""; for (const [at, n] of tune.sections || []) if (b >= at) name = n; return name; };
 
 // ===================================================================== the tunes
 const TUNES = [
   { id: "black", title: "Waltz in Black", meta: "Grand waltz · C minor · organ or saxophone over strings and tuba",
-    desc: "After Shostakovich's Second Waltz, only darker: a slow, sweeping ballroom waltz for a ball nobody leaves.",
-    bpm: 150, beats: 3, send: 1.4, gain: 1.7, organ: true, useOrgan: true, organGain: 1, organSkip: ["violin"],
-    chords: ("Cm Cm Cm G7 G7 G7 G7 Cm Cm Cm C7 Fm Fm Cm G7 Cm " +
-             "Ab Ab Fm Fm Cm Cm D7 G7 Ab Ab Fm G7 Cm G7 Cm Cm").split(" "),
+    desc: "After Shostakovich's Second Waltz, only darker: a slow, sweeping ballroom waltz for a ball nobody leaves. Intro, two themes, a variation with a violin counter-tune, a hushed middle section, the return and a coda.",
+    bpm: 150, beats: 3, send: 1.4, gain: 1.7, organ: true, useOrgan: true, organGain: 1,
+    // intro 4 | A 16 | B 16 | A' 16 (violin counter-tune) | C 16 (the middle section, hushed) | A'' 16 | coda 4
+    sections: [[0, "intro"], [4, "A"], [20, "B"], [36, "A2"], [52, "C"], [68, "A3"], [84, "coda"]],
+    chords: ("Cm Cm G7 G7 " +
+             "Cm Cm Cm G7 G7 G7 G7 Cm Cm Cm C7 Fm Fm Cm G7 Cm " +
+             "Ab Ab Fm Fm Cm Cm D7 G7 Ab Ab Fm G7 Cm G7 Cm Cm " +
+             "Cm Cm Cm G7 G7 G7 G7 Cm Cm Cm C7 Fm Fm Cm G7 Cm " +
+             "Eb Eb Bb7 Bb7 Eb Ab Fm G7 Cm Cm Ab Ab Fm Fm G7 G7 " +
+             "Cm Cm Cm G7 G7 G7 G7 Cm Cm Cm C7 Fm Fm Cm G7 Cm " +
+             "Cm Ab G7 Cm").split(" "),
     parts: [
       { inst: "sax", vel: 1, shift: -12, notes: bars(
+        rests(4, 3) + " | " +
         "G4:2 C5:1 | Eb5:3 | D5:1 Eb5:1 F5:1 | D5:3 | B4:2 D5:1 | F5:3 | Eb5:1 D5:1 C5:1 | C5:2 r:1 |" +
         "G4:2 C5:1 | Eb5:3 | E5:1 G5:1 Bb5:1 | Ab5:3 | Ab5:1 G5:1 F5:1 | Eb5:2 C5:1 | D5:2 B4:1 | C5:3 |" +
         "C5:2 Eb5:1 | Ab5:3 | G5:1 F5:1 Eb5:1 | F5:3 | Eb5:1 D5:1 C5:1 | G5:3 | F#5:2 A5:1 | G5:3 |" +
-        "C6:2 Ab5:1 | Eb5:3 | F5:1 Ab5:1 C6:1 | D6:2 B5:1 | C6:2 G5:1 | F5:1 D5:1 B4:1 | C5:3 | r:3") },
-      { inst: "violin", vel: 0.55, shift: 0, notes: bars(
-        "r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 |" +
-        "C5:2 Eb5:1 | Ab5:3 | G5:1 F5:1 Eb5:1 | F5:3 | Eb5:1 D5:1 C5:1 | G5:3 | F#5:2 A5:1 | G5:3 |" +
-        "C6:2 Ab5:1 | Eb5:3 | F5:1 Ab5:1 C6:1 | D6:2 B5:1 | C6:2 G5:1 | F5:1 D5:1 B4:1 | C5:3 | r:3") }
+        "C6:2 Ab5:1 | Eb5:3 | F5:1 Ab5:1 C6:1 | D6:2 B5:1 | C6:2 G5:1 | F5:1 D5:1 B4:1 | C5:3 | r:3 |" +
+        // A': the theme decorated with turns
+        "G4:1 B4:0.5 C5:0.5 C5:1 | Eb5:2 G5:1 | F5:1 Eb5:1 D5:1 | D5:2 G4:1 | B4:1 C5:0.5 D5:0.5 D5:1 | F5:2 Ab5:1 | G5:1 F5:1 Eb5:1 | C5:2 r:1 |" +
+        "G4:1 B4:0.5 C5:0.5 C5:1 | Eb5:2 G5:1 | Bb5:1 G5:1 E5:1 | Ab5:2 C6:1 | Ab5:1 G5:1 F5:1 | Eb5:1 D5:1 C5:1 | D5:1 F5:1 B4:1 | C5:3 |" +
+        // C: long, sighing notes in E flat, sinking back to C minor
+        "G5:3 | Bb5:2 G5:1 | F5:3 | D5:2 Ab5:1 | G5:2 Eb5:1 | C6:3 | Ab5:1 G5:1 F5:1 | D5:2 B4:1 |" +
+        "C5:2 Eb5:1 | G5:3 | Ab5:2 C6:1 | Eb6:3 | D6:1 C6:1 Ab5:1 | F5:3 | B5:1 D6:1 F6:1 | G5:2 r:1 |" +
+        // A'': the theme once more, plainly
+        "G4:2 C5:1 | Eb5:3 | D5:1 Eb5:1 F5:1 | D5:3 | B4:2 D5:1 | F5:3 | Eb5:1 D5:1 C5:1 | C5:2 r:1 |" +
+        "G4:2 C5:1 | Eb5:3 | E5:1 G5:1 Bb5:1 | Ab5:3 | Ab5:1 G5:1 F5:1 | Eb5:2 C5:1 | D5:2 B4:1 | C5:3 |" +
+        // coda
+        "C6:2 G5:1 | Ab5:2 Eb5:1 | D5:1 F5:1 B4:1 | C5:3") },
+      { inst: "violin", vel: 0.6, shift: 0, notes: bars(
+        rests(4 + 16 + 16, 3) + " | " +
+        // a counter-tune of long notes over the decorated theme
+        "Eb5:3 | G5:3 | C6:3 | B5:3 | D6:3 | B5:3 | G5:3 | C6:2 r:1 | Eb6:3 | D6:3 | Bb5:3 | C6:3 | Ab5:3 | G5:3 | F5:2 D5:1 | Eb5:3 | " +
+        rests(16, 3) + " | " +
+        "Eb5:3 | G5:3 | C6:3 | B5:3 | D6:3 | B5:3 | G5:3 | C6:2 r:1 | Eb6:3 | D6:3 | Bb5:3 | C6:3 | Ab5:3 | G5:3 | F5:2 D5:1 | Eb5:3 | " +
+        "Eb6:3 | C6:3 | B5:3 | C6:3") }
     ],
-    // the big oom-pah-pah: tuba on the downbeat, strings on two and three, a soft snare tap, a crash at each section
+    // the big oom-pah-pah: tuba on the downbeat, strings on two and three, a soft snare tap, a crash at each
+    // section; hushed held strings in the middle section; a long final chord
     accomp(S, bus, t, b, ch, beat) {
-      S.tuba(t, hz(36 + ch.root - (ch.root > 4 ? 12 : 0)), beat, 0.95, bus);
-      for (const k of [1, 2]) for (const tone of ch.tones) S.strings(t + k * beat, hz(55 + ((ch.root + tone + 5) % 12)), beat * 0.55, 0.8, S.pan(bus, 0.15 * (k === 1 ? -1 : 1)));
+      const sec = sectionOf(this, b), bass = hz(36 + ch.root - (ch.root > 4 ? 12 : 0));
+      const chord = ch.tones.map(tone => hz(55 + ((ch.root + tone + 5) % 12)));
+      if (this.sections.some(x => x[0] === b) && sec !== "C") S.hit(t, 0.07, bus, 5200, 0.7, 2.2, "highpass");
+      if (sec === "C") {
+        S.tuba(t, bass, beat, 0.7, bus);
+        for (const f of chord) S.strings(t, f, beat * 2.9, 0.7, bus);
+        return;
+      }
+      if (sec === "coda" && b === this.chords.length - 1) {
+        S.tuba(t, bass, beat * 3, 1, bus);
+        for (const f of chord) S.strings(t, f, beat * 2.9, 1, bus);
+        S.hit(t, 0.09, bus, 5200, 0.7, 2.8, "highpass");
+        return;
+      }
+      S.tuba(t, bass, beat, 0.95, bus);
+      for (const k of [1, 2]) for (const f of chord) S.strings(t + k * beat, f, beat * 0.55, 0.8, S.pan(bus, 0.15 * (k === 1 ? -1 : 1)));
       S.hit(t + beat, 0.04, bus, 3200, 2, 0.05); S.hit(t + 2 * beat, 0.035, bus, 3200, 2, 0.05);
-      if (b === 0 || b === 16) S.hit(t, 0.07, bus, 5200, 0.7, 2.2, "highpass");
     } },
 
   { id: "parlour", title: "The Devil's Parlour", meta: "Waltz · D minor · organ or bassoon over harpsichord and pizzicato",
-    desc: "A sly, slightly crooked waltz for a card room run by the Devil himself. My suggestion for the main game music.",
+    desc: "A sly, slightly crooked waltz for a card room run by the Devil himself. Intro, the tune twice, a second theme, a skipping middle section in F major, a variation with a harpsichord counter-tune, the return and a coda.",
     bpm: 138, beats: 3, organ: true, useOrgan: true, organGain: 1,
-    chords: "Dm Dm A7 A7 Dm Dm Gm A7 Dm Dm Gm Gm Dm A7 Dm Dm Bb Bb F F Gm A7 Dm A7 Dm Dm Gm Gm Dm A7 Dm Dm".split(" "),
+    // intro 4 | A1 8 | A2 8 | B 8 | C 16 (the middle section) | A1' 8 (counter-tune) | A2 8 | coda 4
+    sections: [[0, "intro"], [4, "A"], [20, "B"], [28, "C"], [44, "A2"], [60, "coda"]],
+    chords: ("Dm Dm A7 A7 " +
+             "Dm Dm A7 A7 Dm Dm Gm A7 Dm Dm Gm Gm Dm A7 Dm Dm " +
+             "Bb Bb F F Gm A7 Dm A7 " +
+             "F F C7 C7 F F Bb A7 Gm Gm Dm Dm Bb Bb A7 A7 " +
+             "Dm Dm A7 A7 Dm Dm Gm A7 Dm Dm Gm Gm Dm A7 Dm Dm " +
+             "Dm Gm A7 Dm").split(" "),
     parts: [
       { inst: "bassoon", vel: 1, shift: -12, notes: bars(
+        rests(4, 3) + " | " +
+        "A4:1 D5:1 E5:1 | F5:2 E5:1 | C#5:1 E5:1 G5:1 | G5:1 F5:1 E5:1 | A4:1 D5:1 F5:1 | A5:2 G5:1 | Bb5:1 G5:1 E5:1 | C#5:2 r:1 |" +
+        "A4:1 D5:1 E5:1 | F5:2 G5:1 | Bb5:1 A5:1 G5:1 | D5:2 Bb4:1 | A4:1 F5:1 E5:1 | E5:1 G5:1 C#5:1 | D5:3 | r:3 | " +
+        rests(8 + 16, 3) + " | " +
         "A4:1 D5:1 E5:1 | F5:2 E5:1 | C#5:1 E5:1 G5:1 | G5:1 F5:1 E5:1 | A4:1 D5:1 F5:1 | A5:2 G5:1 | Bb5:1 G5:1 E5:1 | C#5:2 r:1 |" +
         "A4:1 D5:1 E5:1 | F5:2 G5:1 | Bb5:1 A5:1 G5:1 | D5:2 Bb4:1 | A4:1 F5:1 E5:1 | E5:1 G5:1 C#5:1 | D5:3 | r:3 |" +
-        "r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 |" +
-        "A4:1 D5:1 E5:1 | F5:2 G5:1 | Bb5:1 A5:1 G5:1 | D5:2 Bb4:1 | A4:1 F5:1 E5:1 | E5:1 G5:1 C#5:1 | D5:3 | r:3") },
+        "D5:3 | Bb4:2 G4:1 | A4:2 C#5:1 | D5:3") },
       { inst: "harpsichord", vel: 0.9, shift: 0, notes: bars(
-        "r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 | r:3 |" +
+        rests(4 + 16, 3) + " | " +
         "D5:1 F5:1 Bb5:1 | A5:2 F5:1 | C5:1 F5:1 A5:1 | C6:2 A5:1 | G5:1 Bb5:1 D6:1 | C#6:1 A5:1 G5:1 | F5:1 E5:1 D5:1 | E5:1 C#5:1 A4:1 |" +
-        "A5:1 D6:1 E6:1 | F6:2 G6:1 | Bb6:1 A6:1 G6:1 | D6:2 Bb5:1 | A5:1 F6:1 E6:1 | E6:1 G6:1 C#6:1 | D6:3 | r:3") }
+        // C: skipping, in F major, then darkening on the way back
+        "A5:0.5 C6:0.5 F6:1 C6:1 | A5:1 F5:1 C5:1 | E5:0.5 G5:0.5 C6:1 Bb5:1 | G5:2 r:1 | F5:0.5 A5:0.5 C6:1 F6:1 | E6:1 D6:1 C6:1 | D6:1 Bb5:1 F5:1 | E5:2 r:1 |" +
+        "D5:1 G5:1 Bb5:1 | A5:1 G5:1 F5:1 | F5:1 A5:1 D6:1 | C6:1 A5:1 F5:1 | D5:1 F5:1 Bb5:1 | A5:1 Bb5:1 D6:1 | C#6:1 E6:1 G6:1 | A5:2 r:1 |" +
+        // a counter-tune over the bassoon's return
+        "D6:1 F6:0.5 E6:0.5 D6:1 | A5:3 | E6:1 G6:0.5 F6:0.5 E6:1 | C#6:3 | F6:1 A6:0.5 G6:0.5 F6:1 | D6:3 | G6:1 Bb6:0.5 A6:0.5 G6:1 | E6:2 C#6:1 | " +
+        rests(8 + 4, 3)) }
     ],
-    // oom-pah-pah: a plucked bass note, then two crisp harpsichord chords
+    // oom-pah-pah: a plucked bass note, then two crisp harpsichord chords; in the middle section a plucked
+    // bass on every beat instead; a long final chord
     accomp(S, bus, t, b, ch, beat) {
-      S.pizz(t, hz(36 + ch.root), beat, 0.9, bus);
+      const sec = sectionOf(this, b), root = 36 + ch.root;
+      if (sec === "C") {
+        [0, ch.tones[1], 7].forEach((x, k) => S.pizz(t + k * beat, hz(root + x), beat, k ? 0.7 : 0.95, bus));
+        for (const tone of ch.tones.slice(0, 3)) S.harpsichord(t + 2 * beat, hz(60 + ((ch.root + tone) % 12)), beat * 0.25, 0.3, S.pan(bus, 0.25));
+        return;
+      }
+      if (sec === "coda" && b === this.chords.length - 1) {
+        S.pizz(t, hz(root), beat, 0.6, bus); S.pizz(t, hz(root - 12), beat, 0.6, bus);
+        for (const tone of ch.tones.slice(0, 3)) S.harpsichord(t, hz(60 + ((ch.root + tone) % 12)), beat * 3, 0.4, bus);
+        return;
+      }
+      S.pizz(t, hz(root), beat, 0.9, bus);
       for (const k of [1, 2]) for (const tone of ch.tones.slice(0, 3)) S.harpsichord(t + k * beat, hz(60 + ((ch.root + tone) % 12)), beat * 0.25, 0.45, S.pan(bus, 0.25));
     } },
 
