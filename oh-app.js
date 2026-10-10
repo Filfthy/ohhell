@@ -1817,6 +1817,35 @@ class GameController {
       });
     });
 
+    // Style: Classic or Infernal. Picking one sets the table, card back and suits to its own (by clicking
+    // their options, so they're saved as usual); any of them can be changed afterwards.
+    const STYLE_DEFAULTS = {
+      classic: { table: "green", cardback: "bugvictim", suitset: "classic" },
+      infernal: { table: "souls", cardback: "infernal", suitset: "infernal" }
+    };
+    const styleRadios = document.querySelectorAll('[data-style-group] input');
+    const showStyle = v => {
+      document.body.classList.toggle("style-infernal", v === "infernal");
+      styleRadios.forEach(r => { r.checked = r.value === v; });
+    };
+    const applyStyleDefaults = v => {
+      for (const [name, value] of Object.entries(STYLE_DEFAULTS[v])) {
+        const r = document.querySelector(`input[name="${name}"][value="${value}"]`);
+        if (r && !r.checked) r.click();
+      }
+    };
+    let style = "classic";
+    try { if (localStorage.getItem("oh_style") === "infernal") style = "infernal"; } catch (e) { /* ignore */ }
+    showStyle(style);
+    styleRadios.forEach(r => r.addEventListener("change", () => {
+      if (!r.checked) return;
+      style = r.value;
+      try { localStorage.setItem("oh_style", style); } catch (e) { /* ignore */ }
+      showStyle(style);
+      applyStyleDefaults(style);
+    }));
+    document.querySelectorAll(".style-reset").forEach(b => b.addEventListener("click", () => applyStyleDefaults(style)));
+
     const speedRadios = document.querySelectorAll('input[name="speed"]');
     speedRadios.forEach(r => { r.checked = (r.value === (GAME_SPEED < 1 ? "fast" : "normal")); });
     speedRadios.forEach(r => r.addEventListener("change", () => {

@@ -938,7 +938,7 @@ body[data-players="5"] .seat-right { top: 62%; }
 /* Tagline under the main logo */
 .logo-subtitle {
   text-align: center;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
   font-style: italic;
   font-weight: 700;
   color: #ffcf6b;
@@ -1732,7 +1732,7 @@ body.suits-infernal .card:not(.back) {
 .card.inf-court-card .corner.bottom { display: none; }
 body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0 4px #f1dcae; }
 /* Infernal specials: one letter at top left, in the court style */
-.card.inf-court-card .corner.sp-letter { display: flex; flex-direction: column; font-family: Georgia, "Times New Roman", serif; font-weight: 700; }
+.card.inf-court-card .corner.sp-letter { display: flex; flex-direction: column; font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; font-weight: 700; }
 .card.inf-court-card .inf-sp-glyph { z-index: 2; width: 26cqw; top: 2cqw; left: 2cqw; filter: drop-shadow(0 0 2px #f1dcae) drop-shadow(0 0 3px #f1dcae); }
 /* Infernal aces: the woodcut centred in its panel; the pentagram sits a little smaller, as drawn */
 /* the whole woodcut inside the panel, as large as fits, centred, clear of the frame line */
@@ -1748,3 +1748,124 @@ body.suits-infernal .card:not(.back) .corner { text-shadow: 0 0 2px #f1dcae, 0 0
 /* the Infernal back (its parchment edge is part of the picture) */
 body.back-infernal .card.back { background: transparent url("back-infernal.webp?v=6") center / 100% 100% no-repeat; border-color: transparent; }
 .seg-backs .bk-infernal { background: transparent url("back-infernal.webp?v=6") center / 100% 100% no-repeat !important; }
+
+/* ===================================================================== THE INFERNAL STYLE
+   body.style-infernal: brass and leather panels, parchment nameplates, wax-seal bids, a bronze coin,
+   Cinzel for names and headings. Placed last so it wins over the per-table colours. */
+@font-face { font-family: "Cinzel"; src: url("fonts/cinzel.woff2") format("woff2"); font-weight: 400 900; font-display: swap; }
+
+/* the style switch itself (both styles) */
+.style-row .seg-style { display: inline-flex; gap: 0.4em; }
+.style-row .seg-style label { flex: 0 0 auto; }
+.style-reset { margin-left: 0.6em; background: none; border: 0; padding: 0; color: var(--ui-soft); text-decoration: underline; cursor: pointer; font-size: 0.9em; }
+
+body.style-infernal {
+  --ui-rgb: 30, 14, 8; --ui-accent: #b8893f; --ui-accent-rgb: 184, 137, 63; --ui-accent-hi: #d4a556;
+  --ui-soft: rgb(240, 200, 130); --ui-soft-rgb: 240, 200, 130;
+  --inf-ink: #3a1a0a; --inf-brass: #b8893f; --inf-leather: linear-gradient(180deg, #2c160b 0%, #1d0d06 100%);
+}
+body.style-infernal .seg-style input[value="infernal"] + span { font-family: "Cinzel", Georgia, serif; }
+
+/* panels: dark leather with a brass edge, book-like type */
+body.style-infernal #scoreboard, body.style-infernal #bid-panel, body.style-infernal #end-panel, body.style-infernal #start-panel,
+body.style-infernal .tut-offer-panel, body.style-infernal #instructions-panel, body.style-infernal .scorecard-panel {
+  background: var(--inf-leather) !important;
+  border: 2px solid var(--inf-brass) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 210, 140, 0.12), inset 0 0 30px rgba(0, 0, 0, 0.6), 0 12px 32px rgba(0, 0, 0, 0.7) !important;
+  color: #f1dcae;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+}
+body.style-infernal #scoreboard { border-width: 1px !important; }
+body.style-infernal .tut-offer-title, body.style-infernal .scorecard-title, body.style-infernal #end-panel .end-result,
+body.style-infernal #bid-title, body.style-infernal .tab-btn, body.style-infernal #instructions-panel h3, body.style-infernal #bv-more h3,
+body.style-infernal #round-label {
+  font-family: "Cinzel", Georgia, serif; letter-spacing: 0.03em;
+}
+body.style-infernal .tab-btn { font-weight: 700; }
+
+/* buttons: dark leather with brass edges; the main ones brass-filled */
+body.style-infernal button, body.style-infernal .bv-play { font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; }
+body.style-infernal #btn-play, body.style-infernal #btn-end-next, body.style-infernal #bid-buttons .bid-btn:not(:disabled),
+body.style-infernal #oh-modal-close, body.style-infernal #btn-offer-tutorial, body.style-infernal #btn-quit-no, body.style-infernal #btn-scorecard-close {
+  background: linear-gradient(180deg, #d9ac5c 0%, #a87a33 100%) !important; color: #2a1206 !important;
+  border: 1px solid #6e4a18 !important; box-shadow: inset 0 1px 0 rgba(255, 240, 200, 0.5), 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+body.style-infernal #btn-play, body.style-infernal #bid-buttons .bid-btn { font-family: "Cinzel", Georgia, serif; }
+body.style-infernal #btn-tutorial, body.style-infernal .icon-btn, body.style-infernal .bv-games-btn, body.style-infernal .bv-share-buttons button {
+  background: var(--inf-leather) !important; border: 1px solid var(--inf-brass) !important; color: #f1dcae !important;
+}
+body.style-infernal .icon-btn { color: #e8c88a !important; }
+
+/* nameplates: little parchment tags with dark ink */
+body.style-infernal .seat-info .name-label {
+  font-family: "Cinzel", Georgia, serif; font-style: normal; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--inf-ink); -webkit-text-stroke: 0; text-shadow: none;
+  background: url("img/parchment-card.webp?v=3") center / 300% 300%, #e3c48b;
+  border: 1px solid #7a4a1e; border-radius: 4px; padding: 0.1em 0.75em 0.12em;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(110, 60, 20, 0.35);
+}
+body.style-infernal .seat-info .name-label.turn-glow { animation: emberPlate 1.2s ease-in-out infinite; }
+@keyframes emberPlate {
+  0%, 100% { box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(110, 60, 20, 0.35), 0 0 4px rgba(255, 120, 30, 0.35); }
+  50%      { box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(110, 60, 20, 0.35), 0 0 14px 3px rgba(255, 120, 30, 0.85); }
+}
+body.style-infernal .seat-stats { font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; }
+body.style-infernal .seat-stats .stat, body.style-infernal .seat-stats .stat-muted {
+  background: rgba(28, 12, 6, 0.82); border: 1px solid rgba(184, 137, 63, 0.55); color: #f1dcae;
+}
+
+/* bids: wax seals */
+body.style-infernal .bid-token {
+  font-family: "Cinzel", Georgia, serif; color: #f7dfb4;
+  border-radius: 47% 53% 50% 50% / 52% 48% 52% 48%;
+  background: radial-gradient(circle at 38% 32%, #c8382c 0%, #8e1712 55%, #5c0b08 100%);
+  box-shadow: inset 0 0 0 2px rgba(60, 5, 3, 0.65), inset 0 0 0 4px rgba(200, 60, 45, 0.45), inset 2px 3px 4px rgba(255, 150, 120, 0.25), 0 2px 4px rgba(0, 0, 0, 0.7);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
+}
+body.style-infernal .bid-token.empty { background: rgba(28, 12, 6, 0.6); box-shadow: inset 0 0 0 2px rgba(184, 137, 63, 0.45); color: rgba(241, 220, 174, 0.7); }
+body.style-infernal .bid-token.face-down { background: radial-gradient(circle at 38% 32%, #7a1d16 0%, #4a0c08 60%, #2c0604 100%); color: #d9ac5c; }
+body.style-infernal .bid-token.revealed.on-target { box-shadow: inset 0 0 0 3px #d9ac5c, 0 0 9px rgba(240, 190, 90, 0.8), 0 2px 4px rgba(0, 0, 0, 0.7); }
+body.style-infernal .bid-token.revealed.over { background: radial-gradient(circle at 38% 32%, #6b4a3e 0%, #3b2620 60%, #241510 100%); box-shadow: inset 0 0 0 3px #e0503a, 0 0 8px rgba(224, 80, 58, 0.7); }
+
+/* the trump coin: old bronze, its glyph struck into it */
+body.style-infernal .trump-coin {
+  background: radial-gradient(circle at 34% 28%, #f0c27e 0%, #c98a46 30%, #8f5626 70%, #5a3112 100%);
+  box-shadow: inset 0 0 0 calc(3px * var(--card-scale)) #4d2a10, inset 0 0 0 calc(6px * var(--card-scale)) rgba(240, 190, 120, 0.55),
+    inset 0 0 calc(14px * var(--card-scale)) rgba(40, 18, 5, 0.6), 0 calc(4px * var(--card-scale)) calc(9px * var(--card-scale)) rgba(0, 0, 0, 0.65);
+}
+body.style-infernal .trump-coin .coin-suit { color: #3e1e08 !important; -webkit-text-stroke: 0;
+  filter: drop-shadow(0 1px 0 rgba(255, 220, 160, 0.55)) drop-shadow(0 -1px 0 rgba(30, 10, 0, 0.5)); }
+body.style-infernal .trump-coin .coin-blank { font-family: "Cinzel", Georgia, serif; color: #3e1e08; text-shadow: 0 1px 0 rgba(255, 220, 160, 0.55); }
+
+/* the coach: a parchment note */
+body.style-infernal #coach {
+  background: url("img/parchment-card.webp?v=3") center / 100% 100%, #e3c48b !important; color: var(--inf-ink);
+  border: 1px solid #7a4a1e !important; font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+}
+body.style-infernal #coach .coach-text b { color: #8e1712; }
+
+/* option buttons */
+body.style-infernal .seg input:checked + span { color: #2a1206; }
+body.style-infernal .seg label > span { border-color: rgba(184, 137, 63, 0.5); }
+
+/* serif with ordinary numerals (Georgia's old-style 0 reads as an "o") */
+body.style-infernal #scoreboard, body.style-infernal .seat-stats, body.style-infernal .end-table { font-variant-numeric: lining-nums tabular-nums; }
+/* the dealer: a small brass disc */
+body.style-infernal .dealer-chip { background: radial-gradient(circle at 35% 30%, #f0cf8a 0%, #b8893f 60%, #7a5320 100%) !important;
+  color: #2a1206 !important; font-family: "Cinzel", Georgia, serif; box-shadow: inset 0 0 0 1px #5a3a12, 0 1px 3px rgba(0, 0, 0, 0.6) !important; border: 0 !important; }
+/* the Look & feel copy of the Style switch only shows in the in-game Settings popup (the start screen has its own) */
+#start-panel .style-look-row { display: none; }
+.style-row { align-items: center; }
+.style-row .seg-style { flex-direction: row !important; flex-wrap: nowrap !important; }
+.style-row .seg-style label > span { padding-left: 1em; padding-right: 1em; }
+.style-look-row .style-reset { margin: 0; font-size: 0.75em; font-weight: normal; }
+@media (max-height: 520px) {
+  .style-row .seg-style label > span { padding-left: 0.6em; padding-right: 0.6em; }
+  .style-row .style-reset { font-size: 0.8em; margin-left: 0.4em; }
+}
+/* the style row: the label keeps the name row's width, the switch takes what's left */
+.style-row .seg-style { flex: 1 1 auto; min-width: 0; }
+.style-row .seg-style label { flex: 1 1 0; min-width: 0; }
+.style-row .seg-style label > span { overflow: hidden; text-overflow: ellipsis; }
+.style-row .style-reset { flex: 0 0 auto; white-space: nowrap; }
+@media (max-height: 520px) { .style-row .style-reset { display: none; } }
