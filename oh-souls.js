@@ -227,7 +227,7 @@ const SOULS = {
   },
 
   // A miserable face, drawn into the sand: brows pinched up in the middle, eyes drooping at the outer
-  // corners in sunken sockets, tear streaks, and a mouth whose corners sag as it wails. g = groan (0..1).
+  // corners in sunken sockets, and a mouth whose corners sag as it wails. g = groan (0..1).
   misery(c, u, eye, mouth, g, shape) {
     const dark = "rgba(16, 8, 4, 0.82)", lip = "rgba(150, 108, 76, 0.38)";
     for (const side of [-1, 1]) {
@@ -248,12 +248,6 @@ const SOULS = {
       c.beginPath();
       c.moveTo(ex + side * u * 0.2, ey - u * 0.22);
       c.quadraticCurveTo(ex + side * u * 0.03, ey - u * 0.3 - lift * 0.55, ex - side * u * 0.19, ey - u * 0.31 - lift);
-      c.stroke();
-      // a tear streak running down from the outer corner
-      c.strokeStyle = "rgba(14, 7, 3, 0.32)"; c.lineWidth = u * 0.05;
-      c.beginPath();
-      c.moveTo(ex + side * u * 0.14, ey + ry * 0.6);
-      c.quadraticCurveTo(ex + side * u * 0.2, ey + u * 0.35, ex + side * u * 0.15, ey + u * (0.6 + 0.1 * shape));
       c.stroke();
     }
     // the mouth: corners dragged down, the top arching up in the middle, opening downward as it wails
