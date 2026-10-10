@@ -2151,3 +2151,22 @@ body.style-infernal .seat-stats .stat, body.style-infernal .seat-stats .stat-mut
   text-shadow: 0 0 1px #000, 0 0 2px #000, 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, 0.8);
 }
 body.style-infernal .seat-stats .stat-muted { opacity: 0.9; }
+/* Infernal fronts, aged: the art printed into the paper - the copy beneath is multiplied with the parchment, the
+   copy on top (img.ink-top) fades out by --print - and ink wear laid over it with a "lighten" blend, so dark ink
+   rubs back to the paper while bare parchment hardly changes (img/wear-N.webp, flipped per card) */
+:root { --print: 0.85; --wear: 0.25; --wear-num: 0.7; }
+body.suits-infernal .card .inf-court img { mix-blend-mode: multiply; }
+body.suits-infernal .card .inf-court img.ink-top { mix-blend-mode: normal; opacity: calc(1 - var(--print)); }
+body:not(.suits-infernal) .card .inf-court img.ink-top { display: none; }
+body.suits-infernal .card[data-wear] .inf-court::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: lighten; opacity: var(--wear);
+  background-position: center; background-size: 100% 100%; background-repeat: no-repeat;
+  transform: scale(var(--wear-x, 1), var(--wear-y, 1));
+}
+body.suits-infernal .card.inf-num[data-wear] .inf-court::after { opacity: calc(var(--wear) * var(--wear-num)); }
+.card[data-wear="0"] .inf-court::after { background-image: url("img/wear-0.webp"); }
+.card[data-wear="1"] .inf-court::after { background-image: url("img/wear-1.webp"); }
+.card[data-wear="2"] .inf-court::after { background-image: url("img/wear-2.webp"); }
+.card[data-wear="3"] .inf-court::after { background-image: url("img/wear-3.webp"); }
+.card[data-wear="4"] .inf-court::after { background-image: url("img/wear-4.webp"); }
+.card[data-wear="5"] .inf-court::after { background-image: url("img/wear-5.webp"); }

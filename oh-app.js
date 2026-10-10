@@ -2377,3 +2377,29 @@ window.addEventListener("resize", () => {
   controller.updateOppScale();
   controller.render();
 });
+
+// TEMPORARY: sliders for tuning how aged the Infernal card fronts look (print into the paper, ink wear)
+const CARD_TUNER = false;
+if (CARD_TUNER) {
+  const rows = [["--print", "Printed into the paper", 0, 1, 0.05], ["--wear", "Ink wear (picture cards)", 0, 1.5, 0.05],
+    ["--wear-num", "Ink wear on number cards (× the above)", 0, 1.5, 0.05]];
+  const root = document.documentElement, el = document.createElement("div");
+  el.id = "card-tuner";
+  el.style.cssText = "position:fixed;left:8px;top:8px;z-index:100000;background:rgba(10,5,3,0.88);color:#f1dcae;" +
+    "font:13px Georgia,serif;padding:8px 10px;border:1px solid #b8893f;border-radius:6px;width:250px";
+  el.innerHTML = `<div style="font-weight:bold;margin-bottom:4px">Card ageing (temporary)</div>` +
+    rows.map(([v, label, lo, hi, st]) => `<label style="display:block;margin:5px 0">${label}: <b data-o="${v}"></b>` +
+      `<input type="range" data-v="${v}" min="${lo}" max="${hi}" step="${st}" style="width:100%"></label>`).join("") +
+    `<textarea readonly rows="2" style="width:100%;font:11px monospace;margin-top:4px"></textarea>`;
+  const out = el.querySelector("textarea");
+  const sync = () => {
+    out.value = "Cards: " + rows.map(([v, label]) => `${label} ${getComputedStyle(root).getPropertyValue(v).trim()}`).join(", ");
+    rows.forEach(([v]) => { el.querySelector(`[data-o="${v}"]`).textContent = getComputedStyle(root).getPropertyValue(v).trim(); });
+  };
+  el.querySelectorAll("input").forEach(inp => {
+    inp.value = getComputedStyle(root).getPropertyValue(inp.dataset.v).trim();
+    inp.addEventListener("input", () => { root.style.setProperty(inp.dataset.v, inp.value); sync(); });
+  });
+  const add = () => { document.body.appendChild(el); sync(); };
+  if (document.body) add(); else document.addEventListener("DOMContentLoaded", add);
+}

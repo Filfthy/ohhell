@@ -620,7 +620,7 @@ class CardView {
       frame.className = "inf-court";
       const img = document.createElement("img");
       img.src = `img/inf-${card.role}.webp`; img.alt = ""; img.draggable = false;
-      frame.appendChild(img); center.appendChild(frame); div.appendChild(center);
+      frame.appendChild(img); frame.appendChild(this.inkTop(img)); center.appendChild(frame); div.appendChild(center);
       return div;
     }
 
@@ -668,6 +668,10 @@ class CardView {
     div.style.setProperty("--crease-x", r(2) ? "-1" : "1"); div.style.setProperty("--crease-y", r(2) ? "-1" : "1");
   }
 
+  // Infernal fronts: a second copy of the art on top. The one beneath is printed into the paper (multiplied with
+  // the parchment); fading this top copy shows more of that (see oh.css, --print)
+  inkTop(img) { const t = img.cloneNode(); t.classList.add("ink-top"); return t; }
+
   createCardElement(card, options = {}) {
     const div = document.createElement("div");
     div.className = "card small";
@@ -690,6 +694,8 @@ class CardView {
     // which of the eight parchment sheets this card is printed on (always the same for the same card)
     if (card) {
       let h = 7; for (const ch of cardCode(card) + (card.copy || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0; div.dataset.paper = String(h % 8);
+      // its ink wear (img/wear-N.webp, tools/make-wear.py), flipped any of four ways - the same for the same card
+      div.dataset.wear = String((h >>> 4) % 6); div.style.setProperty("--wear-x", (h >>> 9) & 1 ? "-1" : "1"); div.style.setProperty("--wear-y", (h >>> 10) & 1 ? "-1" : "1");
       // a few cards have been folded at some point: a crease across the card, or a corner once bent over
       this.crease(div, (h ^ CREASE_SEED) >>> 0);   // which cards are creased changes with every game
     }
@@ -756,7 +762,7 @@ class CardView {
         const img = document.createElement("img");
         img.src = art ? `img/inf-${card.rank}-${INFERNAL_SUITS[card.suit]}.webp` : `img/infpips/${card.rank}-${INFERNAL_SUITS[card.suit]}.svg?v=2`;
         img.alt = ""; img.draggable = false;
-        frame.appendChild(img);
+        frame.appendChild(img); frame.appendChild(this.inkTop(img));
         center.appendChild(frame);
       } else if (card.rank === "J" || card.rank === "Q" || card.rank === "K") {
         // Traditional double-headed court art (court/KH.svg etc.). The suit is
