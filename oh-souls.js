@@ -7,8 +7,9 @@ const t0 = q => q * 1.5;   // how much a wisp's haze has spread by this point in
 
 // Look settings (the temporary tuning panel changes these live)
 const SOULS_P = { faces: 0.76, headSolid: 0.9, headTone: 0.85, faceSize: 1, drift: 1, rock: 1, smoke: 1.7, smokeDark: 1.55,
-  embers: 0.4, emberSpeed: 1, emberBright: 0.45, flames: 2.7, flameSize: 0.7, cracks: 0.9, vignette: 1.35 };
-const SOULS_TUNER = false;   // true shows a sliders panel on the Souls table, for tuning the look
+  embers: 0.4, emberSpeed: 1, emberBright: 0.45, flames: 2.7, flameSize: 0.7, cracks: 0.9, vignette: 1.35,
+  hue: 0, saturation: 1, brightness: 1 };
+const SOULS_TUNER = true;    // true shows a sliders panel on the Souls table, for tuning the look
 
 const SOULS = {
   P: SOULS_P,
@@ -132,11 +133,19 @@ const SOULS = {
     this.fit("embers", Math.round(Math.max(25, W * H / 9000) * this.P.embers), () => this.newEmber(true));
     this.flames = [];
     this.flameEvery = 1100000 / (W * H);   // seconds between new licks: about 3 at once on a big screen
+    this.tint();
     if (SOULS_TUNER) this.tuner();
     this.flameT = 0;
     this.draw(performance.now());
   },
 
+  // overall colour: a filter on the whole canvas (free to run)
+  tint() {
+    if (!this.canvas) return;
+    const P = this.P;
+    this.canvas.style.filter = (P.hue || P.saturation !== 1 || P.brightness !== 1)
+      ? `hue-rotate(${P.hue}deg) saturate(${P.saturation}) brightness(${P.brightness})` : "";
+  },
   // keep a list at n items (the sliders change how many wisps and embers there are)
   fit(key, n, make) {
     const a = this[key] || (this[key] = []);
@@ -329,13 +338,14 @@ const SOULS = {
       ["smoke", "Smoke amount", 0, 3, 0.1, "count"], ["smokeDark", "Smoke darkness", 0, 2.5, 0.05, ""],
       ["embers", "Ember amount", 0, 3, 0.1, "count"], ["emberSpeed", "Ember speed", 0.1, 3, 0.05, ""], ["emberBright", "Ember brightness", 0, 2, 0.05, ""],
       ["flames", "Flame frequency", 0, 4, 0.1, ""], ["flameSize", "Flame size", 0.3, 2.5, 0.05, ""],
-      ["cracks", "Crack glow", 0, 3, 0.1, "sand"], ["vignette", "Edge darkening", 0, 1.8, 0.05, ""]];
+      ["cracks", "Crack glow", 0, 3, 0.1, "sand"], ["vignette", "Edge darkening", 0, 1.8, 0.05, ""],
+      ["hue", "Overall hue", -180, 180, 1, "tint"], ["saturation", "Saturation", 0, 2.5, 0.05, "tint"], ["brightness", "Brightness", 0.4, 1.8, 0.05, "tint"]];
     const el = document.createElement("div");
     el.id = "souls-tuner";
-    el.style.cssText = "position:fixed;left:8px;top:8px;z-index:40000;background:rgba(20,10,6,0.92);color:#f1dcae;border:1px solid #a87a52;border-radius:8px;padding:6px 10px 8px;font:12px/1.3 system-ui,sans-serif;width:260px;max-height:94vh;overflow-y:auto;overflow-x:hidden;box-sizing:border-box";
+    el.style.cssText = "position:fixed;left:8px;top:8px;z-index:40000;background:rgba(20,10,6,0.92);color:#f1dcae;border:1px solid #a87a52;border-radius:8px;padding:6px 10px 8px;font:12px/1.3 system-ui,sans-serif;width:290px;max-height:94vh;overflow-y:auto;overflow-x:hidden;box-sizing:border-box";
     el.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b>Souls tuning (temporary)</b>'
       + '<button type="button" data-t="hide" style="margin:0;padding:1px 7px;font-size:12px">-</button></div><div data-t="body">'
-      + rows.map(([k, label, lo, hi, st]) => '<label style="display:grid;grid-template-columns:100px 1fr 34px;gap:4px;align-items:center">' + label
+      + rows.map(([k, label, lo, hi, st]) => '<label style="display:grid;grid-template-columns:100px 1fr 40px;gap:4px;align-items:center">' + label
         + '<input type="range" min="' + lo + '" max="' + hi + '" step="' + st + '" value="' + P[k] + '" data-k="' + k + '"><span data-v="' + k + '">' + P[k] + '</span></label>').join("")
       + '<div style="display:flex;gap:6px;margin-top:6px"><button type="button" data-t="copy" style="margin:0;padding:3px 8px;font-size:12px">Copy values</button>'
       + '<button type="button" data-t="reset" style="margin:0;padding:3px 8px;font-size:12px">Reset</button></div><div data-t="msg" style="min-height:1.2em;margin-top:3px;opacity:0.85"></div></div>';
@@ -347,7 +357,8 @@ const SOULS = {
     const apply = (k, v) => {
       P[k] = v; el.querySelector('[data-v="' + k + '"]').textContent = v;
       const kind = kindOf(k);
-      if (kind === "head") this.makeHead();
+      if (kind === "tint") this.tint();
+      else if (kind === "head") this.makeHead();
       else if (k === "smoke") this.fit("wisps", Math.round(Math.max(110, this.W * this.H / 3000) * v), () => this.newWisp(Math.random()));
       else if (k === "embers") this.fit("embers", Math.round(Math.max(25, this.W * this.H / 9000) * v), () => this.newEmber(true));
       else if (kind === "sand") { clearTimeout(sandT); sandT = setTimeout(() => this.build(), 250); }
