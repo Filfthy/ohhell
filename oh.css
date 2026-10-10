@@ -1896,3 +1896,43 @@ body.suits-infernal .card:not(.back)[data-paper="7"] { background-image: url("im
 }
 /* Infernal indices sit a little further in from the edge */
 body.suits-infernal .card:not(.back) .corner:not(.bottom) { left: 3.5cqw; top: 3.5cqw; }
+
+/* ===== Infernal palette, take two: charred black panels with an ember glow, gold edges with a crimson
+   inner line, parchment bid tiles, crimson main buttons with gold lettering ===== */
+body.style-infernal {
+  --inf-leather: radial-gradient(ellipse at 50% 0%, rgba(120, 22, 10, 0.32) 0%, rgba(0, 0, 0, 0) 70%), linear-gradient(180deg, #170907 0%, #0d0504 100%);
+  --inf-gold: #d4a64e;
+}
+body.style-infernal #scoreboard, body.style-infernal #bid-panel, body.style-infernal #end-panel, body.style-infernal #start-panel,
+body.style-infernal .tut-offer-panel, body.style-infernal #instructions-panel, body.style-infernal .scorecard-panel {
+  border-color: var(--inf-gold) !important;
+  box-shadow: inset 0 0 0 2px rgba(130, 20, 12, 0.75), inset 0 0 0 3px rgba(212, 166, 78, 0.18), inset 0 0 40px rgba(0, 0, 0, 0.7),
+    0 0 18px rgba(255, 90, 20, 0.12), 0 14px 34px rgba(0, 0, 0, 0.8) !important;
+}
+body.style-infernal .tut-offer-title, body.style-infernal #bid-title, body.style-infernal #scoreboard .sb-round,
+body.style-infernal #end-panel .end-result, body.style-infernal .scorecard-title { color: var(--inf-gold) !important; text-shadow: 0 0 10px rgba(255, 120, 30, 0.25); }
+body.style-infernal #scoreboard .sb-nt, body.style-infernal #bid-title b { color: #e8603c; }
+
+/* bid numbers: parchment tiles with dark ink; an ember glow when you hover */
+body.style-infernal #bid-buttons .bid-btn:not(:disabled) {
+  background: url("img/parchment-card-3.webp") center / 220% 220%, #e3c48b !important; color: #3a1206 !important;
+  border: 1px solid #7a4a1e !important; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.7), inset 0 0 8px rgba(110, 50, 15, 0.35) !important;
+}
+body.style-infernal #bid-buttons .bid-btn:not(:disabled):hover { box-shadow: 0 0 12px 2px rgba(255, 110, 30, 0.7), inset 0 0 8px rgba(110, 50, 15, 0.35) !important; color: #8e1712 !important; }
+
+/* main buttons: crimson with gold lettering and a gold edge */
+body.style-infernal #btn-play, body.style-infernal #btn-end-next, body.style-infernal #oh-modal-close, body.style-infernal #btn-offer-tutorial,
+body.style-infernal #btn-quit-no, body.style-infernal #btn-scorecard-close, body.style-infernal #btn-close-results, body.style-infernal .bv-close, body.style-infernal .bv-play {
+  background: linear-gradient(180deg, #a3241a 0%, #6e1209 100%) !important; color: #f6d68c !important;
+  border: 1px solid var(--inf-gold) !important; box-shadow: inset 0 1px 0 rgba(255, 190, 140, 0.35), 0 3px 6px rgba(0, 0, 0, 0.6) !important;
+}
+body.style-infernal #btn-play:hover, body.style-infernal #btn-end-next:hover, body.style-infernal #oh-modal-close:hover, body.style-infernal .bv-play:hover {
+  background: linear-gradient(180deg, #c22e20 0%, #84160c 100%) !important; box-shadow: 0 0 14px rgba(255, 90, 30, 0.55) !important;
+}
+/* secondary buttons and the selected options */
+body.style-infernal #btn-tutorial, body.style-infernal .icon-btn, body.style-infernal .bv-games-btn, body.style-infernal .bv-share-buttons button {
+  background: linear-gradient(180deg, #1c0b07 0%, #0e0504 100%) !important; border-color: var(--inf-gold) !important;
+}
+body.style-infernal .seg input:checked + span { background: linear-gradient(180deg, #a3241a 0%, #6e1209 100%) !important; border-color: var(--inf-gold) !important; color: #f6d68c !important; }
+body.style-infernal .tab-btn.active { background: rgba(130, 20, 12, 0.45) !important; border-color: var(--inf-gold) !important; color: var(--inf-gold) !important; }
+body.style-infernal .seat-stats .stat, body.style-infernal .seat-stats .stat-muted { background: rgba(13, 5, 4, 0.85); border-color: rgba(212, 166, 78, 0.5); }
