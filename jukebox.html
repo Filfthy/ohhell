@@ -27,6 +27,9 @@
   .track p { margin: 0; font-size: 15px; line-height: 1.4; }
   .bar { height: 4px; margin-top: 10px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; }
   .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #a8321a, var(--hot)); }
+  .reg { display: inline-flex; margin-top: 8px; border: 1px solid var(--edge); border-radius: 7px; overflow: hidden; }
+  .reg button { background: #2a1208; color: var(--dim); border: 0; padding: 4px 12px; font: 13px Georgia, serif; cursor: pointer; }
+  .reg button.on { background: var(--gold); color: #1e0a05; }
   .controls { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 20px; color: var(--dim); font-size: 14px; }
   .controls input { width: 220px; accent-color: var(--hot); }
   .note { text-align: center; color: var(--dim); font-size: 13px; margin-top: 18px; font-style: italic; }
@@ -176,6 +179,28 @@ class Synth {
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + len * 0.4); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
     s.connect(lp); lp.connect(g); g.connect(dest); s.start(t); s.stop(t + len + 0.1);
   }
+  // ---- the organ: pipe ranks added together, with a celeste rank tuned slightly sharp (that uneasy beating)
+  // and a tremulant (a slow wobble in loudness)
+  ranks(t, f, dur, v, dest, stops, level, celeste = 0.0035) {
+    const end = t + dur + 0.4, g = this.held(t, 0.035, level * v, dur, 0.18), trem = this.ctx.createGain();
+    const lfo = this.osc("sine", 5.6, t, end), depth = this.ctx.createGain(); depth.gain.value = 0.22; trem.gain.value = 0.78;
+    lfo.connect(depth); depth.connect(trem.gain);
+    for (const [k, a, type] of stops) for (const det of celeste ? [1, 1 + celeste] : [1]) {
+      const o = this.osc(type || "sine", f * k * det, t, end), ga = this.ctx.createGain(); ga.gain.value = a / (celeste ? 2 : 1); o.connect(ga); ga.connect(trem);
+    }
+    trem.connect(g); g.connect(dest);
+  }
+  organ(t, f, dur, v, dest) {   // soft flutes and a diapason, for the chords
+    this.ranks(t, f, Math.max(dur, 0.12), v, dest, [[1, 1], [2, 0.45], [4, 0.12]], 0.05);
+  }
+  organLead(t, f, dur, v, dest) {   // a reedy solo stop: a vox humana-ish reed over flutes, for the tunes
+    const lp = this.filter("lowpass", 1800, 1.5), reed = this.filter("peaking", 900, 3); reed.gain.value = 7;
+    lp.connect(reed); reed.connect(dest);
+    this.ranks(t, f, dur, v, lp, [[1, 0.55, "sawtooth"], [1, 0.8], [2, 0.5], [3, 0.18], [4, 0.15]], 0.085, 0.004);
+  }
+  organPedal(t, f, dur, v, dest) {   // 16' and 8' pedal pipes
+    this.ranks(t, f, Math.max(dur, 0.3), v, dest, [[0.5, 0.9], [1, 0.7], [2, 0.2]], 0.16, 0);
+  }
   choir(t, f, dur, v, dest) {   // "aah": two detuned saws through three vowel formants
     const end = t + dur + 2.2, g = this.held(t, 1.4, 0.05 * v, dur, 2), mix = this.ctx.createGain();
     [0.996, 1.004].forEach(k => { const o = this.osc("sawtooth", f * k, t, end); this.vibrato(o, t, 4.3 + Math.random(), f * 0.005, 0.8).stop(end); o.connect(mix); });
@@ -209,9 +234,9 @@ const bars = s => s.split("|").map(parseBar);
 
 // ===================================================================== the tunes
 const TUNES = [
-  { id: "black", title: "Waltz in Black", meta: "Grand waltz · C minor · saxophone, strings, tuba, violin",
+  { id: "black", title: "Waltz in Black", meta: "Grand waltz · C minor · organ, or saxophone, strings, tuba and violin",
     desc: "After Shostakovich's Second Waltz, only darker: a slow, sweeping ballroom waltz for a ball nobody leaves.",
-    bpm: 150, beats: 3, send: 1.4, gain: 1.7,
+    bpm: 150, beats: 3, send: 1.4, gain: 1.7, organ: true, useOrgan: true, organGain: 1.15,
     chords: ("Cm Cm Cm G7 G7 G7 G7 Cm Cm Cm C7 Fm Fm Cm G7 Cm " +
              "Ab Ab Fm Fm Cm Cm D7 G7 Ab Ab Fm G7 Cm G7 Cm Cm").split(" "),
     parts: [
@@ -233,28 +258,9 @@ const TUNES = [
       if (b === 0 || b === 16) S.hit(t, 0.07, bus, 5200, 0.7, 2.2, "highpass");
     } },
 
-  { id: "below", title: "So Far Below", meta: "Slow and eerie · D minor · pads, sub bass, distant piano, synth",
-    desc: "In the spirit of the Nether: vast, dark and lonely, with a piano a long way off. Could suit the Souls table.",
-    bpm: 66, beats: 4, send: 3,
-    chords: "Dm Dm Bb Bb Gm Gm A A Dm Dm Bb Bb Gm Gm A A".split(" "),
-    parts: [{ inst: "piano", vel: 0.55, shift: 0, notes: bars(
-      "A5:3 r:1 | F5:2 E5:2 | D5:4 | r:4 | G5:3 r:1 | F5:2 D5:2 | E5:4 | C#5:4 |" +
-      "D6:3 r:1 | C6:2 Bb5:2 | A5:4 | r:4 | Bb5:3 r:1 | A5:2 G5:2 | A5:4 | r:4") }],
-    // a pad and sub bass held across each two-bar chord, a quiet arpeggio drifting side to side, a rumble now and then
-    accomp(S, bus, t, b, ch, beat) {
-      if (b % 2 === 0) {
-        for (const tone of ch.tones.slice(0, 3)) S.pad(t, hz(50 + ((ch.root + tone + 10) % 12)), beat * 8, 1, S.pan(bus, (tone - 3) / 10));
-        S.sub(t, hz(26 + ch.root + (ch.root > 6 ? 0 : 12)), beat * 7.5, 1, bus);
-      }
-      const arp = [0, 2, 1, 2, 3, 2, 1, 2].map(i => 62 + ((ch.root + [0, ch.tones[1], 7, 12][i] + 10) % 12) + (i === 3 ? 12 : 0));
-      arp.forEach((n, i) => S.pluck(t + i * beat / 2, hz(n), beat / 2, 0.8 - (i % 2) * 0.3, S.pan(bus, i % 2 ? 0.5 : -0.5)));
-      if (b === 0 || b === 9) S.rumble(t + beat, 0.09, bus);
-      if (b % 4 === 3) S.hit(t + beat * 2.5, 0.05, bus, 900 + Math.random() * 600, 18, 1.4);   // a far-off metallic ring
-    } },
-
-  { id: "parlour", title: "The Devil's Parlour", meta: "Waltz · D minor · harpsichord, bassoon, pizzicato",
+  { id: "parlour", title: "The Devil's Parlour", meta: "Waltz · D minor · organ, or harpsichord, bassoon and pizzicato",
     desc: "A sly, slightly crooked waltz for a card room run by the Devil himself. My suggestion for the main game music.",
-    bpm: 138, beats: 3,
+    bpm: 138, beats: 3, organ: true, useOrgan: true, organGain: 2,
     chords: "Dm Dm A7 A7 Dm Dm Gm A7 Dm Dm Gm Gm Dm A7 Dm Dm Bb Bb F F Gm A7 Dm A7 Dm Dm Gm Gm Dm A7 Dm Dm".split(" "),
     parts: [
       { inst: "bassoon", vel: 1, shift: -12, notes: bars(
@@ -271,23 +277,6 @@ const TUNES = [
     accomp(S, bus, t, b, ch, beat) {
       S.pizz(t, hz(36 + ch.root), beat, 0.9, bus);
       for (const k of [1, 2]) for (const tone of ch.tones.slice(0, 3)) S.harpsichord(t + k * beat, hz(60 + ((ch.root + tone) % 12)), beat * 0.25, 0.45, S.pan(bus, 0.25));
-    } },
-
-  { id: "tango", title: "Bub's Tango", meta: "Tango · A minor · bandoneon, upright piano, pizzicato",
-    desc: "Smouldering and a little theatrical: the music for a dealer who knows exactly what you're holding.",
-    bpm: 112, beats: 2, gain: 0.75,
-    chords: "Am Am E7 E7 Am Am Dm E7 Dm Dm Am Am E7 E7 Am Am".split(" "),
-    parts: [{ inst: "reed", vel: 1, shift: 0, notes: bars(
-      "E5:0.75 E5:0.25 E5:0.5 F5:0.5 | E5:1 r:0.5 C5:0.5 | B4:0.75 B4:0.25 B4:0.5 C5:0.5 | B4:1 r:0.5 G#4:0.5 |" +
-      "A4:0.5 C5:0.5 E5:0.5 A5:0.5 | A5:0.75 G5:0.25 F5:0.5 E5:0.5 | D5:0.5 F5:0.5 A5:0.5 F5:0.5 | E5:1.5 r:0.5 |" +
-      "F5:0.75 F5:0.25 F5:0.5 E5:0.5 | D5:0.5 A4:0.5 D5:0.5 F5:0.5 | E5:0.75 E5:0.25 E5:0.5 D5:0.5 | C5:0.5 A4:0.5 C5:0.5 E5:0.5 |" +
-      "D5:0.5 B4:0.5 G#4:0.5 B4:0.5 | E5:0.5 D5:0.5 C5:0.5 B4:0.5 | A4:0.5 E4:0.25 A4:0.25 C5:0.5 E5:0.5 | A5:1 r:1") }],
-    // the habanera: long-short-long-long in the bass, a stab of piano chord, a knock on the off-beats
-    accomp(S, bus, t, b, ch, beat) {
-      const r = 36 + ch.root, f = r + 7;
-      [[0, r, 0.75], [0.75, f, 0.25], [1, r + 12, 0.5], [1.5, f, 0.5]].forEach(([at, n, d]) => S.pizz(t + at * beat, hz(n), d * beat, 0.95, bus));
-      for (const at of [0, 1]) for (const tone of ch.tones) S.piano(t + at * beat, hz(57 + ((ch.root + tone + 3) % 12) - 3 + 0), beat * 0.2, 0.5, S.pan(bus, -0.2));
-      S.hit(t + 0.75 * beat, 0.12, bus, 1600, 4, 0.06); S.hit(t + 1.5 * beat, 0.09, bus, 2200, 4, 0.05);
     } },
 
   { id: "danse", title: "Danse of the Damned", meta: "Danse macabre · G minor · violin, xylophone, pizzicato",
@@ -333,6 +322,16 @@ const TUNES = [
 ];
 
 // ===================================================================== playing
+// On the organ every instrument becomes an organ stop: bass parts on the pedals, chords on soft flutes,
+// tunes on the reedy solo stop; the drums are left out.
+const ORGAN = { tuba: "organPedal", pizz: "organPedal", strings: "organ", harpsichord: "organ", piano: "organ",
+  sax: "organLead", bassoon: "organLead", violin: "organLead", reed: "organLead", xylo: "organLead" };
+function organised(S) {
+  const o = Object.create(S);
+  for (const [k, v] of Object.entries(ORGAN)) o[k] = (...a) => S[v](...a);
+  o.hit = () => {};
+  return o;
+}
 let ctx = null, S = null, now = null;
 function stop() {
   if (!now) return;
@@ -348,7 +347,8 @@ function play(tune) {
   if (!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); S = new Synth(ctx); S.out.gain.value = +document.getElementById("vol").value; }
   if (ctx.state === "suspended") ctx.resume();
   stop();
-  const bus = S.bus(tune.send || 1); bus.gain.value = tune.gain || 1;
+  const onOrgan = tune.organ && tune.useOrgan, P = onOrgan ? organised(S) : S;
+  const bus = S.bus(tune.send || 1); bus.gain.value = (tune.gain || 1) * (onOrgan ? tune.organGain || 1 : 1);
   const el = document.getElementById("t-" + tune.id), bar = el.querySelector(".bar i");
   el.classList.add("playing"); el.querySelector(".play").textContent = "■";
   now = { tune, bus, extra: [] };
@@ -358,11 +358,11 @@ function play(tune) {
   const schedule = () => {
     while (at < ctx.currentTime + 0.6) {
       const i = b % n, ch = chordOf(tune.chords[i]), next = chordOf(tune.chords[(i + 1) % n]);
-      tune.accomp(S, bus, at, i, ch, beat, next);
+      tune.accomp(P, bus, at, i, ch, beat, next);
       for (const p of tune.parts) for (const ev of p.notes[i] || []) {
         let pos = ev.at;
         if (tune.swing && Math.abs(pos % 1 - 0.5) < 0.01) pos = Math.floor(pos) + tune.swing;   // lazy off-beats
-        for (const m of ev.midi) S[p.inst](at + pos * beat, hz(m + p.shift), ev.beats * beat * 0.95, p.vel, bus);
+        for (const m of ev.midi) P[p.inst](at + pos * beat, hz(m + p.shift + (onOrgan && p.inst === "sax" ? 12 : 0)), ev.beats * beat * 0.95, p.vel, bus);
       }
       const start = at; setTimeout(() => { if (now && now.bus === bus) bar.style.width = ((i + 1) / n * 100) + "%"; }, Math.max(0, (start - ctx.currentTime) * 1000));
       at += tune.beats * beat; b++;
@@ -396,17 +396,25 @@ function ambient(bus, bar) {
 // ===================================================================== the page
 document.getElementById("deck").innerHTML = TUNES.map(t => `<article class="track" id="t-${t.id}">
   <button class="play" type="button" aria-label="Play ${t.title}">▶</button>
-  <div><h2>${t.title}</h2><div class="meta">${t.meta}</div><p>${t.desc}</p><div class="bar"><i></i></div></div></article>`).join("");
+  <div><h2>${t.title}</h2><div class="meta">${t.meta}</div><p>${t.desc}</p>
+  ${t.organ ? `<div class="reg"><button type="button" data-r="organ" class="on">Organ</button><button type="button" data-r="orch">Orchestra</button></div>` : ""}
+  <div class="bar"><i></i></div></div></article>`).join("");
+TUNES.filter(t => t.organ).forEach(t => document.querySelectorAll(`#t-${t.id} .reg button`).forEach(btn => btn.addEventListener("click", () => {
+  t.useOrgan = btn.dataset.r === "organ";
+  document.querySelectorAll(`#t-${t.id} .reg button`).forEach(x => x.classList.toggle("on", x === btn));
+  if (now && now.tune === t) play(t);
+})));
 TUNES.forEach(t => document.querySelector(`#t-${t.id} .play`).addEventListener("click", () => (now && now.tune === t ? stop() : play(t))));
 document.getElementById("vol").addEventListener("input", e => { if (S) S.out.gain.value = +e.target.value; });
 // for testing: render a tune offline
 window.__render = async (id, secs) => {
-  const off = new OfflineAudioContext(2, 44100 * secs, 44100), s = new Synth(off), tune = TUNES.find(x => x.id === id), bus = s.bus(tune.send || 1); bus.gain.value = tune.gain || 1;
+  const off = new OfflineAudioContext(2, 44100 * secs, 44100), s = new Synth(off), tune = TUNES.find(x => x.id === id), bus = s.bus(tune.send || 1); bus.gain.value = (tune.gain || 1) * (tune.organ && tune.useOrgan ? tune.organGain || 1 : 1);
   if (!tune.ambient) {
     const beat = 60 / tune.bpm; let at = 0.05, b = 0;
     while (at < secs) { const i = b % tune.chords.length, ch = chordOf(tune.chords[i]), next = chordOf(tune.chords[(i + 1) % tune.chords.length]);
-      tune.accomp(s, bus, at, i, ch, beat, next);
-      for (const p of tune.parts) for (const ev of p.notes[i] || []) for (const m of ev.midi) s[p.inst](at + ev.at * beat, hz(m + p.shift), ev.beats * beat * 0.95, p.vel, bus);
+      const og = tune.organ && tune.useOrgan, P = og ? organised(s) : s;
+      tune.accomp(P, bus, at, i, ch, beat, next);
+      for (const p of tune.parts) for (const ev of p.notes[i] || []) for (const m of ev.midi) P[p.inst](at + ev.at * beat, hz(m + p.shift + (og && p.inst === "sax" ? 12 : 0)), ev.beats * beat * 0.95, p.vel, bus);
       at += tune.beats * beat; b++; }
   }
   const buf = await off.startRendering(), d = buf.getChannelData(0);
