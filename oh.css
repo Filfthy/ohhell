@@ -2108,11 +2108,3 @@ body.style-infernal .seat-info .name-label .portrait.flip { --fx: -1; }
 }
 /* your name row sits in front of your hand, so a card's corner never hides your seal or "bidding…" */
 #player-seat-info { z-index: 310; }
-/* the portraits breathe: a slow rise and fall from the shoulders, each to its own rhythm (set per seat in
-   oh-app.js), uses the separate scale property so it doesn't disturb the mirroring */
-@keyframes portraitBreath { 0%, 100% { scale: 1 1; } 50% { scale: 1.006 1.016; } }
-body.style-infernal .seat-info .name-label .portrait {
-  transform-origin: center bottom;
-  animation: portraitBreath var(--breath-s, 5.5s) ease-in-out var(--breath-d, 0s) infinite;
-}
-@media (prefers-reduced-motion: reduce) { body.style-infernal .seat-info .name-label .portrait { animation: none; } }

@@ -200,12 +200,7 @@ class GameController {
   setPortrait(seat, els) {
     // it lives inside the nameplate (tucked behind its end), so it's put back each time the name is written
     let p = els.portrait;
-    if (!p) {
-      p = els.portrait = document.createElement("div"); p.className = "portrait";
-      // each breathes to its own rhythm, out of step with the others
-      p.style.setProperty("--breath-s", (5 + seat * 0.37 % 1.2).toFixed(2) + "s");
-      p.style.setProperty("--breath-d", (-seat * 1.9).toFixed(1) + "s");
-    }
+    if (!p) { p = els.portrait = document.createElement("div"); p.className = "portrait"; }
     if (p.parentNode !== els.name) els.name.appendChild(p);
     const who = seat === 0 ? "player" : this.seatName(seat).toLowerCase().replace(/\s+/g, "-");
     const pos = seat === 0 ? "bottom" : this.seatPos(seat);
