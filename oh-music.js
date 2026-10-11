@@ -740,6 +740,10 @@ window.OHMusic = (function () {
   const SET = [["black", false], ["parlour", false], ["bell13", false], ["carousel", false], ["veil", false],
     ["hymn", true], ["ironCourt", false], ["thirdKnock", false]];   // [tune, on the organ?]
   const MAXGAIN = 0.55, REST = 2.5;   // loudest the music goes (the jukebox plays at 0.7); seconds between tunes
+  // Phones have far less to spare (and the Souls table is animating too), so there the music runs at a lower sample
+  // rate (about half the work, the reverb included) and is scheduled further ahead, so a busy moment leaves no gap.
+  const PHONE = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
+  const AHEAD = PHONE ? 1.5 : 0.6, TICK = PHONE ? 250 : 100;
   let ctx = null, S = null, cur = null, order = [], last = null, wait = null, woken = false;
   let sound = true, volume = 0.45, picked = null;
   try {
@@ -778,7 +782,7 @@ window.OHMusic = (function () {
     let b = 0, at = ctx.currentTime + 0.3;
     const me = cur = { bus, release: P.release, timer: null, end: null };
     const schedule = () => {
-      while (b < n && at < ctx.currentTime + 0.6) {
+      while (b < n && at < ctx.currentTime + AHEAD) {
         const ch = LIB.chordOf(tune.chords[b]), nx = LIB.chordOf(tune.chords[(b + 1) % n]);
         tune.accomp(P, bus, at, b, ch, beat, nx);
         for (const p of tune.parts) {
@@ -798,14 +802,17 @@ window.OHMusic = (function () {
           Math.max(0, (at - ctx.currentTime) * 1000 + 1500));
       }
     };
-    schedule(); me.timer = setInterval(schedule, 100);
+    schedule(); me.timer = setInterval(schedule, TICK);
   }
   // start, stop or carry on, to match the switch, the volume and whether the page has been clicked yet
   function refresh() {
     if (!wanted()) { if (ctx) stopCurrent(); changed(); return; }
     if (!ctx) {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      ctx = new AC(); S = new LIB.Synth(ctx);
+      // a large "playback" buffer: a moment more delay, far fewer stutters
+      try { ctx = new AC(PHONE ? { latencyHint: "playback", sampleRate: 22050 } : { latencyHint: "playback" }); }
+      catch (e) { try { ctx = new AC({ latencyHint: "playback" }); } catch (e2) { ctx = new AC(); } }
+      S = new LIB.Synth(ctx);
       document.addEventListener("visibilitychange", () => {
         if (!ctx) return;
         if (document.hidden) ctx.suspend(); else if (wanted()) ctx.resume();

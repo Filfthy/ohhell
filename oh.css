@@ -2197,3 +2197,8 @@ body.style-infernal #oh-mixer input.vol { accent-color: #b8893f; }
 #oh-mixer { z-index: 20000; }
 /* Infernal tooltips in the same book face as the rest of the writing */
 body.style-infernal #oh-tip { font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; color: #f1dcae; }
+/* the cards' "printed into the paper" and wear blends stay inside each card on every browser (without this some phone
+   browsers blend the art with the dark table behind the card, which darkens everything) */
+body.suits-infernal .card:not(.back) { isolation: isolate; }
+/* never let a phone browser's own dark mode re-colour the game (see the color-scheme meta in index.html) */
+:root { color-scheme: only light; }
