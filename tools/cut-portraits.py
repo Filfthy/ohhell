@@ -113,14 +113,17 @@ def sheet_masks(sheet, cols, rows):
     return [m.filter(ImageFilter.MaxFilter(5)) for m in masks]
 
 
-# each sheet: its file, its grid (columns, rows) and who is on it, left to right, top row first
+# each sheet: its file, its grid (columns, rows) and who is on it, left to right, top row first (None = not cut)
 SHEETS = [("infernal/infernal-opponents-sheet-1.png", 4, 2, NAMES[0]),
           ("infernal/infernal-opponents-sheet-2.png", 4, 2, NAMES[1]),
-          ("infernal/anubis-charon-hecate-ereshkigal-right.png", 4, 1, ["anubis", "charon", "hecate", "ereshkigal"])]
+          ("infernal/anubis-charon-hecate-ereshkigal-right.png", 4, 1, ["anubis", "charon", "hecate", "ereshkigal"]),
+          ("infernal/ammit-kali-necro-tengu-right.png", 4, 1, ["ammit", "kali", None, None]),   # None: not used
+          ("infernal/necro-right-v2.png", 1, 1, ["the-necro"])]
 for path, cols, rows, names in SHEETS:
     sheet = Image.open(path).convert("RGBA")
     masks = sheet_masks(sheet, cols, rows)
     for i, n in enumerate(names):
+        if not n: continue
         c = sheet.copy(); c.putalpha(ImageChops.multiply(sheet.getchannel("A"), masks[i]))
         c = c.crop(masks[i].getbbox())
         c = keep_portrait(c)
