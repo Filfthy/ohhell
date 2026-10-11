@@ -210,7 +210,7 @@ class GameController {
     const onRight = pos === "right" || pos === "topright";   // the outer side; everyone looks in to the middle
     // a portrait drawn in three views shows the one that looks in, rather than being mirrored
     const file = PORTRAIT_VIEWS[who] ? `${who}-${onRight ? "l" : "r"}` : who;
-    if (p.dataset.file !== file) { p.dataset.file = file; p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${file}.webp?v=2")`; }
+    if (p.dataset.file !== file) { p.dataset.file = file; p.dataset.who = who; p.style.backgroundImage = `url("img/opp-${file}.webp?v=3")`; }
     p.classList.toggle("on-right", onRight);
     p.style.setProperty("--lean", onRight ? "-1" : "1");   // which way is "towards the table" for a reaction
     p.classList.toggle("flip", onRight && !PORTRAIT_VIEWS[who] && !PORTRAIT_FRONT[who]);

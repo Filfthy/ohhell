@@ -119,7 +119,7 @@ SHEETS = [("infernal/infernal-opponents-sheet-1.png", 4, 2, NAMES[0]),
           ("infernal/anubis-charon-hecate-ereshkigal-right.png", 4, 1, ["anubis", "charon", "hecate", "ereshkigal"]),
           ("infernal/ammit-kali-necro-tengu-right.png", 4, 1, ["ammit", "kali", None, None]),   # None: not used
           ("infernal/necro-right-v2.png", 1, 1, ["ronnie"]),   # The Necro(mancer)
-          ("infernal/tengu-mask-right-v2.png", 1, 1, ["sojobo"])]   # king of the tengu
+          ("infernal/sojobo-mask-right-v3.png", 1, 1, ["sojobo"])]   # king of the tengu
 for path, cols, rows, names in SHEETS:
     sheet = Image.open(path).convert("RGBA")
     masks = sheet_masks(sheet, cols, rows)
