@@ -2207,3 +2207,41 @@ body.suits-infernal .card:not(.back) { isolation: isolate; }
 .bright-row input { flex: 1; margin: 0; accent-color: var(--ui-accent); cursor: pointer; }
 .bright-row b { width: 3.2em; text-align: right; font-weight: 600; }
 body.style-infernal .bright-row input { accent-color: #b8893f; }
+/* Phones with a camera notch: the game fills the whole screen (viewport-fit=cover in index.html), and the side
+   players, the corner buttons, the scores, the sound panel and the trump coin step clear of the notch. (The insets
+   are 0 everywhere else, so nothing moves.) Uses the separate translate property so it adds to each one's own transform. */
+.seat-left, #deck-area { translate: env(safe-area-inset-left, 0px) 0; }
+.seat-right, #controls, #scoreboard, #oh-mixer { translate: calc(-1 * env(safe-area-inset-right, 0px)) 0; }
+/* The brightness test card (the sun button): a sample table over the real table background, or in a game just the
+   bar over the live table; the start screen steps out of the way while it's open */
+#oh-testcard { position: fixed; inset: 0; z-index: 19000; display: none; flex-direction: column; pointer-events: none; }
+#oh-testcard.open { display: flex; }
+body.testcard-open #start-overlay, body.testcard-open #bid-panel { opacity: 0 !important; pointer-events: none !important; }
+#oh-testcard .tc-table { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; padding: max(60px, 8vh) 10vw 0; --tcw: min(9vw, 16vh); }
+#oh-testcard .tc-top { display: flex; justify-content: space-between; width: min(100%, 980px); }
+#oh-testcard .tc-seat { display: flex; flex-direction: column; align-items: center; gap: 1.2vh; }
+#oh-testcard .tc-backs { display: flex; }
+#oh-testcard .tc-backs .card, #oh-testcard .tc-hand .card { position: relative; width: var(--tcw); height: calc(var(--tcw) * 1.406); flex: none; left: auto; top: auto; transform: none; }
+#oh-testcard .tc-backs .card + .card { margin-left: calc(var(--tcw) * -0.72); }
+#oh-testcard .tc-hand { display: flex; }
+#oh-testcard .tc-hand .card + .card { margin-left: calc(var(--tcw) * -0.3); }
+#oh-testcard .tc-mid { display: flex; align-items: center; gap: 4vw; }
+#oh-testcard .tc-coin { position: relative; width: calc(var(--tcw) * 0.95); height: calc(var(--tcw) * 0.95); }
+#oh-testcard .tc-coin .trump-coin { position: absolute; inset: 0; width: 100%; height: 100%; }
+#oh-testcard .seat-info .portrait { display: block; }
+#oh-testcard .tc-bar {
+  pointer-events: auto; align-self: center; margin: 1.5vh 12px max(1.5vh, env(safe-area-inset-bottom, 0px)); padding: 10px 16px 8px;
+  width: min(560px, calc(100% - 24px)); box-sizing: border-box; border-radius: 8px; border: 1px solid var(--ui-accent);
+  background: rgba(var(--ui-rgb, 3, 32, 18), 0.92); color: #fdf6e3; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+}
+#oh-testcard.live .tc-table { visibility: hidden; }
+#oh-testcard .tc-row { display: flex; align-items: center; gap: 12px; }
+#oh-testcard .tc-row > span { font-weight: 700; }
+#oh-testcard .tc-row input { flex: 1; margin: 0; accent-color: var(--ui-accent); cursor: pointer; }
+#oh-testcard .tc-row b { width: 3.2em; text-align: right; }
+#oh-testcard .tc-done { padding: 6px 18px; border-radius: 6px; border: 1px solid var(--ui-accent); background: var(--ui-accent); color: #021408; font: inherit; font-weight: 700; cursor: pointer; }
+#oh-testcard .tc-hint { font-size: 13px; font-style: italic; opacity: 0.85; margin-top: 5px; }
+body.style-infernal #oh-testcard .tc-bar { background: rgba(6, 3, 2, 0.82); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); border-color: rgba(212, 166, 78, 0.55); color: #f1dcae; font-family: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif; }
+body.style-infernal #oh-testcard .tc-row > span { font-family: "Cinzel", Georgia, serif; }
+body.style-infernal #oh-testcard .tc-row input { accent-color: #b8893f; }
+body.style-infernal #oh-testcard .tc-done { background: var(--inf-parch, #e8cc93); color: #5e0008; border-color: #8f6a3c; }

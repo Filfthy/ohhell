@@ -8,6 +8,7 @@ const ICONS = {
   exitFull: svgIcon('<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>'),
   sound: svgIcon('<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>'),
   muted: svgIcon('<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/>'),
+  sun: svgIcon('<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>'),
   quit: svgIcon('<path d="M6 6l12 12M18 6L6 18"/>'),
   rules: svgIcon('<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M8.5 7.5h7M8.5 11h7"/>'),
   gear: svgIcon('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>')
@@ -1388,6 +1389,8 @@ class GameController {
     document.getElementById("btn-quit").innerHTML = ICONS.quit;
     document.getElementById("btn-rules").innerHTML = ICONS.rules;
     document.getElementById("btn-settings").innerHTML = ICONS.gear;
+    document.getElementById("btn-bright").innerHTML = ICONS.sun;
+    document.getElementById("btn-bright").addEventListener("click", e => { e.currentTarget.blur(); this.openTestCard(); });
     document.getElementById("btn-rules").addEventListener("click", e => { e.currentTarget.blur(); this.showLentPopup("Rules", document.querySelector("#instructions-panel .instructions-content")); });
     document.getElementById("btn-settings").addEventListener("click", e => { e.currentTarget.blur(); this.showLentPopup("Settings", document.querySelector('.tab-pane[data-pane="look"]')); });
     const shade = document.getElementById("oh-modal");
@@ -1868,20 +1871,14 @@ class GameController {
     });
     applyFaces();
 
-    // Brightness (this device only): brightens the whole screen; at 100% there's no filter at all
-    const bright = document.getElementById("opt-bright"), brightV = document.getElementById("opt-bright-v");
-    const applyBright = pc => {
-      document.documentElement.style.filter = pc === 100 ? "" : `brightness(${pc / 100})`;
-      if (bright) bright.value = pc;
-      if (brightV) brightV.textContent = pc + "%";
-    };
+    // Brightness (this device only): a gamma curve over the whole screen (the filter #oh-gamma in index.html), so the
+    // dark parts lift a lot, the middle a little, and black and white stay as they are - nothing washes out.
+    // At 100% there's no filter at all.
     let savedBright = 100;
     try { savedBright = +(localStorage.getItem("oh_bright") || 100) || 100; } catch (e) { /* ignore */ }
-    applyBright(savedBright);
-    if (bright) bright.addEventListener("input", () => {
-      const pc = +bright.value; applyBright(pc);
-      try { localStorage.setItem("oh_bright", String(pc)); } catch (e) { /* ignore */ }
-    });
+    this.setBright(savedBright, false);
+    const bright = document.getElementById("opt-bright");
+    if (bright) bright.addEventListener("input", () => this.setBright(+bright.value));
 
     // Suit symbols: Classic or Infernal (redraws whatever is on the table)
     const applySuitSet = v => {
@@ -2196,6 +2193,76 @@ class GameController {
     m.addEventListener("pointerdown", e => e.stopPropagation());
     document.addEventListener("pointerdown", () => this.toggleMixer(false));
     document.addEventListener("musicchange", () => this.audioUi());
+  }
+
+  // Brightness (this device only): a gamma curve over the whole screen (the filter #oh-gamma in index.html), so the
+  // dark parts lift a lot, the middle a little, and black and white stay as they are - nothing washes out.
+  // At 100% there's no filter at all. Every brightness slider (Look & feel, the test card) follows it.
+  setBright(pc, save = true) {
+    document.querySelectorAll("#oh-gamma feComponentTransfer > *").forEach(f => f.setAttribute("exponent", String(100 / pc)));
+    document.documentElement.style.filter = pc === 100 ? "" : "url(#oh-gamma)";
+    document.querySelectorAll("#opt-bright, [data-bright-slider]").forEach(i => { if (document.activeElement !== i) i.value = pc; });
+    document.querySelectorAll("#opt-bright-v, [data-bright-value]").forEach(b => (b.textContent = pc + "%"));
+    if (save) try { localStorage.setItem("oh_bright", String(pc)); } catch (e) { /* ignore */ }
+  }
+
+  // The brightness test card (the sun button). In a game it's the game itself, with just a slider bar over the
+  // table; otherwise a sample table made on the spot from the current settings - the cards, suits, backs, style
+  // and table - so it always shows what the game will look like.
+  openTestCard() {
+    let o = document.getElementById("oh-testcard");
+    if (!o) {
+      o = document.createElement("div");
+      o.id = "oh-testcard";
+      o.innerHTML = `<div class="tc-table"></div><div class="tc-bar"><div class="tc-row"><span>Brightness</span>` +
+        `<input type="range" min="70" max="200" step="5" data-bright-slider aria-label="Brightness"><b data-bright-value></b>` +
+        `<button type="button" class="tc-done">Done</button></div>` +
+        `<div class="tc-hint">Raise it until you can see into the dark corners; stop before the light parts look washed out.</div></div>`;
+      document.body.appendChild(o);
+      const sl = o.querySelector("[data-bright-slider]");
+      sl.addEventListener("input", () => this.setBright(+sl.value));
+      o.querySelector(".tc-done").addEventListener("click", () => this.closeTestCard());
+      document.addEventListener("keydown", e => { if (e.key === "Escape" && o.classList.contains("open")) this.closeTestCard(); });
+    }
+    const live = this.game && this.game.phase !== "idle";
+    o.classList.toggle("live", live);
+    const table = o.querySelector(".tc-table");
+    table.innerHTML = "";
+    if (!live) this.buildTestTable(table);
+    let pc = 100; try { pc = +(localStorage.getItem("oh_bright") || 100) || 100; } catch (e) { /* ignore */ }
+    this.setBright(pc, false);
+    document.body.classList.add("testcard-open");
+    o.classList.add("open");
+  }
+  closeTestCard() {
+    const o = document.getElementById("oh-testcard");
+    if (o) o.classList.remove("open");
+    document.body.classList.remove("testcard-open");
+  }
+  buildTestTable(table) {
+    const seat = (name, file, right, bid, won) => {
+      const s = document.createElement("div"); s.className = "tc-seat";
+      const info = document.createElement("div"); info.className = "seat-info";
+      const plate = document.createElement("div"); plate.className = "name-label"; plate.textContent = name;
+      const p = document.createElement("div"); p.className = "portrait" + (right ? " on-right flip" : "");
+      p.style.backgroundImage = `url("img/opp-${file}.webp?v=3")`; plate.appendChild(p);
+      const stats = document.createElement("div"); stats.className = "seat-stats";
+      stats.innerHTML = `<span class="bid-token revealed">${bid}</span><span class="stat">Won ${won}</span>`;
+      info.append(plate, stats); s.appendChild(info);
+      const backs = document.createElement("div"); backs.className = "tc-backs";
+      for (let i = 0; i < 4; i++) backs.appendChild(this.cardView.createCardElement(null, { back: true }));
+      s.prepend(backs);
+      return s;
+    };
+    const top = document.createElement("div"); top.className = "tc-top";
+    top.append(seat("Lilith", "lilith", false, 2, 1), seat("Ronnie", "ronnie", true, 0, 0));
+    const mid = document.createElement("div"); mid.className = "tc-mid";
+    const coinBox = document.createElement("div"); coinBox.className = "tc-coin"; coinBox.appendChild(this.makeCoin("♥", false));
+    const hand = document.createElement("div"); hand.className = "tc-hand";
+    const cards = [["K", "♥"], ["Q", "♠"], ["J", "♦"], ["A", "♣"], ["10", "♥"], ["7", "♠"]];
+    for (const [rank, suit] of cards) hand.appendChild(this.cardView.createCardElement({ rank, suit }));
+    mid.append(coinBox, hand);
+    table.append(top, mid);
   }
 
   toggleMixer(show) {

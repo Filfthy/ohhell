@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!-- the game draws its own colours: phone browsers (Chrome's auto-darken, Samsung Internet's dark mode) must not darken it -->
   <meta name="color-scheme" content="only light" />
   <title>Oh Hell! Extended</title>
@@ -19,7 +19,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="preload" href="share.jpg" as="image" fetchpriority="low">
   <link rel="stylesheet" href="./gw.css?v=224">
-  <link rel="stylesheet" href="./oh.css?v=267">
+  <link rel="stylesheet" href="./oh.css?v=270">
   <!-- the Infernal fonts load straight away, so nameplates are never drawn first in a stand-in font and then jump -->
   <link rel="preload" href="fonts/manufacturing-consent.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/cinzel.woff2" as="font" type="font/woff2" crossorigin>
@@ -27,7 +27,7 @@
 </head>
 <body>
 <!-- The Infernal suits (Look & feel): drawn with <use href="#s-flame"> etc. -->
-<svg id="suit-symbols" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<svg id="suit-symbols" width="0" height="0" style="position:absolute" aria-hidden="true"><defs><filter id="oh-gamma" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncR type="gamma" exponent="1"/><feFuncG type="gamma" exponent="1"/><feFuncB type="gamma" exponent="1"/></feComponentTransfer></filter>
     <!-- Flame: a three-tongued fire, its inner tongues cut out -->
     <symbol id="s-flame" viewBox="0 0 100 100">
       <path fill-rule="evenodd" d="M50 98 C30 92 13 79 12 60 C11 46 18 37 24 30 C23 39 26 45 31 48 C29 34 35 19 50 4 C49 18 55 26 62 33 C64 26 66 21 71 16 C72 29 80 36 86 47 C92 59 88 78 74 89 C67 94 58 96 50 98 Z
@@ -93,6 +93,7 @@
       <button id="btn-quit" type="button" class="icon-btn" aria-label="Quit this game" data-tip="Quit this game"></button>
       <button id="btn-rules" type="button" class="icon-btn" aria-label="Rules" data-tip="Rules"></button>
       <button id="btn-settings" type="button" class="icon-btn" aria-label="Settings" data-tip="Settings"></button>
+      <button id="btn-bright" type="button" class="icon-btn" aria-label="Brightness" data-tip="Brightness"></button>
       <button id="btn-sound" type="button" class="icon-btn" aria-label="Sound" aria-pressed="true" data-tip="Sound: off"></button>
       <button id="btn-fullscreen" type="button" class="icon-btn" aria-label="Fullscreen" aria-pressed="false" data-tip="Fullscreen"></button>
     </div>
@@ -314,8 +315,8 @@
           <div class="seg" role="radiogroup"><label><input type="radio" name="speed" value="normal" checked><span>Normal</span></label><label><input type="radio" name="speed" value="fast"><span>Fast</span></label></div>
         </div>
         <div class="opt-row">
-          <div class="opt-label" data-tip="Brightens the whole screen (this device only)">Brightness</div>
-          <div class="bright-row"><input type="range" id="opt-bright" min="70" max="160" step="5" value="100" aria-label="Brightness"><b id="opt-bright-v">100%</b></div>
+          <div class="opt-label" data-tip="Lifts the dark parts of the whole screen, leaving the bright parts as they are (this device only)">Brightness</div>
+          <div class="bright-row"><input type="range" id="opt-bright" min="70" max="200" step="5" value="100" aria-label="Brightness"><b id="opt-bright-v">100%</b></div>
         </div>
         <div class="opt-row">
           <div class="opt-label" data-tip="The suit symbols">Suits</div>
@@ -483,7 +484,7 @@
   <script src="./bv-more.js?v=224"></script>
   <script src="./oh-souls.js?v=226"></script>
   <script src="./oh-music-player.js?v=1"></script>
-  <script src="./oh-app.js?v=267"></script>
+  <script src="./oh-app.js?v=270"></script>
   <script>
     BVMore.init({ key: "oh-hell-extended", title: "Oh Hell! Extended", others: ["drakeharbour", "german-whist", "artifact"],
       shareText: "Bid your tricks, then win exactly that many. Play Oh Hell! Extended.",
