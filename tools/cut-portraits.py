@@ -1,6 +1,6 @@
-# Cuts the opponent portraits out of infernal/infernal-opponents-sheet-1/2.png (4 x 2 grids, transparent
-# backgrounds) into img/opp-<name>.webp, keeping only each portrait's own shape: thin slivers of the
-# neighbouring portraits that cross into a cell are dropped.
+# Cuts the opponent portraits out of the sheets in infernal/ (see SHEETS below; transparent backgrounds) into
+# img/opp-<name>.webp, keeping only each portrait's own shape: thin slivers of the neighbouring portraits that cross
+# into a cell are dropped.
 from PIL import Image, ImageChops
 
 NAMES = [["lilith", "persephone", "lamia", "loki", "old-nick", "bub", "cerberus", "brimstone"],
@@ -113,9 +113,13 @@ def sheet_masks(sheet, cols, rows):
     return [m.filter(ImageFilter.MaxFilter(5)) for m in masks]
 
 
-for s, names in enumerate(NAMES):
-    sheet = Image.open(f"infernal/infernal-opponents-sheet-{s + 1}.png").convert("RGBA")
-    masks = sheet_masks(sheet, 4, 2)
+# each sheet: its file, its grid (columns, rows) and who is on it, left to right, top row first
+SHEETS = [("infernal/infernal-opponents-sheet-1.png", 4, 2, NAMES[0]),
+          ("infernal/infernal-opponents-sheet-2.png", 4, 2, NAMES[1]),
+          ("infernal/anubis-charon-hecate-ereshkigal-right.png", 4, 1, ["anubis", "charon", "hecate", "ereshkigal"])]
+for path, cols, rows, names in SHEETS:
+    sheet = Image.open(path).convert("RGBA")
+    masks = sheet_masks(sheet, cols, rows)
     for i, n in enumerate(names):
         c = sheet.copy(); c.putalpha(ImageChops.multiply(sheet.getchannel("A"), masks[i]))
         c = c.crop(masks[i].getbbox())
