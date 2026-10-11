@@ -111,6 +111,7 @@ class GameController {
 
     // WebAudio (for win/lose jingle)
     this.audioCtx = null;
+    this.sfxVolume = 1;   // the Game slider in the sound panel (0 to 1)
     this.playedEndJingle = false;
     this.soundMuted = true;
 
@@ -122,6 +123,8 @@ class GameController {
     try { this.sfx.cardShove2.load(); } catch (e) { /* ignore */ }
 
     try {
+      const savedSfx = localStorage.getItem("oh_sfxVol");
+      if (savedSfx != null) this.sfxVolume = +savedSfx;
       const savedMuted = localStorage.getItem("oh_soundMuted");
       if (savedMuted != null) this.soundMuted = (savedMuted === "1");
 
@@ -2131,19 +2134,81 @@ class GameController {
     if (btn) {
       btn.innerHTML = muted ? ICONS.muted : ICONS.sound;
       btn.setAttribute("aria-pressed", muted ? "true" : "false");
-      btn.dataset.tip = muted ? "Sound: off" : "Sound: on";
+      btn.dataset.tip = (muted ? "Sound: off" : "Sound: on") + ". Click to switch it on or off, or set the game and music volumes.";
       btn.classList.toggle("muted", muted);
 
       if (!btn.__ohBound) {
         btn.__ohBound = true;
-        btn.addEventListener("click", () => {
-          this.setSoundMuted(!this.soundMuted);
-          if (!this.soundMuted) this.ensureAudioContext();
-        });
+        this.buildMixer();
+        btn.addEventListener("pointerdown", e => e.stopPropagation());
+        btn.addEventListener("click", e => { e.currentTarget.blur(); e.stopPropagation(); this.toggleMixer(); });
       }
     }
 
     try { localStorage.setItem("oh_soundMuted", muted ? "1" : "0"); } catch (e) { /* ignore */ }
+    if (window.OHMusic) OHMusic.setSound(!muted);
+    this.audioUi();
+  }
+
+  // The sound panel under the sound button (as in Drakeharbour): the Sound switch silences everything; the game's
+  // sounds and the music each have a volume; a tune can be picked, and the line beneath says what's playing.
+  buildMixer() {
+    if (document.getElementById("oh-mixer")) return;
+    const m = document.createElement("div");
+    m.id = "oh-mixer"; m.className = "hidden";
+    const row = (k, label) => `<div class="mx-row"><span>${label}</span><input type="range" class="vol" data-k="${k}" min="0" max="100" step="1" aria-label="${label} volume"><b class="vol-v" data-k="${k}"></b></div>`;
+    const tunes = window.OHMusic ? OHMusic.TUNES.map(t => `<option value="${t.id}">${t.name}</option>`).join("") : "";
+    m.innerHTML = `<div class="mx-row mx-sw"><span>Sound</span><button type="button" class="mx-toggle" id="mx-sound" role="switch" aria-label="Sound"><i></i></button><b id="mx-sound-v"></b></div>` +
+      row("sfx", "Game") + row("music", "Music") +
+      `<div class="mx-row mx-tune"><span>Tune</span><select class="music-pick" aria-label="Choose a tune"><option value="" disabled>Choose a tune</option>${tunes}</select></div>` +
+      `<div class="mx-note music-now" aria-live="polite"></div>`;
+    document.body.appendChild(m);
+    m.querySelector("#mx-sound").addEventListener("click", () => {
+      this.setSoundMuted(!this.soundMuted);
+      if (!this.soundMuted) { this.ensureAudioContext(); this.sfxFlick(); }
+    });
+    m.querySelectorAll("input.vol").forEach(inp => inp.addEventListener("input", () => {
+      const v = inp.value / 100;
+      if (inp.dataset.k === "music") { if (window.OHMusic) OHMusic.setVolume(v); }
+      else {
+        this.sfxVolume = v;
+        try { localStorage.setItem("oh_sfxVol", String(v)); } catch (e) { /* ignore */ }
+        this.ensureAudioContext(); this.sfxFlick();
+      }
+      this.audioUi();
+    }));
+    m.querySelector("select.music-pick").addEventListener("change", e => { if (e.target.value && window.OHMusic) OHMusic.choose(e.target.value); });
+    m.addEventListener("pointerdown", e => e.stopPropagation());
+    document.addEventListener("pointerdown", () => this.toggleMixer(false));
+    document.addEventListener("musicchange", () => this.audioUi());
+  }
+
+  toggleMixer(show) {
+    const m = document.getElementById("oh-mixer");
+    if (!m) return;
+    const open = show == null ? m.classList.contains("hidden") : show;
+    m.classList.toggle("hidden", !open);
+    if (open) this.audioUi();
+  }
+
+  audioUi() {
+    const m = document.getElementById("oh-mixer");
+    if (!m) return;
+    const M = window.OHMusic, sound = !this.soundMuted;
+    const sw = m.querySelector("#mx-sound");
+    sw.classList.toggle("on", sound); sw.setAttribute("aria-checked", String(sound));
+    m.querySelector("#mx-sound-v").textContent = sound ? "On" : "Off";
+    m.classList.toggle("off", !sound);
+    const lvl = k => (k === "music" ? (M ? M.volume : 0) : this.sfxVolume);
+    m.querySelectorAll("b.vol-v").forEach(b => { const v = lvl(b.dataset.k); b.textContent = v ? Math.round(v * 100) + "%" : "off"; });
+    m.querySelectorAll("input.vol").forEach(i => { if (document.activeElement !== i) i.value = Math.round(100 * lvl(i.dataset.k)); });
+    if (!M) return;
+    const sel = m.querySelector("select.music-pick"), now = M.queued || M.tune;
+    const t = M.TUNES.find(x => x.name === now);
+    sel.value = t ? t.id : "";
+    m.querySelector(".music-now").textContent =
+      !sound ? "Sound is off." : !M.volume ? "Music is off. Raise Music to listen." :
+      M.queued ? `Next: ${M.queued}` : M.tune ? `Playing: ${M.tune}` : "Music starts in a moment.";
   }
 
   setSoundMuted(muted) {
@@ -2206,10 +2271,17 @@ class GameController {
       // Play a fresh copy so rapid repeats overlap instead of cutting each
       // other off (restarting one element makes quick sounds thin and quiet).
       const a = audio.cloneNode();
-      a.volume = audio.volume;
+      a.volume = audio.volume * this.sfxVolume;
       const p = a.play();
       if (p && typeof p.catch === "function") p.catch(() => {});
     } catch (e) { /* ignore */ }
+  }
+
+  // the game's own sounds all go through one gain, set by the Game slider in the sound panel
+  sfxOut(ctx) {
+    if (!this.sfxGain || this.sfxGain.context !== ctx) { this.sfxGain = ctx.createGain(); this.sfxGain.connect(ctx.destination); }
+    this.sfxGain.gain.value = this.sfxVolume;
+    return this.sfxGain;
   }
 
   ensureAudioContext() {
@@ -2237,7 +2309,7 @@ class GameController {
       g.gain.setValueAtTime(0.0001, now + t0);
       g.gain.exponentialRampToValueAtTime(gain, now + t0 + 0.012);
       g.gain.exponentialRampToValueAtTime(0.0001, now + t0 + d);
-      osc.connect(g).connect(ctx.destination);
+      osc.connect(g).connect(this.sfxOut(ctx));
       osc.start(now + t0);
       osc.stop(now + t0 + d + 0.02);
     }
@@ -2264,7 +2336,7 @@ class GameController {
       g.gain.setValueAtTime(0.0001, now);
       g.gain.exponentialRampToValueAtTime(peak, now + 0.008);
       g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-      src.connect(f).connect(g).connect(ctx.destination);
+      src.connect(f).connect(g).connect(this.sfxOut(ctx));
       src.start(now);
       src.stop(now + dur + 0.02);
     };
@@ -2307,7 +2379,7 @@ class GameController {
     const totalTime = seq.length * noteGap;
 
     const gainNode = ctx.createGain();
-    gainNode.connect(ctx.destination);
+    gainNode.connect(this.sfxOut(ctx));
     gainNode.gain.setValueAtTime(0.0001, now);
     gainNode.gain.linearRampToValueAtTime(0.22, now + 0.02);
     gainNode.gain.exponentialRampToValueAtTime(0.0001, now + totalTime + 0.12);
