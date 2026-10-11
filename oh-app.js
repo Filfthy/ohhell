@@ -1917,9 +1917,12 @@ class GameController {
         if (r && !r.checked) r.click();
       }
     };
-    let style = "classic";
-    try { if (localStorage.getItem("oh_style") === "infernal") style = "infernal"; } catch (e) { /* ignore */ }
+    // Infernal is the default: anyone who hasn't picked a style yet starts in it, with its table, back and suits
+    let style = "infernal", chosen = null;
+    try { chosen = localStorage.getItem("oh_style"); } catch (e) { /* ignore */ }
+    if (chosen === "classic") style = "classic";
     showStyle(style);
+    if (!chosen) { applyStyleDefaults(style); try { localStorage.setItem("oh_style", style); } catch (e) { /* ignore */ } }
     styleRadios.forEach(r => r.addEventListener("change", () => {
       if (!r.checked) return;
       style = r.value;
