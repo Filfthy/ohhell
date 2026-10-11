@@ -2120,14 +2120,9 @@ body.style-infernal .seat-info .name-label .portrait { transform-origin: center 
   25%, 55% { filter: brightness(0.55) saturate(0.6) drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); }
   50% { translate: 0 0; }
 }
-@keyframes rExact {
-  0%, 100% { filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); }
-  35% { filter: brightness(1.15) drop-shadow(0 0 4px rgba(255, 214, 120, 0.95)) drop-shadow(0 0 14px rgba(240, 180, 70, 0.8)); }
-}
 body.style-infernal .name-label .portrait.r-lean  { animation: rLean 0.55s ease-out; }
 body.style-infernal .name-label .portrait.r-win   { animation: rWin 0.7s ease-out; }
 body.style-infernal .name-label .portrait.r-bust  { animation: rBust 0.75s ease-out; }
-body.style-infernal .name-label .portrait.r-exact { animation: rExact 1.2s ease-in-out; }
 @media (prefers-reduced-motion: reduce) {
   body.style-infernal .name-label .portrait.r-lean, body.style-infernal .name-label .portrait.r-win { animation: none; }
 }

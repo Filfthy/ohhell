@@ -1021,18 +1021,18 @@ class GameController {
   }
 
   // A portrait's one-off reaction (Infernal style): "lean" as they play a card, "win" as they take a trick,
-  // "bust" the moment they go over their bid or can no longer make it, "exact" at round end if they made it.
+  // "bust" the moment they go over their bid or can no longer make it.
   // Each plays once and stops.
   react(seat, kind) {
     const p = this.seatEls[seat] && this.seatEls[seat].portrait;
     if (!p || !document.body.classList.contains("style-infernal")) return;
     // a lean never cuts short a bigger reaction (the trick's winner leads straight away)
-    if (kind === "lean" && (p.classList.contains("r-win") || p.classList.contains("r-bust") || p.classList.contains("r-exact"))) return;
-    p.classList.remove("r-lean", "r-win", "r-bust", "r-exact");
+    if (kind === "lean" && (p.classList.contains("r-win") || p.classList.contains("r-bust"))) return;
+    p.classList.remove("r-lean", "r-win", "r-bust");
     void p.offsetWidth;
     p.classList.add("r-" + kind);
     clearTimeout(p._react);
-    p._react = setTimeout(() => p.classList.remove("r-" + kind), { lean: 600, win: 750, bust: 800, exact: 1250 }[kind]);
+    p._react = setTimeout(() => p.classList.remove("r-" + kind), { lean: 600, win: 750, bust: 800 }[kind]);
   }
 
   // After each trick: the winner lifts, unless that trick (or the tricks running out) has just sunk someone,
@@ -1091,8 +1091,6 @@ class GameController {
     }
 
     if (g.phase === "roundEnd" || g.phase === "gameOver") {
-      const r = g.history[g.history.length - 1];
-      if (r) for (let s = 0; s < g.numPlayers; s++) if (r.bids[s] === r.won[s]) this.react(s, "exact");
       await wait(400);
       if (ep !== this.epoch) return;
       this.showRoundSummary();
