@@ -59,8 +59,11 @@ let GAME_SPEED = 1;
 let FACES_MODE = "auto";
 const LARGE_FACES_BELOW_PX = 64;   // card width at which auto switches
 function applyFaces() {
+  // Auto: large-index faces when cards are drawn small - except Infernal cards, whose woodcuts and Cinzel indices
+  // read well even small, so they keep their full faces
+  const infernal = document.body && document.body.classList.contains("suits-infernal");
   const large = FACES_MODE === "large" ||
-    (FACES_MODE === "auto" && layoutMetrics.cardWidth < LARGE_FACES_BELOW_PX);
+    (FACES_MODE === "auto" && !infernal && layoutMetrics.cardWidth < LARGE_FACES_BELOW_PX);
   document.body.classList.toggle("faces-large", large);
 }
 const COIN_BIG = 2.2;
@@ -1883,6 +1886,7 @@ class GameController {
     const applySuitSet = v => {
       INFERNAL = v === "infernal";
       document.body.classList.toggle("suits-infernal", INFERNAL);
+      applyFaces();   // Auto picks the faces by suit set too
     };
     let suitset = "classic";
     try { if (localStorage.getItem("oh_suits") === "infernal") suitset = "infernal"; } catch (e) { /* ignore */ }
