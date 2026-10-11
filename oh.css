@@ -2240,19 +2240,15 @@ body.style-infernal #oh-testcard .tc-bar { background: rgba(6, 3, 2, 0.82); -web
 body.style-infernal #oh-testcard .tc-row > span { font-family: "Cinzel", Georgia, serif; }
 body.style-infernal #oh-testcard .tc-row input { accent-color: #b8893f; }
 body.style-infernal #oh-testcard .tc-done { background: var(--inf-parch, #e8cc93); color: #5e0008; border-color: #8f6a3c; }
-/* Phones: the cards played to the table show just a big rank and suit (read from across the table) - the big
-   symbol in the middle goes, to give them the room */
+/* Phones, Infernal cards with full faces: the cards played to the table get a much bigger corner index, with a thin
+   dark outline round the rank and suit (inside the usual parchment glow) so they stand out from the artwork */
 @media (orientation: landscape) and (max-height: 500px) {
-  body.faces-large #trick-area .card .corner { font-size: 78cqw; width: 90cqw; top: 2cqw; left: 4cqw; }
-  body.faces-large #trick-area .card .corner .rank.ten { letter-spacing: -0.08em; font-size: 0.8em; }
-  body.faces-large #trick-area .card .corner .suit { font-size: 0.78em; }
-  body.faces-large #trick-area .card .jumbo-pip, body.faces-large #trick-area .card .jumbo-ace,
-  body.faces-large #trick-area .card .jumbo-court, body.faces-large #trick-area .card.special .jumbo-icon { display: none !important; }
-  body.faces-large #trick-area .card.special .sp-corner { width: 70cqw; }
-}
-@media (orientation: landscape) and (max-height: 500px) {
-  /* a thin dark outline round the index and suit symbol of the played cards, so they stand out */
-  body.faces-large #trick-area .card .corner { text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1.5px rgba(0, 0, 0, 0.7); }
-  body.faces-large #trick-area .card .corner .suit svg, body.faces-large #trick-area .card .corner svg,
-  body.faces-large #trick-area .card.special .sp-corner { filter: drop-shadow(0 0 0.6px #000) drop-shadow(0 0 0.6px #000); }
+  body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) {
+    font-size: 40cqw; width: 38cqw;
+    text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 3px #f1dcae, 0 0 5px #f1dcae;
+  }
+  body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) svg,
+  body.suits-infernal:not(.faces-large) #trick-area .card.special .sp-corner:not(.bottom) {
+    filter: drop-shadow(0 0 0.6px #000) drop-shadow(0 0 0.6px #000);
+  }
 }
