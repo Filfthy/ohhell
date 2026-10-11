@@ -37,7 +37,7 @@ const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135
 // Opponents are drawn at random from this pool for each game.
 const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub",
   "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Banshee", "Faust",
-  "Morgana", "Jezebel", "Anubis", "Charon", "Hecate", "Ereshkigal", "Ammit", "Kali", "The Necro"];
+  "Morgana", "Jezebel", "Anubis", "Charon", "Hecate", "Ereshkigal", "Ammit", "Kali", "Ronnie"];
 // Every portrait looks to the right as drawn, except these, which face straight ahead (you, and three-headed
 // Cerberus). Portraits left of the table's centre line are shown as drawn; right of it they're mirrored.
 const PORTRAIT_FRONT = { player: true, cerberus: true };
