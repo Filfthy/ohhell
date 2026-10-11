@@ -25,6 +25,7 @@ window.OHMusic = (function () {
   const FILES_V = 1;                  // bump when the recordings are re-made, so browsers fetch the new ones
   const MAXVOL = 0.8, REST = 2.5;     // loudest the music goes; seconds between tunes
   let sound = true, volume = 0.45, picked = null, woken = false, order = [], last = null, wait = null, fader = null;
+  if (/[?&]demo\b/.test(location.search)) picked = "black";   // index.html?demo (for recording videos): Waltz in Black first
   try {
     const v = localStorage.getItem("oh_musicVol"); if (v != null) volume = +v;
     sound = localStorage.getItem("oh_soundMuted") !== "1";

@@ -234,6 +234,8 @@ class GameController {
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
     this.opponentNames = pool;
+    // index.html?demo (for recording videos): always the same three opponents, left to right
+    if (/[?&]demo\b/.test(location.search)) this.opponentNames = ["Persephone", "Bub", "Ronnie"];
   }
 
   seatPos(seat) {
