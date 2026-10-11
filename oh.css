@@ -2245,3 +2245,10 @@ body.style-infernal #oh-testcard .tc-done { background: var(--inf-parch, #e8cc93
 @media (orientation: landscape) and (max-height: 500px) {
   body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) { font-size: 28cqw; width: 26cqw; }
 }
+/* Infernal card indices in Cinzel (shipped with the game, so the same on every device - phones have no Times New
+   Roman and stand in a chunkier serif), semi-bold: crisp, open letters and figures */
+body.suits-infernal .card:not(.back) .corner .rank { font-family: "Cinzel", Georgia, serif; font-weight: 600; font-size: 1.18em; }   /* Cinzel draws smaller than Times at the same size */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* on the cards played to the table, just a tight edge of parchment round the letters, not a soft glow */
+  body.suits-infernal #trick-area .card:not(.back) .corner { text-shadow: 0 0 1px #f1dcae, 0 0 1px #f1dcae; }
+}
