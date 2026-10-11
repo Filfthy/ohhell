@@ -2252,3 +2252,13 @@ body.suits-infernal .card:not(.back) .corner .rank { font-family: "Cinzel", Geor
   /* on the cards played to the table, just a tight edge of parchment round the letters, not a soft glow */
   body.suits-infernal #trick-area .card:not(.back) .corner { text-shadow: 0 0 1px #f1dcae, 0 0 1px #f1dcae; }
 }
+/* the version, quietly in the title screen's bottom-right corner (as in German Whist) */
+#splash .splash-version {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: rgba(253, 246, 227, 0.55);
+  pointer-events: none;
+}
