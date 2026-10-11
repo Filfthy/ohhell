@@ -2244,7 +2244,7 @@ body.style-infernal #oh-testcard .tc-done { background: var(--inf-parch, #e8cc93
    dark outline round the rank and suit (inside the usual parchment glow) so they stand out from the artwork */
 @media (orientation: landscape) and (max-height: 500px) {
   body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) {
-    font-size: 40cqw; width: 38cqw;
+    font-size: 32cqw; width: 30cqw;
     text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 3px #f1dcae, 0 0 5px #f1dcae;
   }
   body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) svg,
