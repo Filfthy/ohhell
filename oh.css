@@ -2240,15 +2240,8 @@ body.style-infernal #oh-testcard .tc-bar { background: rgba(6, 3, 2, 0.82); -web
 body.style-infernal #oh-testcard .tc-row > span { font-family: "Cinzel", Georgia, serif; }
 body.style-infernal #oh-testcard .tc-row input { accent-color: #b8893f; }
 body.style-infernal #oh-testcard .tc-done { background: var(--inf-parch, #e8cc93); color: #5e0008; border-color: #8f6a3c; }
-/* Phones, Infernal cards with full faces: the cards played to the table get a much bigger corner index, with a thin
-   dark outline round the rank and suit (inside the usual parchment glow) so they stand out from the artwork */
+/* Phones, Infernal cards with full faces: the cards played to the table get a bigger corner index, so they read from
+   across the table */
 @media (orientation: landscape) and (max-height: 500px) {
-  body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) {
-    font-size: 32cqw; width: 30cqw;
-    text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 3px #f1dcae, 0 0 5px #f1dcae;
-  }
-  body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) svg,
-  body.suits-infernal:not(.faces-large) #trick-area .card.special .sp-corner:not(.bottom) {
-    filter: drop-shadow(0 0 0.6px #000) drop-shadow(0 0 0.6px #000);
-  }
+  body.suits-infernal:not(.faces-large) #trick-area .card:not(.back) .corner:not(.bottom) { font-size: 28cqw; width: 26cqw; }
 }
