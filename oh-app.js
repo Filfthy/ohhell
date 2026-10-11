@@ -1429,7 +1429,9 @@ class GameController {
     document.body.appendChild(tip);
     let cur = null;
     document.addEventListener("mouseover", e => {
-      const el = e.target.closest && e.target.closest("[data-tip]");
+      const el = e.target.closest && e.target.closest("[data-tip], [title]");
+      // anything still carrying a plain title gets this tooltip instead of the browser's, so they all look the same
+      if (el && el.hasAttribute("title")) { if (!el.dataset.tip) el.dataset.tip = el.getAttribute("title"); el.removeAttribute("title"); }
       if (el === cur) return;
       cur = el;
       if (!el) { tip.classList.remove("on"); return; }
@@ -2134,7 +2136,7 @@ class GameController {
     if (btn) {
       btn.innerHTML = muted ? ICONS.muted : ICONS.sound;
       btn.setAttribute("aria-pressed", muted ? "true" : "false");
-      btn.dataset.tip = (muted ? "Sound: off" : "Sound: on") + ". Click to switch it on or off, or set the game and music volumes.";
+      btn.dataset.tip = muted ? "Sound: off" : "Sound: on";
       btn.classList.toggle("muted", muted);
 
       if (!btn.__ohBound) {
