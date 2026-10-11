@@ -2245,3 +2245,12 @@ body.style-infernal #oh-testcard .tc-bar { background: rgba(6, 3, 2, 0.82); -web
 body.style-infernal #oh-testcard .tc-row > span { font-family: "Cinzel", Georgia, serif; }
 body.style-infernal #oh-testcard .tc-row input { accent-color: #b8893f; }
 body.style-infernal #oh-testcard .tc-done { background: var(--inf-parch, #e8cc93); color: #5e0008; border-color: #8f6a3c; }
+/* Phones: the cards played to the table get a much bigger corner index (read from across the table), with the big
+   symbol below made smaller and lower to make room */
+@media (orientation: landscape) and (max-height: 500px) {
+  body.faces-large #trick-area .card .corner { font-size: 56cqw; width: 56cqw; top: 2cqw; left: 3cqw; }
+  body.faces-large #trick-area .card.special .sp-corner { width: 50cqw; }
+  body.faces-large #trick-area .card .jumbo-pip { top: 74%; font-size: 48cqw; }
+  body.faces-large #trick-area .card .jumbo-ace, body.faces-large #trick-area .card .jumbo-court { width: 48cqw; }
+  body.faces-large #trick-area .card.special .jumbo-icon { top: 70%; width: 46cqw; }
+}
