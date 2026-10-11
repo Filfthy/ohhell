@@ -1876,9 +1876,7 @@ class GameController {
     // At 100% there's no filter at all.
     let savedBright = 100;
     try { savedBright = +(localStorage.getItem("oh_bright") || 100) || 100; } catch (e) { /* ignore */ }
-    this.setBright(savedBright, false);
-    const bright = document.getElementById("opt-bright");
-    if (bright) bright.addEventListener("input", () => this.setBright(+bright.value));
+    this.setBright(savedBright, false);   // set from the sun button's test card
 
     // Suit symbols: Classic or Infernal (redraws whatever is on the table)
     const applySuitSet = v => {
@@ -2197,12 +2195,12 @@ class GameController {
 
   // Brightness (this device only): a gamma curve over the whole screen (the filter #oh-gamma in index.html), so the
   // dark parts lift a lot, the middle a little, and black and white stay as they are - nothing washes out.
-  // At 100% there's no filter at all. Every brightness slider (Look & feel, the test card) follows it.
+  // At 100% there's no filter at all. The test card's slider follows it.
   setBright(pc, save = true) {
     document.querySelectorAll("#oh-gamma feComponentTransfer > *").forEach(f => f.setAttribute("exponent", String(100 / pc)));
     document.documentElement.style.filter = pc === 100 ? "" : "url(#oh-gamma)";
-    document.querySelectorAll("#opt-bright, [data-bright-slider]").forEach(i => { if (document.activeElement !== i) i.value = pc; });
-    document.querySelectorAll("#opt-bright-v, [data-bright-value]").forEach(b => (b.textContent = pc + "%"));
+    document.querySelectorAll("[data-bright-slider]").forEach(i => { if (document.activeElement !== i) i.value = pc; });
+    document.querySelectorAll("[data-bright-value]").forEach(b => (b.textContent = pc + "%"));
     if (save) try { localStorage.setItem("oh_bright", String(pc)); } catch (e) { /* ignore */ }
   }
 
