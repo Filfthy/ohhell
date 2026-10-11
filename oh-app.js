@@ -315,7 +315,8 @@ class GameController {
       els.slot.style.left = (o.x * W - W / 2) + "px";
       els.slot.style.top = (y * H - H / 2) + "px";
       els.slot.style.transform = `rotate(${o.rot}deg)`;
-      els.slot.style.zIndex = "1";
+      // your card (lowest on the table) lies on top, so every card's index - at its top - stays in view
+      els.slot.style.zIndex = pos === "bottom" ? "2" : "1";
     });
   }
 
