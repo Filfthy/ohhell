@@ -1868,6 +1868,21 @@ class GameController {
     });
     applyFaces();
 
+    // Brightness (this device only): brightens the whole screen; at 100% there's no filter at all
+    const bright = document.getElementById("opt-bright"), brightV = document.getElementById("opt-bright-v");
+    const applyBright = pc => {
+      document.documentElement.style.filter = pc === 100 ? "" : `brightness(${pc / 100})`;
+      if (bright) bright.value = pc;
+      if (brightV) brightV.textContent = pc + "%";
+    };
+    let savedBright = 100;
+    try { savedBright = +(localStorage.getItem("oh_bright") || 100) || 100; } catch (e) { /* ignore */ }
+    applyBright(savedBright);
+    if (bright) bright.addEventListener("input", () => {
+      const pc = +bright.value; applyBright(pc);
+      try { localStorage.setItem("oh_bright", String(pc)); } catch (e) { /* ignore */ }
+    });
+
     // Suit symbols: Classic or Infernal (redraws whatever is on the table)
     const applySuitSet = v => {
       INFERNAL = v === "infernal";

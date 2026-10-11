@@ -1,7 +1,7 @@
 // oh-music.js - the music of Oh Hell! Extended, synthesised live with Web Audio (no recordings): the instruments,
-// the tunes and their organ / chiptune arrangements, shared by the game and by jukebox.html. Wrapped up so none of its
-// names clash with the game's; what the rest needs is handed out on window.OHMusicLib, and the game's own player is
-// window.OHMusic (at the bottom).
+// the tunes and their organ / chiptune arrangements. The source of all the music: jukebox.html plays from it live, and
+// tools/render-music.js records the game's tunes from it into music/<id>.mp3, which the game plays (oh-music-player.js).
+// Wrapped up so none of its names clash; what the rest needs is handed out on window.OHMusicLib.
 (function () {
 // ===================================================================== the synthesiser
 const A4 = 440, NAMES = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
@@ -728,111 +728,46 @@ function organised(S, tune = {}, bus = null) {
   return o;
 }
 
-window.OHMusicLib = { A4, NAMES, midiOf, hz, CHORD, chordOf, Synth, parseBar, bars, rests, sectionOf, TUNES, ORGAN, organised, chipped };
-})();
-// ===================================================================== the game's player
-// Plays the game's own set once through each, in shuffled order (never the same tune twice running), with a short
-// rest between; or a tune picked from the sound panel, then carries on shuffling. All orchestral except The Hollow
-// Benediction, which is on its organ. Like Drakeharbour: the Sound switch silences everything, the music has its own
-// volume (0 = off). Browsers keep sound off until the first click, which wakes it; it goes quiet while the tab is hidden.
-window.OHMusic = (function () {
-  const LIB = window.OHMusicLib;
-  const SET = [["black", false], ["parlour", false], ["bell13", false], ["carousel", false], ["veil", false],
-    ["hymn", true], ["ironCourt", false], ["thirdKnock", false]];   // [tune, on the organ?]
-  const MAXGAIN = 0.55, REST = 2.5;   // loudest the music goes (the jukebox plays at 0.7); seconds between tunes
-  // Phones have far less to spare (and the Souls table is animating too), so there the music runs at a lower sample
-  // rate (about half the work, the reverb included) and is scheduled further ahead, so a busy moment leaves no gap.
-  const PHONE = !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
-  const AHEAD = PHONE ? 1.5 : 0.6, TICK = PHONE ? 250 : 100;
-  let ctx = null, S = null, cur = null, order = [], last = null, wait = null, woken = false;
-  let sound = true, volume = 0.45, picked = null;
-  try {
-    const v = localStorage.getItem("oh_musicVol"); if (v != null) volume = +v;
-    sound = localStorage.getItem("oh_soundMuted") !== "1";
-  } catch (e) { /* ignore */ }
-  const gain = () => MAXGAIN * Math.pow(volume, 1.75);   // shaped so the lower half of the slider is properly quiet
-  const changed = () => document.dispatchEvent(new Event("musicchange"));
-  const wanted = () => woken && sound && volume > 0;
+// Records a tune once through (with its last notes left to ring out), exactly as it plays live, and returns it as a
+// 16-bit stereo WAV in base64. tools/render-music.js uses this to make the game's MP3s (music/<id>.mp3).
+async function renderOnce(id, onOrgan, rate = 44100) {
+  const tune = TUNES.find(t => t.id === id), beat = 60 / tune.bpm, n = tune.chords.length;
+  const secs = 0.3 + n * tune.beats * beat + 6;
+  const off = new OfflineAudioContext(2, Math.ceil(rate * secs), rate), s = new Synth(off);
+  const bus = s.bus(tune.send || 1); bus.gain.value = (tune.gain || 1) * (onOrgan ? tune.organGain || 1 : 1);
+  const P = onOrgan ? organised(s, tune, bus) : s;
+  let at = 0.3;
+  for (let b = 0; b < n; b++) {
+    tune.accomp(P, bus, at, b, chordOf(tune.chords[b]), beat, chordOf(tune.chords[(b + 1) % n]));
+    for (const p of tune.parts) {
+      if (onOrgan && (tune.organSkip || []).includes(p.inst)) continue;
+      for (const ev of p.notes[b] || []) {
+        let pos = ev.at;
+        if (tune.swing && Math.abs(pos % 1 - 0.5) < 0.01) pos = Math.floor(pos) + tune.swing;
+        const up = onOrgan && (p.inst === "sax" || p.inst === "bassoon") ? 12 : 0;
+        for (const m of ev.midi) P[p.inst](at + pos * beat, hz(m + p.shift + up), ev.beats * beat * 0.95, ev.vel ?? p.vel, bus);
+      }
+    }
+    at += tune.beats * beat;
+  }
+  const buf = await off.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1);
+  // trim the silence after the last ring, keeping a short tail
+  let end = L.length - 1;
+  while (end > 0 && Math.abs(L[end]) < 2e-4 && Math.abs(R[end]) < 2e-4) end--;
+  end = Math.min(L.length, end + Math.round(rate * 0.25));
+  const bytes = new DataView(new ArrayBuffer(44 + end * 4));
+  const str = (o, t) => { for (let i = 0; i < t.length; i++) bytes.setUint8(o + i, t.charCodeAt(i)); };
+  str(0, "RIFF"); bytes.setUint32(4, 36 + end * 4, true); str(8, "WAVEfmt "); bytes.setUint32(16, 16, true);
+  bytes.setUint16(20, 1, true); bytes.setUint16(22, 2, true); bytes.setUint32(24, rate, true); bytes.setUint32(28, rate * 4, true);
+  bytes.setUint16(32, 4, true); bytes.setUint16(34, 16, true); str(36, "data"); bytes.setUint32(40, end * 4, true);
+  for (let i = 0; i < end; i++) {
+    bytes.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i])) * 32767, true);
+    bytes.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i])) * 32767, true);
+  }
+  const u8 = new Uint8Array(bytes.buffer); let bin = "";
+  for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return { seconds: +(end / rate).toFixed(1), wav: btoa(bin) };
+}
 
-  function stopCurrent(fade = 0.8) {
-    clearTimeout(wait); wait = null;
-    if (!cur) return;
-    clearInterval(cur.timer); clearTimeout(cur.end);
-    const g = cur.bus.gain, t = ctx.currentTime, bus = cur.bus, rel = cur.release;
-    g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + fade);
-    setTimeout(() => { bus.disconnect(); if (rel) rel(); }, fade * 1000 + 200);
-    cur = null;
-  }
-  function next() {
-    if (!wanted()) return;
-    let id, organ;
-    if (picked) { id = picked; organ = SET.find(x => x[0] === id)[1]; picked = null; order = order.filter(x => x[0] !== id); }
-    else {
-      if (!order.length) { order = SET.slice().sort(() => Math.random() - 0.5); if (order[0][0] === last && order.length > 1) order.push(order.shift()); }
-      [id, organ] = order.shift();
-    }
-    last = id;
-    play(LIB.TUNES.find(t => t.id === id), organ);
-    changed();
-  }
-  function play(tune, onOrgan) {
-    const bus = S.bus(tune.send || 1); bus.gain.value = (tune.gain || 1) * (onOrgan ? tune.organGain || 1 : 1);
-    const P = onOrgan ? LIB.organised(S, tune, bus) : S;
-    const beat = 60 / tune.bpm, n = tune.chords.length;
-    let b = 0, at = ctx.currentTime + 0.3;
-    const me = cur = { bus, release: P.release, timer: null, end: null };
-    const schedule = () => {
-      while (b < n && at < ctx.currentTime + AHEAD) {
-        const ch = LIB.chordOf(tune.chords[b]), nx = LIB.chordOf(tune.chords[(b + 1) % n]);
-        tune.accomp(P, bus, at, b, ch, beat, nx);
-        for (const p of tune.parts) {
-          if (onOrgan && (tune.organSkip || []).includes(p.inst)) continue;
-          for (const ev of p.notes[b] || []) {
-            let pos = ev.at;
-            if (tune.swing && Math.abs(pos % 1 - 0.5) < 0.01) pos = Math.floor(pos) + tune.swing;
-            const up = onOrgan && (p.inst === "sax" || p.inst === "bassoon") ? 12 : 0;
-            for (const m of ev.midi) P[p.inst](at + pos * beat, LIB.hz(m + p.shift + up), ev.beats * beat * 0.95, ev.vel ?? p.vel, bus);
-          }
-        }
-        at += tune.beats * beat; b++;
-      }
-      if (b >= n && !me.end) {   // all scheduled: when the last bar (and its ring) is over, rest, then the next tune
-        clearInterval(me.timer);
-        me.end = setTimeout(() => { if (cur !== me) return; stopCurrent(0.3); changed(); wait = setTimeout(next, REST * 1000); },
-          Math.max(0, (at - ctx.currentTime) * 1000 + 1500));
-      }
-    };
-    schedule(); me.timer = setInterval(schedule, TICK);
-  }
-  // start, stop or carry on, to match the switch, the volume and whether the page has been clicked yet
-  function refresh() {
-    if (!wanted()) { if (ctx) stopCurrent(); changed(); return; }
-    if (!ctx) {
-      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      // a large "playback" buffer: a moment more delay, far fewer stutters
-      try { ctx = new AC(PHONE ? { latencyHint: "playback", sampleRate: 22050 } : { latencyHint: "playback" }); }
-      catch (e) { try { ctx = new AC({ latencyHint: "playback" }); } catch (e2) { ctx = new AC(); } }
-      S = new LIB.Synth(ctx);
-      document.addEventListener("visibilitychange", () => {
-        if (!ctx) return;
-        if (document.hidden) ctx.suspend(); else if (wanted()) ctx.resume();
-      });
-    }
-    S.out.gain.setTargetAtTime(gain(), ctx.currentTime, 0.05);
-    if (ctx.state === "suspended" && !document.hidden) ctx.resume();
-    if (!cur && !wait) next();
-  }
-  // the first click anywhere wakes the sound
-  document.addEventListener("pointerdown", () => { if (!woken) { woken = true; refresh(); } }, true);
-  return {
-    TUNES: SET.map(([id]) => ({ id, name: LIB.TUNES.find(t => t.id === id).title })),
-    get sound() { return sound; }, get volume() { return volume; },
-    get tune() { return cur && last ? LIB.TUNES.find(t => t.id === last).title : null; },
-    get queued() { return picked ? LIB.TUNES.find(t => t.id === picked).title : null; },
-    setSound(on) { sound = !!on; refresh(); },
-    setVolume(v) { volume = Math.max(0, Math.min(1, v)); try { localStorage.setItem("oh_musicVol", String(volume)); } catch (e) { /* ignore */ } refresh(); },
-    // play this tune now (then carry on shuffling)
-    choose(id) { picked = id; if (ctx) stopCurrent(0.5); if (wanted()) setTimeout(next, 600); changed(); },
-    wake() { if (!woken) { woken = true; refresh(); } }
-  };
+window.OHMusicLib = { A4, NAMES, midiOf, hz, CHORD, chordOf, Synth, parseBar, bars, rests, sectionOf, TUNES, ORGAN, organised, chipped, renderOnce };
 })();

@@ -2202,3 +2202,8 @@ body.style-infernal #oh-tip { font-family: "Palatino Linotype", "Book Antiqua", 
 body.suits-infernal .card:not(.back) { isolation: isolate; }
 /* never let a phone browser's own dark mode re-colour the game (see the color-scheme meta in index.html) */
 :root { color-scheme: only light; }
+/* Look & feel: the Brightness slider */
+.bright-row { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 160px; }
+.bright-row input { flex: 1; margin: 0; accent-color: var(--ui-accent); cursor: pointer; }
+.bright-row b { width: 3.2em; text-align: right; font-weight: 600; }
+body.style-infernal .bright-row input { accent-color: #b8893f; }
