@@ -1036,10 +1036,10 @@ class GameController {
     else this.continueBidding(this.epoch);
   }
 
-  // A portrait's one-off reaction (Infernal style): "lean" as they play a card, "win" as they take a trick,
-  // "bust" the moment they go over their bid or can no longer make it.
+  // A portrait's one-off reaction (Infernal style): "lean" as they play a card, "win" (a lift, and a pleased face)
+  // when things go to plan, "bust" (a shake, and a furious face) when they don't - see reactToTrick.
   // Each plays once and stops.
-  react(seat, kind) {
+  react(seat, kind, holdMs) {
     const p = this.seatEls[seat] && this.seatEls[seat].portrait;
     if (!p || !document.body.classList.contains("style-infernal")) return;
     // a lean never cuts short a bigger reaction (the trick's winner leads straight away)
@@ -1049,28 +1049,33 @@ class GameController {
     p.classList.add("r-" + kind);
     clearTimeout(p._react);
     p._react = setTimeout(() => p.classList.remove("r-" + kind), { lean: 600, win: 750, bust: 800 }[kind]);
-    // a moving portrait also changes face: pleased with a trick, furious at a sunk bid
-    if (typeof LivingPortraits !== "undefined" && kind !== "lean") LivingPortraits.mood(p, kind === "win" ? "happy" : "angry", kind === "win" ? 2400 : 3500);
+    // a moving portrait also changes face: pleased when things go to plan, furious when they don't
+    if (typeof LivingPortraits !== "undefined" && kind !== "lean")
+      LivingPortraits.mood(p, kind === "win" ? "happy" : "angry", holdMs || (kind === "win" ? 2000 : 3000));
   }
 
-  // After each trick: the winner lifts, unless that trick (or the tricks running out) has just sunk someone,
-  // who shudders instead - once per round each.
+  // After each trick, everyone reacts to how it went for their own plan (their bid), not to winning as such:
+  //   took a trick they still needed - pleased; the one that makes their bid exactly - pleased, for longer;
+  //   took a trick they didn't want (over their bid) - thwarted; can no longer make their bid - thwarted (once);
+  //   and on the round's last trick: made their bid exactly - pleased, missed it - thwarted.
+  // Anyone the trick changes nothing for stays as they are. At most one reaction each per trick.
   reactToTrick(winner) {
     const g = this.game;
     if (this.bustRound !== g.roundIndex) { this.bustRound = g.roundIndex; this.bustSeen = {}; }
     const left = g.handSize - g.tricksPlayed;
-    let winnerSank = false;
     for (let s = 0; s < g.numPlayers; s++) {
       const bid = g.bids ? g.bids[s] : null;
-      if (bid == null || this.bustSeen[s]) continue;
+      if (bid == null) continue;
       const won = g.won[s] || 0;
-      if (won > bid || bid - won > left) {
-        this.bustSeen[s] = true;
-        this.react(s, "bust");
-        if (s === winner) winnerSank = true;
-      }
+      let kind = null, hold;
+      if (left === 0) { kind = won === bid ? "win" : "bust"; hold = won === bid ? 3200 : 3500; }
+      else if (s === winner) {
+        if (won <= bid) { kind = "win"; hold = won === bid ? 2800 : 1800; }
+        else kind = "bust";
+      } else if (!this.bustSeen[s] && bid - won > left) kind = "bust";
+      if (kind === "bust") this.bustSeen[s] = true;
+      if (kind) this.react(s, kind, hold);
     }
-    if (!winnerSank) this.react(winner, "win");
   }
 
   flashStats(seat) {
