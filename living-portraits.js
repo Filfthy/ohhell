@@ -50,7 +50,7 @@ const LivingPortraits = (() => {
 
   const VS = `attribute vec2 a; varying vec2 uv; void main() { uv = vec2(a.x * 0.5 + 0.5, 0.5 - a.y * 0.5); gl_Position = vec4(a, 0.0, 1.0); }`;
   const FS = `precision highp float;
-varying vec2 uv; uniform sampler2D tex, texBlink, texGlance, texHappy, texAngry, flowHappy, flowAngry; uniform float blinkMix, glanceMix, happyMix, angryMix, flowMH, flowMA;
+varying vec2 uv; uniform sampler2D tex, texBlink, texGlance, texHappy, texAngry, flowHappy, flowAngry; uniform float blinkMix, glanceMix, happyMix, angryMix, flowMH, flowMA, swapLo, swapHi;
 uniform int nHeads; uniform vec2 hC[3]; uniform vec2 hR[3]; uniform vec2 hP[3]; uniform float hRot[3]; uniform vec2 hT[3];
 uniform vec4 brow; uniform float browAmt; uniform vec2 ck[2]; uniform float ckR; uniform float ckAmt; uniform int nCk;
 uniform vec4 mouth; uniform vec4 mouthAmt; uniform float mouthCr; uniform vec2 chest; uniform float breath;
@@ -89,7 +89,7 @@ void main() {
   vec4 col = texture2D(tex, fromN);
   col = mix(col, texture2D(texGlance, fromN), glanceMix);
   col = mix(col, texture2D(texBlink, fromN), blinkMix);
-  float swap = smoothstep(0.35, 0.7, m);
+  float swap = smoothstep(swapLo, swapHi, m);
   if (happyMix > 0.0) col = mix(col, texture2D(texHappy, fromM), swap);
   if (angryMix > 0.0) col = mix(col, texture2D(texAngry, fromM), swap);
   gl_FragColor = col;
@@ -271,6 +271,10 @@ void main() {
       gl.uniform2f(U("chest"), rig.heads[0].p[0], rig.heads[0].p[1]);
       gl.uniform1f(U("breath"), k * S.breath * lp.breath(t) * 0.0045);
       gl.uniform1f(U("flowMH"), lp.flowM[0]); gl.uniform1f(U("flowMA"), lp.flowM[1]);
+      // the colours change quickly going into a mood (hidden in the movement), but over most of the way back, so a
+      // face that changes a lot (Faust's grin) lets go gradually instead of snapping back
+      const relaxing = lp.moodKind && now - lp.moodStart > IN + lp.moodHold;
+      gl.uniform1f(U("swapLo"), relaxing ? 0.05 : 0.35); gl.uniform1f(U("swapHi"), relaxing ? 0.95 : 0.7);
       gl.uniform1f(U("happyMix"), lp.moodKind === "happy" ? mood : 0);
       gl.uniform1f(U("angryMix"), lp.moodKind === "angry" ? mood : 0);
       gl.uniform1f(U("blinkMix"), Math.min(1, lp.blink(now, S.blink * Math.min(1, k * 4))) * (1 - mood));
