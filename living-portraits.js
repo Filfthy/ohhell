@@ -50,7 +50,7 @@ const LivingPortraits = (() => {
 
   const VS = `attribute vec2 a; varying vec2 uv; void main() { uv = vec2(a.x * 0.5 + 0.5, 0.5 - a.y * 0.5); gl_Position = vec4(a, 0.0, 1.0); }`;
   const FS = `precision highp float;
-varying vec2 uv; uniform sampler2D tex, texBlink, texGlance, texHappy, texAngry; uniform float blinkMix, glanceMix, happyMix, angryMix;
+varying vec2 uv; uniform sampler2D tex, texBlink, texGlance, texHappy, texAngry, flowHappy, flowAngry; uniform float blinkMix, glanceMix, happyMix, angryMix, flowMH, flowMA;
 uniform int nHeads; uniform vec2 hC[3]; uniform vec2 hR[3]; uniform vec2 hP[3]; uniform float hRot[3]; uniform vec2 hT[3];
 uniform vec4 brow; uniform float browAmt; uniform vec2 ck[2]; uniform float ckR; uniform float ckAmt; uniform int nCk;
 uniform vec4 mouth; uniform vec4 mouthAmt; uniform float mouthCr; uniform vec2 chest; uniform float breath;
@@ -80,11 +80,18 @@ void main() {
   d += vec2((uv.x - chest.x) * 0.6 * base * upper, -0.35 * base * mix(0.35, 1.0, upper)) * breath;
   vec2 src = uv - d;
   if (src.x < 0.0 || src.y < 0.0 || src.x > 1.0 || src.y > 1.0) { gl_FragColor = vec4(0.0); return; }
-  vec4 col = texture2D(tex, src);
-  col = mix(col, texture2D(texGlance, src), glanceMix);
-  col = mix(col, texture2D(texBlink, src), blinkMix);
-  col = mix(col, texture2D(texHappy, src), happyMix);
-  col = mix(col, texture2D(texAngry, src), angryMix);
+  // a mood morphs rather than fades: the neutral face is bent along the flow (where each point moves to in the mood
+  // face) as far as the mood has come, the mood face is bent back from the neutral shape the rest of the way, and
+  // the colours change over the middle of the movement - so the shape moves first and the swap hides inside it
+  float m = happyMix + angryMix;
+  vec2 f = happyMix > 0.0 ? (texture2D(flowHappy, src).rg - 0.5) * 2.0 * flowMH : (texture2D(flowAngry, src).rg - 0.5) * 2.0 * flowMA;
+  vec2 fromN = src - m * f, fromM = src + (1.0 - m) * f;
+  vec4 col = texture2D(tex, fromN);
+  col = mix(col, texture2D(texGlance, fromN), glanceMix);
+  col = mix(col, texture2D(texBlink, fromN), blinkMix);
+  float swap = smoothstep(0.35, 0.7, m);
+  if (happyMix > 0.0) col = mix(col, texture2D(texHappy, fromM), swap);
+  if (angryMix > 0.0) col = mix(col, texture2D(texAngry, fromM), swap);
   gl_FragColor = col;
 }`;
 
@@ -154,7 +161,7 @@ void main() {
     const loc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const cache = {};
     const U = n => n in cache ? cache[n] : (cache[n] = gl.getUniformLocation(pr, n));
-    ["tex", "texBlink", "texGlance", "texHappy", "texAngry"].forEach((n, unit) => gl.uniform1i(U(n), unit));
+    ["tex", "texBlink", "texGlance", "texHappy", "texAngry", "flowHappy", "flowAngry"].forEach((n, unit) => gl.uniform1i(U(n), unit));
     G = { cv, gl, U };
     return G;
   }
@@ -175,14 +182,14 @@ void main() {
       moodKind: null, moodStart: 0, moodHold: 0 };
     // the neutral portrait, then each other frame: a patch laid over a copy of it (living-data.js stores only the
     // part that changes); a frame that's missing is just the neutral again
-    const upload = (unit, src) => {
+    const upload = (unit, src, data = false) => {
       const tex = lp.tex[unit] = lp.tex[unit] || gl.createTexture();
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, !data);      // (a flow map holds numbers, not colours)
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      if (++lp.loaded === FRAMES.length && !lp.gone) el.classList.add("lp-on");    // the still picture steps aside once the moving one is ready
+      if (++lp.loaded === FRAMES.length + 2 && !lp.gone) el.classList.add("lp-on");    // the still picture steps aside once the moving one is ready
     };
     const base = new Image();
     base.onload = () => {
@@ -205,8 +212,18 @@ void main() {
       });
     };
     base.src = LIVING_DATA[who];
+    // the happy and angry flow maps (units 5 and 6); none = no movement (128, 128)
+    lp.flowM = [0, 0];
+    ["-happy-flow", "-angry-flow"].forEach((suf, k) => {
+      const f = LIVING_DATA[who + suf];
+      if (!f) { const c = document.createElement("canvas"); c.width = c.height = 1; const x = c.getContext("2d"); x.fillStyle = "rgb(128,128,128)"; x.fillRect(0, 0, 1, 1); upload(5 + k, c, true); return; }
+      lp.flowM[k] = f.m;
+      const im = new Image();
+      im.onload = () => { if (!lp.gone) upload(5 + k, im, true); };
+      im.src = f.src;
+    });
     lp.draw = (t, now) => {
-      if (lp.loaded < FRAMES.length) return;
+      if (lp.loaded < FRAMES.length + 2) return;
       const w = cv.clientWidth;
       if (!w) return;                                           // hidden (e.g. the Classic style has no portraits)
       const px = Math.round(w * Math.min(2, window.devicePixelRatio || 1));
@@ -218,7 +235,7 @@ void main() {
       // a mood: quick to come on (IN ms), held, quick to relax (OUT ms) - a slow fade reads as a dissolve, not a face
       // changing. Each change also moves the head a touch (jolt: up into a grin, down into a scowl, then it settles),
       // which is what makes it read as movement. Blinks and glances wait while it shows.
-      const IN = 220, OUT = 320;
+      const IN = 350, OUT = 450;
       let mood = 0, jolt = 0;
       if (lp.moodKind) {
         const x = now - lp.moodStart, h = lp.moodHold;
@@ -228,6 +245,7 @@ void main() {
         else lp.moodKind = null;
         if (lp.moodKind === "angry") jolt = -jolt;
       }
+      if (lp.hold != null) { mood = lp.hold; jolt = 0; }     // (testing: held part way through a change)
       const C = [], R = [], P = [], ROT = [], T = [];
       rig.heads.forEach((h, i) => {
         const m = lp.heads[i], a = (h.a || 1) * kh;
@@ -252,6 +270,7 @@ void main() {
         Math.min(0.1, km * Math.max(0, lp.press(t)) * 0.05), Math.min(0.3 * mh, km * lp.part(t) * 0.06 * mh));
       gl.uniform2f(U("chest"), rig.heads[0].p[0], rig.heads[0].p[1]);
       gl.uniform1f(U("breath"), k * S.breath * lp.breath(t) * 0.0045);
+      gl.uniform1f(U("flowMH"), lp.flowM[0]); gl.uniform1f(U("flowMA"), lp.flowM[1]);
       gl.uniform1f(U("happyMix"), lp.moodKind === "happy" ? mood : 0);
       gl.uniform1f(U("angryMix"), lp.moodKind === "angry" ? mood : 0);
       gl.uniform1f(U("blinkMix"), Math.min(1, lp.blink(now, S.blink * Math.min(1, k * 4))) * (1 - mood));
@@ -294,7 +313,7 @@ void main() {
     const lp = el && el._lp;
     if (!lp || !LIVING_DATA[lp.who + "-" + kind]) return false;
     const now = performance.now();
-    if (lp.moodKind === kind && now - lp.moodStart < 220 + lp.moodHold) lp.moodHold = now - lp.moodStart - 220 + holdMs;   // already showing: stays on longer
+    if (lp.moodKind === kind && now - lp.moodStart < 350 + lp.moodHold) lp.moodHold = now - lp.moodStart - 350 + holdMs;   // already showing: stays on longer
     else { lp.moodKind = kind; lp.moodStart = now; lp.moodHold = holdMs; }
     return true;
   }

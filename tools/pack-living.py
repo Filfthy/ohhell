@@ -6,6 +6,29 @@
 # patch was the neutral's own pixels anyway (tools/expr-build.py), so nothing is lost but bytes.
 import base64, io, json, os
 from PIL import Image, ImageChops, ImageFilter
+import cv2, numpy as np      # (pip install opencv-python-headless numpy) - for the happy/angry morphs
+
+FLOW_SIZE = 80     # the flow maps are smooth, so small: 80x80, stretched over the portrait
+
+def flow_map(base, im):
+    """Where each point of the neutral face moves to in the mood face (OpenCV's dense optical flow), kept to the
+    part that changes and smoothed. Stored as a small lossless image: red/green = 128 + x/y movement / m * 127,
+    m in fractions of the portrait's width."""
+    a = cv2.cvtColor(np.array(base.convert("RGB")), cv2.COLOR_RGB2GRAY)
+    b = cv2.cvtColor(np.array(im.convert("RGB")), cv2.COLOR_RGB2GRAY)
+    a = cv2.GaussianBlur(a, (0, 0), 1.2); b = cv2.GaussianBlur(b, (0, 0), 1.2)
+    f = cv2.calcOpticalFlowFarneback(a, b, None, 0.5, 4, 15, 4, 7, 1.5, 0)
+    # only where the faces differ (dilated, feathered): everything else stays put
+    d = np.abs(np.array(base.convert("RGB"), np.float32) - np.array(im.convert("RGB"), np.float32)).mean(2)
+    mask = (cv2.GaussianBlur(d, (0, 0), 2) > 10).astype(np.float32)
+    mask = cv2.dilate(mask, np.ones((13, 13), np.uint8)); mask = cv2.GaussianBlur(mask, (0, 0), 5)
+    f = cv2.GaussianBlur(f, (0, 0), 3) * mask[..., None]
+    f = cv2.resize(f, (FLOW_SIZE, FLOW_SIZE), interpolation=cv2.INTER_AREA)
+    m = float(max(1.0, np.abs(f).max()))
+    enc = np.clip(np.round(128 + f / m * 127), 0, 255).astype(np.uint8)
+    img = Image.fromarray(np.dstack([enc[..., 0], enc[..., 1], np.full_like(enc[..., 0], 128), np.full_like(enc[..., 0], 255)]), "RGBA")
+    out = io.BytesIO(); img.save(out, "PNG", optimize=True)
+    return {"src": "data:image/png;base64," + base64.b64encode(out.getvalue()).decode(), "m": round(m / base.width, 5)}
 
 CAST = ["persephone", "lilith", "faust", "davy-jones", "bub", "cerberus", "anubis", "kali",
         "hellga", "jezebel", "morgana", "lamia", "loki", "hecate", "ereshkigal",
@@ -32,6 +55,7 @@ for n in CAST:
         x0, y0 = max(0, box[0] - PAD), max(0, box[1] - PAD)
         x1, y1 = min(im.width, box[2] + PAD), min(im.height, box[3] + PAD)
         data[f"{n}-{v}"] = {"src": uri(im.crop((x0, y0, x1, y1))), "x": x0, "y": y0}
+        if v in ("happy", "angry"): data[f"{n}-{v}-flow"] = flow_map(base, im)
 
 with open("living-data.js", "w") as f:
     f.write("// living-data.js - the moving portraits' frames, for living-portraits.js (made by tools/pack-living.py):\n"
