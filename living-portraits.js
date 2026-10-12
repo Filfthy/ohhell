@@ -173,18 +173,38 @@ void main() {
       mouthDrift: wander(), smirk: moments(4, 10), press: wander(), part: moments(5, 13, [0.5, 0.9], [0.6, 2], [0.8, 1.4]), skew: rnd(-0.45, 0.45),
       breath: breathing(), blink: blinker(), glance: moments(9, 22, [0.7, 1.1], [1.8, 3.8], [0.8, 1.2]),
       moodKind: null, moodStart: 0, moodHold: 0 };
-    FRAMES.forEach((suf, unit) => {
-      const tex = lp.tex[unit] = gl.createTexture(), img = new Image();
-      img.onload = () => {
-        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        if (++lp.loaded === FRAMES.length) el.classList.add("lp-on");      // the still picture steps aside once the moving one is ready
-      };
-      img.src = LIVING_DATA[who + suf] || LIVING_DATA[who];
-    });
+    // the neutral portrait, then each other frame: a patch laid over a copy of it (living-data.js stores only the
+    // part that changes); a frame that's missing is just the neutral again
+    const upload = (unit, src) => {
+      const tex = lp.tex[unit] = lp.tex[unit] || gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      if (++lp.loaded === FRAMES.length && !lp.gone) el.classList.add("lp-on");    // the still picture steps aside once the moving one is ready
+    };
+    const base = new Image();
+    base.onload = () => {
+      if (lp.gone) return;
+      upload(0, base);
+      FRAMES.slice(1).forEach((suf, k) => {
+        const unit = k + 1, f = LIVING_DATA[who + suf];
+        if (!f) { upload(unit, base); return; }
+        const patch = new Image();
+        patch.onload = () => {
+          if (lp.gone) return;
+          const c = document.createElement("canvas"); c.width = base.naturalWidth; c.height = base.naturalHeight;
+          const x = c.getContext("2d");
+          x.drawImage(base, 0, 0);
+          x.clearRect(f.x, f.y, patch.naturalWidth, patch.naturalHeight);
+          x.drawImage(patch, f.x, f.y);
+          upload(unit, c);
+        };
+        patch.src = f.src;
+      });
+    };
+    base.src = LIVING_DATA[who];
     lp.draw = (t, now) => {
       if (lp.loaded < FRAMES.length) return;
       const w = cv.clientWidth;
@@ -231,6 +251,7 @@ void main() {
       ctx.drawImage(g.cv, 0, 0, px, px, 0, 0, px, px);
     };
     lp.dispose = () => {
+      lp.gone = true;
       lp.tex.forEach(tx => gl.deleteTexture(tx));
       cv.remove(); el.classList.remove("lp-on");
     };
