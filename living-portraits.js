@@ -170,7 +170,7 @@ void main() {
     const lp = { el, who, cv, rig, loaded: 0, tex: [],
       heads: rig.heads.map(() => ({ rot: wander(), tx: wander(), ty: wander() })),
       brow: moments(4, 11), browDrift: wander(), cheek: moments(4, 11),
-      mouthDrift: wander(), smirk: moments(4, 10), press: wander(), part: moments(5, 13, [0.5, 0.9], [0.6, 2], [0.8, 1.4]), skew: rnd(-0.45, 0.45),
+      mouthDrift: wander(), smirk: moments(4, 10), press: wander(), part: moments(5, 13, [0.5, 0.9], [0.6, 2], [0.8, 1.4]), skew: rnd(-0.2, 0.2),
       breath: breathing(), blink: blinker(), glance: moments(9, 22, [0.7, 1.1], [1.8, 3.8], [0.8, 1.2]),
       moodKind: null, moodStart: 0, moodHold: 0 };
     // the neutral portrait, then each other frame: a patch laid over a copy of it (living-data.js stores only the
@@ -236,9 +236,13 @@ void main() {
       gl.uniform4fv(U("brow"), rig.brow); gl.uniform1f(U("browAmt"), calm * k * S.brow * (lp.brow(t) * 0.0042 + lp.browDrift(t) * 0.0012));
       gl.uniform2fv(U("ck"), rig.cheeks.length === 2 ? rig.cheeks.flat() : rig.cheeks.length ? [...rig.cheeks[0], ...rig.cheeks[0]] : [0, 0, 0, 0]); gl.uniform1f(U("ckR"), rig.cr || 1);
       gl.uniform1f(U("ckAmt"), calm * k * S.cheeks * lp.cheek(t) * 0.006); gl.uniform1i(U("nCk"), rig.cheeks.length);
-      const km = calm * k * S.mouth, lift = lp.mouthDrift(t) * 0.004 + lp.smirk(t) * 0.007;
+      // the mouth moves in proportion to its own size (its half-height mh), and never more than about a third of it,
+      // so the lips keep their shape however strong the sliders are
+      const km = calm * k * S.mouth, mh = rig.mouth[3], cap = v => Math.max(-0.4 * mh, Math.min(0.4 * mh, v));
+      const lift = (lp.mouthDrift(t) * 0.05 + lp.smirk(t) * 0.09) * mh;
       gl.uniform4fv(U("mouth"), rig.mouth); gl.uniform1f(U("mouthCr"), rig.mc || Math.min(rig.mouth[2] * 0.75, 0.035));
-      gl.uniform4f(U("mouthAmt"), km * lift * (1 + lp.skew), km * lift * (1 - lp.skew), Math.min(0.12, km * Math.max(0, lp.press(t)) * 0.08), km * lp.part(t) * 0.004);
+      gl.uniform4f(U("mouthAmt"), cap(km * lift * (1 + lp.skew)), cap(km * lift * (1 - lp.skew)),
+        Math.min(0.1, km * Math.max(0, lp.press(t)) * 0.05), Math.min(0.3 * mh, km * lp.part(t) * 0.06 * mh));
       gl.uniform2f(U("chest"), rig.heads[0].p[0], rig.heads[0].p[1]);
       gl.uniform1f(U("breath"), k * S.breath * lp.breath(t) * 0.0045);
       gl.uniform1f(U("happyMix"), lp.moodKind === "happy" ? mood : 0);
