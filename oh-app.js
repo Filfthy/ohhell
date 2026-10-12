@@ -36,14 +36,16 @@ const TRICK_OFFSETS = {
 const SEAT_ANGLE = { bottom: 0, left: 90, topleft: 135, top: 180, topright: -135, right: -90 };
 
 // Opponents are drawn at random from this pool for each game.
+// (benched: "Banshee" - her portrait and moving frames are kept, so she can come back by adding her name here)
 const OPPONENT_POOL = ["Lilith", "Persephone", "Lamia", "Loki", "Old Nick", "Bub",
-  "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Banshee", "Faust",
+  "Cerberus", "Brimstone", "Hellga", "Davy Jones", "Faust",
   "Morgana", "Jezebel", "Anubis", "Charon", "Hecate", "Ereshkigal", "Ammit", "Kali", "Ronnie", "Sojobo"];
 // Every portrait looks to the right as drawn, except these, which face straight ahead (you, and three-headed
 // Cerberus). Portraits left of the table's centre line are shown as drawn; right of it they're mirrored.
 const PORTRAIT_FRONT = { player: true, cerberus: true };
-// Portraits drawn in three views (img/opp-<name>-l/c/r.webp), shown as they are rather than mirrored
-const PORTRAIT_VIEWS = { "old-nick": true };
+// Portraits drawn in three views (img/opp-<name>-l/c/r.webp), shown as they are rather than mirrored. None now:
+// Old Nick uses his looking-right view, mirrored like everyone else, so his moving portrait can be the same picture.
+const PORTRAIT_VIEWS = {};
 // Opponent card size relative to yours; recalculated for screen shape and
 // player count (see updateOppScale).
 let OPP_CARD_SCALE = 0.85;
@@ -158,6 +160,7 @@ class GameController {
       if (savedTrump === "coin" || savedTrump === "card") this.trumpMode = savedTrump;
       this.extended = localStorage.getItem("oh_extended") === "1";
       if (localStorage.getItem("oh_speed") === "fast") GAME_SPEED = 0.5;
+      this.livingPortraits = localStorage.getItem("oh_portraits") !== "still";
       const savedFaces = localStorage.getItem("oh_faces");
       if (["auto", "classic", "large"].includes(savedFaces)) FACES_MODE = savedFaces;
     } catch (e) { /* ignore */ }
@@ -218,6 +221,9 @@ class GameController {
     p.classList.toggle("on-right", onRight);
     p.style.setProperty("--lean", onRight ? "-1" : "1");   // which way is "towards the table" for a reaction
     p.classList.toggle("flip", onRight && !PORTRAIT_VIEWS[who] && !PORTRAIT_FRONT[who]);
+    // some opponents move a little - breathing, blinking, a shift of the brow or mouth (living-portraits.js);
+    // not those drawn in several views
+    if (typeof LivingPortraits !== "undefined") LivingPortraits.sync(p, who, this.livingPortraits !== false && file === who);
   }
 
   seatName(seat) {
@@ -236,6 +242,9 @@ class GameController {
     this.opponentNames = pool;
     // index.html?demo (for recording videos): always the same three opponents, left to right
     if (/[?&]demo\b/.test(location.search)) this.opponentNames = ["Persephone", "Bub", "Ronnie"];
+    // index.html?living (for trying the moving portraits): only opponents who have them
+    if (/[?&]living\b/.test(location.search) && typeof LivingPortraits !== "undefined")
+      this.opponentNames = pool.filter(n => LivingPortraits.rigs[n.toLowerCase().replace(/\s+/g, "-")]);
   }
 
   seatPos(seat) {
@@ -1040,6 +1049,8 @@ class GameController {
     p.classList.add("r-" + kind);
     clearTimeout(p._react);
     p._react = setTimeout(() => p.classList.remove("r-" + kind), { lean: 600, win: 750, bust: 800 }[kind]);
+    // a moving portrait also changes face: pleased with a trick, furious at a sunk bid
+    if (typeof LivingPortraits !== "undefined" && kind !== "lean") LivingPortraits.mood(p, kind === "win" ? "happy" : "angry", kind === "win" ? 2400 : 3500);
   }
 
   // After each trick: the winner lifts, unless that trick (or the tricks running out) has just sunk someone,
@@ -1940,6 +1951,14 @@ class GameController {
       GAME_SPEED = r.value === "fast" ? 0.5 : 1;
       try { localStorage.setItem("oh_speed", r.value); } catch (e) { /* ignore */ }
     }));
+    document.querySelectorAll('input[name="portraits"]').forEach(r => {
+      r.checked = r.value === (this.livingPortraits !== false ? "living" : "still");
+      r.addEventListener("change", () => {
+        this.livingPortraits = r.value === "living";
+        try { localStorage.setItem("oh_portraits", r.value); } catch (e) { /* ignore */ }
+        (this.seatEls || []).forEach((els, s) => { if (els && els.portrait) this.setPortrait(s, els); });
+      });
+    });
     deckRadios.forEach(r => { r.checked = (r.value === (this.extended ? "extended" : "standard")); });
     biddingRadios.forEach(r => { r.checked = (r.value === this.bidding); });
     trumpRadios.forEach(r => { r.checked = (r.value === this.trumpMode); });
