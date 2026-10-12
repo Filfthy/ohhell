@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Living Portraits Test</title>
+<style>
+  :root { --ink: #f1dcae; --brass: #b8893f; --size: 150px; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 50% 0%, rgba(120, 22, 10, 0.4) 0%, rgba(0, 0, 0, 0) 70%), linear-gradient(180deg, #170907 0%, #0d0504 100%);
+    color: var(--ink); font: 15px/1.4 Georgia, serif; padding: 16px; }
+  h1 { font-size: 20px; margin: 0 0 4px; color: #ffcf7a; }
+  p { margin: 0 0 12px; opacity: 0.85; max-width: 72em; }
+  .bar { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px 22px; align-items: center; margin-bottom: 12px; max-width: 1150px; }
+  .bar label { display: grid; grid-template-columns: 6.5em 1fr 2.6em; align-items: center; gap: 8px; }
+  .bar input[type=range] { width: 100%; accent-color: #d4a64e; }
+  .bar output { font-weight: 700; color: #ffcf7a; text-align: right; }
+  .bar .master span { color: #ffcf7a; font-weight: 700; }
+  .togs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; align-items: center; }
+  .tog { background: #2c160b; border: 1px solid var(--brass); border-radius: 7px; padding: 5px 10px; cursor: pointer; color: var(--ink); font: inherit; }
+  button.tog:hover { background: #3c1e0e; }
+  button.happy { border-color: #e0b84a; } button.angry { border-color: #e0503a; }
+  .hint { opacity: 0.7; font-size: 13px; }
+  .table { display: flex; flex-wrap: wrap; gap: 28px 18px; }
+  .seat { display: flex; flex-direction: column; align-items: center; gap: 4px; width: calc(var(--size) + 30px); }
+  .pf { position: relative; width: var(--size); height: var(--size); cursor: pointer; }
+  .pf.flip { transform: scaleX(-1); }
+  .portrait { position: absolute; inset: 0; background: center bottom / contain no-repeat; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.85)); }
+  .portrait .lp-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .portrait.lp-on { background-image: none !important; }
+  .guide { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .plate { background: linear-gradient(180deg, #f3e2b8, #d9bf86); color: #4a1206; font: 700 15px Georgia, serif; padding: 3px 14px; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,.6); }
+  .moods { display: flex; gap: 4px; }
+  .moods button { font: 12px Georgia, serif; padding: 2px 8px; border-radius: 5px; background: #2c160b; color: var(--ink); border: 1px solid var(--brass); cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>Living portraits</h1>
+<p>The same moving portraits as the game (living-portraits.js), starting from your settings. Each layer has its own slider; 0 turns it off.
+Happy and angry fade a whole new face in for a few seconds, the way a won trick or a sunk bid does in the game.</p>
+<div class="bar" id="bar"></div>
+<div class="togs">
+  <button class="tog happy" id="allHappy">Everyone happy</button>
+  <button class="tog angry" id="allAngry">Everyone angry</button>
+  <button class="tog" id="lookL">Look left</button>
+  <button class="tog" id="lookR">Look right</button>
+  <label class="tog"><input type="checkbox" id="mirror"> Mirror</label>
+  <label class="tog"><input type="checkbox" id="big"> Large (240px)</label>
+  <label class="tog"><input type="checkbox" id="guides"> Show regions</label>
+  <button class="tog" id="reset">Your settings</button>
+  <span class="hint">Keys: H happy, A angry. Click a portrait to cycle its faces.</span>
+</div>
+<div class="table" id="table"></div>
+<script src="../../living-data.js"></script>
+<script src="../../living-portraits.js"></script>
+<script>
+const LP = LivingPortraits;
+// everyone who has moving portraits, by name
+const CAST = Object.keys(LP.rigs).filter(id => LIVING_DATA[id]).map(id => [id, id.split("-").map(w => w[0].toUpperCase() + w.slice(1)).join(" ")]);
+const DEFAULTS = Object.assign({}, LP.settings);       // your tuned values, as the game uses them
+const SLIDERS = [["strength", "All layers", 0, 3], ["speed", "Speed", 0.3, 2.5], ["head", "Head", 0, 3], ["brow", "Brow", 0, 3],
+  ["cheeks", "Cheeks", 0, 3], ["mouth", "Mouth", 0, 3], ["breath", "Breathing", 0, 3], ["blink", "Blinks", 0, 3], ["glance", "Glances", 0, 3], ["yaw", "Head turn", 0, 3]];
+const bar = document.getElementById("bar");
+SLIDERS.forEach(([k, label, min, max]) => {
+  const l = document.createElement("label");
+  if (k === "strength" || k === "speed") l.className = "master";
+  l.innerHTML = `<span>${label}</span><input type="range" min="${min}" max="${max}" step="0.1" value="${LP.settings[k]}" data-k="${k}"><output>${LP.settings[k].toFixed(1)}</output>`;
+  const inp = l.querySelector("input"), out = l.querySelector("output");
+  inp.oninput = () => { LP.settings[k] = +inp.value; out.textContent = (+inp.value).toFixed(1); };
+  bar.appendChild(l);
+});
+document.getElementById("reset").onclick = () => bar.querySelectorAll("input").forEach(i => { i.value = DEFAULTS[i.dataset.k]; i.oninput(); });
+
+const seats = CAST.map(([id, name]) => {
+  const el = document.createElement("div"); el.className = "seat";
+  el.innerHTML = `<div class="pf"><div class="portrait" style="background-image:url('${LIVING_DATA[id]}')"></div><canvas class="guide"></canvas></div>` +
+    `<div class="plate">${name}</div><div class="moods"><button data-m="happy">happy</button><button data-m="angry">angry</button></div>`;
+  document.getElementById("table").appendChild(el);
+  const s = { id, el, pf: el.querySelector(".pf"), p: el.querySelector(".portrait"), guide: el.querySelector(".guide"), next: 0 };
+  LP.sync(s.p, id, true);
+  el.querySelectorAll(".moods button").forEach(b => b.onclick = () => LP.mood(s.p, b.dataset.m, 3000));
+  s.pf.onclick = () => { LP.mood(s.p, s.next++ % 2 ? "angry" : "happy", 3000); };
+  return s;
+});
+const all = kind => seats.forEach(s => LP.mood(s.p, kind, 3000));
+document.getElementById("allHappy").onclick = () => all("happy");
+document.getElementById("allAngry").onclick = () => all("angry");
+document.getElementById("lookL").onclick = () => seats.forEach(s => LP.look(s.p, -1, 2000));
+document.getElementById("lookR").onclick = () => seats.forEach(s => LP.look(s.p, 1, 2000));
+document.addEventListener("keydown", e => { const k = { h: "happy", a: "angry" }[e.key.toLowerCase()]; if (k) all(k); });
+document.getElementById("mirror").onchange = e => seats.forEach(s => s.pf.classList.toggle("flip", e.target.checked));
+document.getElementById("big").onchange = e => { document.documentElement.style.setProperty("--size", e.target.checked ? "240px" : "150px"); drawGuides(); };
+
+// the regions each portrait's movement uses
+let guides = false;
+function drawGuides() {
+  seats.forEach(s => {
+    const c = s.guide, W = c.width = c.height = Math.round(c.clientWidth * (window.devicePixelRatio || 1)), g = c.getContext("2d"), rig = LP.rigs[s.id];
+    g.clearRect(0, 0, W, W);
+    if (!guides || !rig) return;
+    g.lineWidth = Math.max(1, W / 150);
+    const ell = (x, y, rx, ry, col) => { g.strokeStyle = col; g.beginPath(); g.ellipse(x * W, y * W, rx * W, ry * W, 0, 0, 7); g.stroke(); };
+    rig.heads.forEach(h => { ell(h.c[0], h.c[1], h.r[0], h.r[1], "#4af"); g.fillStyle = "#4af"; g.fillRect(h.p[0] * W - 3, h.p[1] * W - 3, 6, 6); });
+    if (rig.face === false) return;          // a helmet or a mask: only the head moves
+    ell(...rig.brow, "#ff4"); rig.cheeks.forEach(c2 => ell(c2[0], c2[1], rig.cr, rig.cr, "#f6a"));
+    ell(rig.mouth[0], rig.mouth[1], rig.mouth[2], rig.mouth[3], "#7f7");
+  });
+}
+document.getElementById("guides").onchange = e => { guides = e.target.checked; drawGuides(); };
+</script>
+</body>
+</html>

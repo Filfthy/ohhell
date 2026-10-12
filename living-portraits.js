@@ -14,7 +14,7 @@
 
 const LivingPortraits = (() => {
   // how much of each layer (1 = the tuned amount); "speed" scales the drifting, not the blinks
-  const settings = { strength: 2.4, speed: 2.3, head: 1.8, brow: 1.6, cheeks: 1.6, mouth: 1.6, breath: 2.9, blink: 1.0, glance: 1.7, yaw: 0 };   // (yaw: on trial, off)
+  const settings = { strength: 2.4, speed: 2.3, head: 1.8, brow: 1.6, cheeks: 1.6, mouth: 1.6, breath: 2.9, blink: 1.0, glance: 1.7, yaw: 0.8 };
 
   // each rig, in fractions of the portrait's square: heads (centre, radii, neck pivot), brow (x, y, rx, ry), cheeks (one or two;
   // cr their reach - kept clear of the nose), mouth (x, y, half width, half height), mc the reach of the mouth's corners
@@ -224,6 +224,8 @@ void main() {
     // the depth map for head turns (unit 7); none = flat, so no turn
     lp.hasDepth = !!LIVING_DATA[who + "-depth"];
     lp.yawNow = 0; lp.yawLook = 0; lp.yawDrift = wander(); lp.yawLast = 0;
+    // now and then a slow turn to one side: about 1.5s to turn, held 2-5s, about 1.5s back, then a while before the next
+    lp.turn = moments(9, 24, [1.2, 2.0], [2.0, 5.0], [1.2, 2.0]); lp.turnDir = Math.random() < 0.5 ? -1 : 1;
     if (lp.hasDepth) { const im = new Image(); im.onload = () => { if (!lp.gone) upload(7, im, true); }; im.src = LIVING_DATA[who + "-depth"]; }
     else { const c = document.createElement("canvas"); c.width = c.height = 1; const x = c.getContext("2d"); x.fillStyle = "rgb(128,128,128)"; x.fillRect(0, 0, 1, 1); upload(7, c, true); }
     lp.flowM = [0, 0];
@@ -286,7 +288,9 @@ void main() {
       // the head turn: a slow drift, plus look(): turning towards something, easing there and back
       const dt = lp.yawLast ? Math.min(0.1, (now - lp.yawLast) / 1000) : 0; lp.yawLast = now;
       lp.yawNow += (lp.yawLook - lp.yawNow) * Math.min(1, dt * 3.5);
-      const yawAmt = lp.hasDepth ? S.yaw * k * 0.4 * (lp.yawDrift(t * 0.6) * 0.35 + lp.yawNow) * 0.05 : 0;
+      const tv = lp.turn(t * 0.5);
+      if (tv === 0) lp.turnDir = Math.random() < 0.5 ? -1 : 1;     // which way the next turn goes
+      const yawAmt = lp.hasDepth ? S.yaw * k * 0.4 * (lp.yawDrift(t * 0.6) * 0.35 + tv * lp.turnDir * 0.9 + lp.yawNow) * 0.05 : 0;
       gl.uniform1f(U("yaw"), yawAmt); gl.uniform1f(U("depthAt"), 0.6);
       gl.uniform1f(U("flowMH"), lp.flowM[0]); gl.uniform1f(U("flowMA"), lp.flowM[1]);
       // the colours change quickly going into a mood (hidden in the movement), but over most of the way back, so a
