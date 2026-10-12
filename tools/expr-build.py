@@ -6,14 +6,23 @@
 #   <name>-happy/-angry   the whole face: aligned on the face, colour-matched, feathered into the neutral
 # Every pixel outside those patches stays the neutral's own, so nothing shimmers when the frames fade into each other.
 # Positions are fractions of the 240px frame (x, y from its top-left): eyes boxes and face ellipses.
-import sys
+import os, sys
 from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageStat
 
 SETS = {
+  "a": ["persephone", "lilith", "faust", "davy-jones", "bub", "cerberus", "anubis", "kali"],   # (cerberus: done by expr-glow-eyes.py, skipped)
   "b": ["hellga", "jezebel", "morgana", "lamia", "loki", "hecate", "ereshkigal", "banshee"],
   "c": ["charon", "ammit", "brimstone", "ronnie", "sojobo", "old-nick"],
 }
 LM = {
+  # set A: only the happy/angry faces are built here (run with "moods"); its blinks and glances came from expr-eyes.py
+  "persephone": {"eyes": (0.47, 0.30, 0.74, 0.42), "faces": [(0.60, 0.43, 0.18, 0.20)]},
+  "lilith":     {"eyes": (0.36, 0.30, 0.67, 0.42), "faces": [(0.51, 0.44, 0.20, 0.19)]},
+  "faust":      {"eyes": (0.54, 0.32, 0.80, 0.44), "faces": [(0.66, 0.47, 0.17, 0.19)]},
+  "davy-jones": {"eyes": (0.58, 0.33, 0.82, 0.43), "faces": [(0.67, 0.42, 0.16, 0.16)]},
+  "bub":        {"eyes": (0.28, 0.27, 0.76, 0.43), "faces": [(0.51, 0.44, 0.25, 0.18)]},
+  "anubis":     {"eyes": (0.55, 0.40, 0.68, 0.46), "faces": [(0.63, 0.48, 0.22, 0.14)]},
+  "kali":       {"eyes": (0.59, 0.31, 0.80, 0.42), "faces": [(0.68, 0.45, 0.14, 0.16)]},
   "hellga":     {"eyes": (0.48, 0.31, 0.76, 0.44), "faces": [(0.61, 0.43, 0.17, 0.17)]},
   "jezebel":    {"eyes": (0.45, 0.27, 0.70, 0.37), "faces": [(0.59, 0.40, 0.15, 0.15)]},
   "morgana":    {"eyes": (0.51, 0.27, 0.75, 0.38), "faces": [(0.63, 0.41, 0.14, 0.16)]},
@@ -31,11 +40,13 @@ LM = {
 }
 SKIP = {"ronnie": {"happy"}, "sojobo": {"happy", "angry"}}   # faces the generator left alone (a helmet, a carved mask)
 
-setx = sys.argv[1]; names = SETS[setx]; dbg_path = sys.argv[2] if len(sys.argv) > 2 else None
+setx = sys.argv[1]; names = SETS[setx]
+MOODS_ONLY = "moods" in sys.argv[2:]
+if MOODS_ONLY: sys.argv = [a for a in sys.argv if a != "moods"]; dbg_path = sys.argv[2] if len(sys.argv) > 2 else None
 D = "infernal/expressions/"
 cw, ch = 384, 512
 N = Image.open(f"{D}set-{setx}-neutral.png").convert("RGBA")
-V = {v: Image.open(f"{D}set-{setx}-{v}.png").convert("RGBA") for v in ["blink", "glance", "happy", "angry"]}
+V = {v: Image.open(f"{D}set-{setx}-{v}.png").convert("RGBA") for v in (["happy", "angry"] if MOODS_ONLY else ["blink", "glance", "happy", "angry"])}
 
 def geom(alpha):
     x0, y0, x1, y1 = alpha.getbbox(); w, h = x1 - x0, y1 - y0; side = max(w, h)
@@ -63,12 +74,13 @@ def aligned(var, x0, y0, a3, ring, reach=12):
 
 rows = []
 for k, n in enumerate(names):
+    if n not in LM: continue          # (done another way; still counted, so everyone keeps their own cell)
     x0, y0 = (k % 4) * cw, (k // 4) * ch
     a = N.crop((x0, y0, x0 + cw, y0 + ch)); alpha = a.getchannel("A"); a3 = a.convert("RGB")
     solid = alpha.point(lambda v: 255 if v > 128 else 0)
     ox, oy, side = geom(alpha)
     P = lambda fx, fy: (ox + fx * side, oy + fy * side)
-    row = [save_frame(a3, alpha, f"{D}frames/{n}.webp")]
+    row = [save_frame(a3, alpha, f"{D}frames/{n}.webp") if not MOODS_ONLY else a.crop(alpha.getbbox()).resize((240, 240))]
     lm, skip = LM[n], SKIP.get(n, set())
     if "glow" in lm:
         import colorsys
@@ -92,6 +104,7 @@ for k, n in enumerate(names):
                 save_frame(flare(2), alpha, f"{D}frames/{n}-angry.webp")]
         rows.append(row); continue
     # blink and glance: only what changed inside the eyes box (one patch for both, so they change the same area)
+    if MOODS_ONLY: lm = dict(lm); skip = skip | {"blink", "glance"}
     ex0, ey0 = P(lm["eyes"][0], lm["eyes"][1]); ex1, ey1 = P(lm["eyes"][2], lm["eyes"][3])
     box = Image.new("L", (cw, ch), 0); ImageDraw.Draw(box).rectangle((ex0, ey0, ex1, ey1), fill=255)
     core = Image.new("L", (cw, ch), 0)
@@ -106,7 +119,9 @@ for k, n in enumerate(names):
     soft = ImageChops.multiply(core.filter(ImageFilter.GaussianBlur(7)), solid)
     ring = ImageChops.subtract(core.filter(ImageFilter.MaxFilter(21)), core)
     for v in ["blink", "glance"]:
-        if v not in eyevars: row.append(None); continue
+        if v not in eyevars:
+            fp = f"{D}frames/{n}-{v}.webp"
+            row.append(Image.open(fp).convert("RGBA") if MOODS_ONLY and os.path.exists(fp) else None); continue
         out = Image.composite(colour_match(eyevars[v], a3, ring), a3, soft)
         row.append(save_frame(out, alpha, f"{D}frames/{n}-{v}.webp"))
     # happy and angry: the whole face
