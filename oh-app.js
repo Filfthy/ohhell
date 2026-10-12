@@ -2589,3 +2589,43 @@ if (CARD_TUNER) {
   const add = () => { document.body.appendChild(el); sync(); };
   if (document.body) add(); else document.addEventListener("DOMContentLoaded", add);
 }
+
+// Card art loads in the background as soon as the page opens, so a card never turns up blank while its picture is
+// still on its way (online, each picture would otherwise only be fetched the first time a card shows it). The URLs
+// must match exactly what the cards and oh.css ask for (including any ?v=). The current style's art comes first.
+const CARD_ART_KEEP = [];
+function preloadCardArt() {
+  const suits = ["flames", "tridents", "horns", "pentagrams"], letters = ["C", "D", "H", "S"], roles = ["SUN", "MOON", "DRAGON", "JOKER"];
+  const infernal = [], classic = [];
+  for (const s of suits) {
+    for (const r of ["A", "J", "Q", "K"]) infernal.push(`img/inf-${r}-${s}.webp`);
+    for (let n = 2; n <= 10; n++) infernal.push(`img/infpips/${n}-${s}.svg?v=2`);
+  }
+  for (let i = 0; i < 8; i++) infernal.push(`img/parchment-card-${i}.webp`);
+  infernal.push("img/parchment-card.webp?v=3");
+  for (const r of roles) infernal.push(`img/inf-${r}.webp`, `special/inf-icon-${r}.svg`);
+  for (const l of letters) for (const r of ["J", "Q", "K"]) classic.push(`court/${r}${l}.svg`);
+  for (const r of roles) classic.push(`special/${r}.svg`, `special/icon-${r}.svg`);
+  for (const r of ["J", "Q", "K"]) classic.push(`special/icon-${r}.svg`);
+  const both = [];
+  for (let i = 0; i < 8; i++) both.push(`img/crease-${i}.webp?v=2`);
+  for (let i = 0; i < 6; i++) both.push(`img/wear-${i}.webp`);
+  let inf = true;                  // Infernal unless Classic was chosen (Infernal is the first-time default)
+  try { inf = localStorage.getItem("oh_style") !== "classic"; } catch (e) { /* ignore */ }
+  const list = (inf ? infernal.concat(both, classic) : classic.concat(both, infernal));
+  // a few at a time, so the first ones needed aren't queued behind everything else
+  let next = 0;
+  const one = () => {
+    if (next >= list.length) return;
+    const img = new Image();
+    img.decoding = "async";
+    const done = () => one();
+    img.onload = () => { (img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(done); };
+    img.onerror = done;
+    img.src = list[next++];
+    CARD_ART_KEEP.push(img);       // kept, so the decoded pictures stay ready
+  };
+  for (let k = 0; k < 6; k++) one();
+}
+if (document.readyState === "complete") setTimeout(preloadCardArt, 0);
+else window.addEventListener("load", () => setTimeout(preloadCardArt, 0));
