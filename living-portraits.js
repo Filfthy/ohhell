@@ -235,7 +235,7 @@ void main() {
       // a mood: quick to come on (IN ms), held, quick to relax (OUT ms) - a slow fade reads as a dissolve, not a face
       // changing. Each change also moves the head a touch (jolt: up into a grin, down into a scowl, then it settles),
       // which is what makes it read as movement. Blinks and glances wait while it shows.
-      const IN = 350, OUT = 450;
+      const IN = 350, OUT = 900;    // (relaxing back is slower than the reaction: a face lets go of a grin gradually)
       let mood = 0, jolt = 0;
       if (lp.moodKind) {
         const x = now - lp.moodStart, h = lp.moodHold;
