@@ -2264,3 +2264,9 @@ body.suits-infernal .card:not(.back) .corner .rank { font-family: "Cinzel", Geor
 /* living portraits (living-portraits.js): the moving picture sits in the portrait box; the still one steps aside once it's ready */
 .portrait .lp-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .portrait.lp-on { background-image: none !important; }
+
+/* No text selection or blue highlights from clicks and drags (or the tap flash on phones); typing fields still select */
+html, body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+::selection { background: transparent; }
+input::selection, textarea::selection { background: rgba(212, 166, 78, 0.45); }
