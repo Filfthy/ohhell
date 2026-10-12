@@ -215,23 +215,30 @@ void main() {
       gl.viewport(0, g.cv.height - px, px, px);
       lp.tex.forEach((tx, unit) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tx); });
       const S = settings, k = S.strength, kh = k * S.head;
+      // a mood: quick to come on (IN ms), held, quick to relax (OUT ms) - a slow fade reads as a dissolve, not a face
+      // changing. Each change also moves the head a touch (jolt: up into a grin, down into a scowl, then it settles),
+      // which is what makes it read as movement. Blinks and glances wait while it shows.
+      const IN = 220, OUT = 320;
+      let mood = 0, jolt = 0;
+      if (lp.moodKind) {
+        const x = now - lp.moodStart, h = lp.moodHold;
+        if (x < IN) { mood = ease(x / IN); jolt = Math.sin(Math.PI * x / IN); }
+        else if (x < IN + h) mood = 1;
+        else if (x < IN + h + OUT) { const q = (x - IN - h) / OUT; mood = 1 - ease(q); jolt = 0.6 * Math.sin(Math.PI * q); }
+        else lp.moodKind = null;
+        if (lp.moodKind === "angry") jolt = -jolt;
+      }
       const C = [], R = [], P = [], ROT = [], T = [];
       rig.heads.forEach((h, i) => {
         const m = lp.heads[i], a = (h.a || 1) * kh;
         C.push(...h.c); R.push(...h.r); P.push(...h.p);
         ROT.push(a * m.rot(t) * 1.6 * Math.PI / 180);
-        T.push(a * m.tx(t) * 0.004, a * m.ty(t) * 0.004);
+        T.push(a * m.tx(t) * 0.004, a * m.ty(t) * 0.004 - jolt * 0.012 * (h.a || 1));
+        ROT[ROT.length - 1] += jolt * 0.035 * (h.a || 1);
       });
       while (C.length < 6) { C.push(0, 0); R.push(1, 1); P.push(0, 0); ROT.push(0); T.push(0, 0); }
       gl.uniform1i(U("nHeads"), rig.heads.length); gl.uniform2fv(U("hC"), C); gl.uniform2fv(U("hR"), R); gl.uniform2fv(U("hP"), P);
       gl.uniform1fv(U("hRot"), ROT); gl.uniform2fv(U("hT"), T);
-      // a mood: a quarter-second to come on, held, then 0.6s to relax; blinks and glances wait while it shows
-      let mood = 0;
-      if (lp.moodKind) {
-        const x = now - lp.moodStart;
-        mood = x < 250 ? ease(x / 250) : x < 250 + lp.moodHold ? 1 : x < 850 + lp.moodHold ? 1 - ease((x - 250 - lp.moodHold) / 600) : 0;
-        if (x >= 850 + lp.moodHold) lp.moodKind = null;
-      }
       const calm = rig.face === false ? 0 : 1 - mood;      // a happy or angry face has its own brow and mouth: the small face movements step aside for it
       gl.uniform4fv(U("brow"), rig.brow); gl.uniform1f(U("browAmt"), calm * k * S.brow * (lp.brow(t) * 0.0042 + lp.browDrift(t) * 0.0012));
       gl.uniform2fv(U("ck"), rig.cheeks.length === 2 ? rig.cheeks.flat() : rig.cheeks.length ? [...rig.cheeks[0], ...rig.cheeks[0]] : [0, 0, 0, 0]); gl.uniform1f(U("ckR"), rig.cr || 1);
@@ -287,7 +294,7 @@ void main() {
     const lp = el && el._lp;
     if (!lp || !LIVING_DATA[lp.who + "-" + kind]) return false;
     const now = performance.now();
-    if (lp.moodKind === kind && now - lp.moodStart < 250 + lp.moodHold) lp.moodHold = now - lp.moodStart - 250 + holdMs;   // already showing: stays on longer
+    if (lp.moodKind === kind && now - lp.moodStart < 220 + lp.moodHold) lp.moodHold = now - lp.moodStart - 220 + holdMs;   // already showing: stays on longer
     else { lp.moodKind = kind; lp.moodStart = now; lp.moodHold = holdMs; }
     return true;
   }
