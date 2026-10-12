@@ -56,6 +56,11 @@ for n in CAST:
         x1, y1 = min(im.width, box[2] + PAD), min(im.height, box[3] + PAD)
         data[f"{n}-{v}"] = {"src": uri(im.crop((x0, y0, x1, y1))), "x": x0, "y": y0}
         if v in ("happy", "angry"): data[f"{n}-{v}-flow"] = flow_map(base, im)
+    # its depth map for head turns (tools/make-depth.py), if it has one: small, lossless
+    dp = F + f"{n}-depth.png"
+    if os.path.exists(dp):
+        b = io.BytesIO(); Image.open(dp).convert("L").save(b, "PNG", optimize=True)
+        data[f"{n}-depth"] = "data:image/png;base64," + base64.b64encode(b.getvalue()).decode()
 
 with open("living-data.js", "w") as f:
     f.write("// living-data.js - the moving portraits' frames, for living-portraits.js (made by tools/pack-living.py):\n"

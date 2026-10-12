@@ -14,7 +14,7 @@
 
 const LivingPortraits = (() => {
   // how much of each layer (1 = the tuned amount); "speed" scales the drifting, not the blinks
-  const settings = { strength: 2.4, speed: 2.3, head: 1.8, brow: 1.6, cheeks: 1.6, mouth: 1.6, breath: 2.9, blink: 1.0, glance: 1.7 };
+  const settings = { strength: 2.4, speed: 2.3, head: 1.8, brow: 1.6, cheeks: 1.6, mouth: 1.6, breath: 2.9, blink: 1.0, glance: 1.7, yaw: 0 };   // (yaw: on trial, off)
 
   // each rig, in fractions of the portrait's square: heads (centre, radii, neck pivot), brow (x, y, rx, ry), cheeks (one or two;
   // cr their reach - kept clear of the nose), mouth (x, y, half width, half height), mc the reach of the mouth's corners
@@ -51,12 +51,20 @@ const LivingPortraits = (() => {
   const VS = `attribute vec2 a; varying vec2 uv; void main() { uv = vec2(a.x * 0.5 + 0.5, 0.5 - a.y * 0.5); gl_Position = vec4(a, 0.0, 1.0); }`;
   const FS = `precision highp float;
 varying vec2 uv; uniform sampler2D tex, texBlink, texGlance, texHappy, texAngry, flowHappy, flowAngry; uniform float blinkMix, glanceMix, happyMix, angryMix, flowMH, flowMA, swapLo, swapHi;
+uniform sampler2D depthTex; uniform float yaw, depthAt;
 uniform int nHeads; uniform vec2 hC[3]; uniform vec2 hR[3]; uniform vec2 hP[3]; uniform float hRot[3]; uniform vec2 hT[3];
 uniform vec4 brow; uniform float browAmt; uniform vec2 ck[2]; uniform float ckR; uniform float ckAmt; uniform int nCk;
 uniform vec4 mouth; uniform vec4 mouthAmt; uniform float mouthCr; uniform vec2 chest; uniform float breath;
 float g2(vec2 q) { return exp(-dot(q, q)); }
 void main() {
   vec2 d = vec2(0.0);
+  // a head turn (yaw): each point of the head slides sideways by how near it is (the depth map: nose most, ears
+  // least, the far side the other way), so it reads as the head rotating rather than the picture sliding
+  {
+    float e0 = length((uv - hC[0]) / hR[0]);
+    float w0 = (1.0 - smoothstep(0.8, 1.55, e0)) * (1.0 - smoothstep(hP[0].y - 0.06, hP[0].y + 0.10, uv.y));
+    d.x += yaw * (texture2D(depthTex, uv).r - depthAt) * w0;
+  }
   for (int i = 0; i < 3; i++) {
     if (i >= nHeads) break;
     float e = length((uv - hC[i]) / hR[i]);
@@ -161,7 +169,7 @@ void main() {
     const loc = gl.getAttribLocation(pr, "a"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const cache = {};
     const U = n => n in cache ? cache[n] : (cache[n] = gl.getUniformLocation(pr, n));
-    ["tex", "texBlink", "texGlance", "texHappy", "texAngry", "flowHappy", "flowAngry"].forEach((n, unit) => gl.uniform1i(U(n), unit));
+    ["tex", "texBlink", "texGlance", "texHappy", "texAngry", "flowHappy", "flowAngry", "depthTex"].forEach((n, unit) => gl.uniform1i(U(n), unit));
     G = { cv, gl, U };
     return G;
   }
@@ -189,7 +197,7 @@ void main() {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      if (++lp.loaded === FRAMES.length + 2 && !lp.gone) el.classList.add("lp-on");    // the still picture steps aside once the moving one is ready
+      if (++lp.loaded === FRAMES.length + 3 && !lp.gone) el.classList.add("lp-on");    // the still picture steps aside once the moving one is ready
     };
     const base = new Image();
     base.onload = () => {
@@ -213,6 +221,11 @@ void main() {
     };
     base.src = LIVING_DATA[who];
     // the happy and angry flow maps (units 5 and 6); none = no movement (128, 128)
+    // the depth map for head turns (unit 7); none = flat, so no turn
+    lp.hasDepth = !!LIVING_DATA[who + "-depth"];
+    lp.yawNow = 0; lp.yawLook = 0; lp.yawDrift = wander(); lp.yawLast = 0;
+    if (lp.hasDepth) { const im = new Image(); im.onload = () => { if (!lp.gone) upload(7, im, true); }; im.src = LIVING_DATA[who + "-depth"]; }
+    else { const c = document.createElement("canvas"); c.width = c.height = 1; const x = c.getContext("2d"); x.fillStyle = "rgb(128,128,128)"; x.fillRect(0, 0, 1, 1); upload(7, c, true); }
     lp.flowM = [0, 0];
     ["-happy-flow", "-angry-flow"].forEach((suf, k) => {
       const f = LIVING_DATA[who + suf];
@@ -223,7 +236,7 @@ void main() {
       im.src = f.src;
     });
     lp.draw = (t, now) => {
-      if (lp.loaded < FRAMES.length + 2) return;
+      if (lp.loaded < FRAMES.length + 3) return;
       const w = cv.clientWidth;
       if (!w) return;                                           // hidden (e.g. the Classic style has no portraits)
       const px = Math.round(w * Math.min(2, window.devicePixelRatio || 1));
@@ -270,6 +283,11 @@ void main() {
         Math.min(0.1, km * Math.max(0, lp.press(t)) * 0.05), Math.min(0.3 * mh, km * lp.part(t) * 0.06 * mh));
       gl.uniform2f(U("chest"), rig.heads[0].p[0], rig.heads[0].p[1]);
       gl.uniform1f(U("breath"), k * S.breath * lp.breath(t) * 0.0045);
+      // the head turn: a slow drift, plus look(): turning towards something, easing there and back
+      const dt = lp.yawLast ? Math.min(0.1, (now - lp.yawLast) / 1000) : 0; lp.yawLast = now;
+      lp.yawNow += (lp.yawLook - lp.yawNow) * Math.min(1, dt * 3.5);
+      const yawAmt = lp.hasDepth ? S.yaw * k * 0.4 * (lp.yawDrift(t * 0.6) * 0.35 + lp.yawNow) * 0.05 : 0;
+      gl.uniform1f(U("yaw"), yawAmt); gl.uniform1f(U("depthAt"), 0.6);
       gl.uniform1f(U("flowMH"), lp.flowM[0]); gl.uniform1f(U("flowMA"), lp.flowM[1]);
       // the colours change quickly going into a mood (hidden in the movement), but over most of the way back, so a
       // face that changes a lot (Faust's grin) lets go gradually instead of snapping back
@@ -326,5 +344,13 @@ void main() {
     const kind = { h: "happy", a: "angry" }[e.key.toLowerCase()];
     if (kind && !e.ctrlKey && !e.metaKey && !e.altKey) live.forEach(lp => mood(lp.el, kind, 3000));
   });
-  return { sync, mood, settings, rigs: LP_RIGS };
+  // turn a moving portrait's head: dir -1 (its left as seen) .. 1 (right), for holdMs, then back
+  function look(el, dir, holdMs = 1500) {
+    const lp = el && el._lp;
+    if (!lp) return false;
+    lp.yawLook = dir; clearTimeout(lp.lookTimer);
+    lp.lookTimer = setTimeout(() => { lp.yawLook = 0; }, holdMs);
+    return true;
+  }
+  return { sync, mood, look, settings, rigs: LP_RIGS };
 })();
