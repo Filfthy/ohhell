@@ -1199,7 +1199,7 @@ html:has(body.table-marble)   { background-color: #1c1c1e; }
 .seg-tables .sw-mahogany { background: url("table-mahogany.jpg") center / 200% !important; }
 .seg-tables .sw-tavern   { background: url("table-tavern.jpg") center / 200% !important; }
 .seg-tables .sw-marble   { background: url("table-marble.jpg") center / 200% !important; }
-.seg-tables label { flex: 1 1 22%; }
+.seg-tables label { flex: 1 1 30%; }   /* nine tables: three even rows of three (none stretched) */
 
 /* ===== Card backs ===== */
 body.back-hellfire .card.back {
