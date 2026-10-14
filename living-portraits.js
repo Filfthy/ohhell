@@ -19,6 +19,9 @@ const LivingPortraits = (() => {
   // each rig, in fractions of the portrait's square: heads (centre, radii, neck pivot), brow (x, y, rx, ry), cheeks (one or two;
   // cr their reach - kept clear of the nose), mouth (x, y, half width, half height), mc the reach of the mouth's corners
   const LP_RIGS = {
+    // the hooded player: no face to speak of - the hood breathes, shifts and turns; the brow, cheeks and mouth sit in
+    // the dark inside it, where they move nothing you can see
+    player:     { heads: [{ c: [0.50, 0.40], r: [0.36, 0.36], p: [0.50, 0.80] }], brow: [0.50, 0.42, 0.08, 0.02], cheeks: [[0.43, 0.55], [0.57, 0.55]], cr: 0.03, mouth: [0.50, 0.62, 0.05, 0.02] },
     // set A
     persephone: { heads: [{ c: [0.55, 0.32], r: [0.27, 0.30], p: [0.585, 0.68] }], brow: [0.62, 0.335, 0.12, 0.025], cheeks: [[0.50, 0.48], [0.715, 0.49]], cr: 0.033, mouth: [0.62, 0.522, 0.05, 0.02] },
     lilith:     { heads: [{ c: [0.48, 0.32], r: [0.30, 0.32], p: [0.50, 0.68] }], brow: [0.51, 0.34, 0.14, 0.025], cheeks: [[0.39, 0.47], [0.65, 0.48]], cr: 0.035, mouth: [0.515, 0.522, 0.055, 0.022] },

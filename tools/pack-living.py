@@ -32,7 +32,8 @@ def flow_map(base, im):
 
 CAST = ["persephone", "lilith", "faust", "davy-jones", "bub", "cerberus", "anubis", "kali",
         "hellga", "jezebel", "morgana", "lamia", "loki", "hecate", "ereshkigal",
-        "charon", "ammit", "brimstone", "ronnie", "sojobo", "old-nick"]      # (the Banshee is benched)
+        "charon", "ammit", "brimstone", "ronnie", "sojobo", "old-nick",
+        "player"]      # (the Banshee is benched; "player" is the hooded figure - no face, so only the neutral and a depth map)
 F = "infernal/expressions/frames/"
 PAD = 4
 

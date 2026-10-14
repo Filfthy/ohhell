@@ -1073,7 +1073,7 @@ class GameController {
         if (won <= bid) { kind = "win"; hold = won === bid ? 2800 : 1800; }
         else kind = "bust";
       } else if (!this.bustSeen[s] && bid - won > left) kind = "bust";
-      if (kind === "bust") this.bustSeen[s] = true;
+      if (kind === "bust") { this.bustSeen[s] = true; if (typeof CAVE !== "undefined") CAVE.flare(); }   // the queen in the cave stirs
       if (kind) this.react(s, kind, hold);
     }
   }
@@ -1848,12 +1848,13 @@ class GameController {
     const trumpRadios = document.querySelectorAll('input[name="trumpmode"]');
     const deckRadios = document.querySelectorAll('input[name="deck"]');
     // Table surface (applied immediately, remembered).
-    const TABLES = ["green", "red", "blue", "walnut", "mahogany", "tavern", "marble", "souls"];
+    const TABLES = ["green", "red", "blue", "walnut", "mahogany", "tavern", "marble", "souls", "cave"];
     const applyTable = (t) => {
       TABLES.forEach(x => document.body.classList.remove("table-" + x));
       document.body.classList.add("table-" + t);
       // the Souls table is animated; a background must never stop the start screen working
       try { if (typeof SOULS !== "undefined") SOULS.setActive(t === "souls"); } catch (e) { /* ignore */ }
+      try { if (typeof CAVE !== "undefined") { CAVE.onDrip = v => this.sfxDrip(v); CAVE.setActive(t === "cave"); } } catch (e) { /* ignore */ }
     };
     let table = "green";
     try { const t = localStorage.getItem("oh_table"); if (TABLES.includes(t)) table = t; } catch (e) { /* ignore */ }
@@ -2456,6 +2457,23 @@ class GameController {
     };
     burst(0, 0.06, 2600, 0.29);
     burst(0.07, 0.05, 3400, 0.22);
+  }
+  // a drop of water landing somewhere in the cave: a soft falling "plip" and its faint echo (quiet; only on the Cave)
+  sfxDrip(v = 1) {
+    if (this.soundMuted || !this.audioCtx) return;
+    const ctx = this.audioCtx;
+    const plip = (t, peak, f0) => {
+      const now = ctx.currentTime + t, o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(f0, now); o.frequency.exponentialRampToValueAtTime(f0 * 0.45, now + 0.07);
+      g.gain.setValueAtTime(0.0001, now); g.gain.exponentialRampToValueAtTime(peak, now + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+      o.connect(g).connect(this.sfxOut(ctx)); o.start(now); o.stop(now + 0.14);
+    };
+    const f0 = 1300 + Math.random() * 700;
+    plip(0, 0.035 * v, f0);
+    plip(0.19, 0.012 * v, f0 * 0.98);
+    plip(0.36, 0.005 * v, f0 * 0.97);
   }
   sfxTick()        { this.playTones([[1800, 0, 0.03]], { type: "square", gain: 0.035 }); }
   sfxTrickMine()   { this.playTones([[784, 0, 0.12], [1175, 0.08, 0.2]], { gain: 0.13 }); }

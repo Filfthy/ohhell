@@ -2270,3 +2270,31 @@ html, body { -webkit-user-select: none; user-select: none; -webkit-tap-highlight
 input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
 ::selection { background: transparent; }
 input::selection, textarea::selection { background: rgba(212, 166, 78, 0.45); }
+
+/* ===== The Cave table (oh-cave.js draws it on #cave-bg; from Black Spider) ===== */
+body.table-cave { background: transparent !important; --ui-rgb: 24, 16, 11; --ui-accent: #a87a52; --ui-accent-rgb: 168, 122, 82; --ui-accent-hi: #c0915f; --ui-soft: rgb(232, 196, 150); --ui-soft-rgb: 232, 196, 150; }
+html:has(body.table-cave) { background-color: #0c0806; }
+#cave-bg { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: -1; pointer-events: none; display: none; }
+.seg-tables .sw-cave { background: radial-gradient(circle at 18% 22%, rgba(215,205,190,0.35) 0 1px, transparent 2px),
+  repeating-conic-gradient(from 0deg at 0 0, rgba(215,205,190,0.25) 0 1deg, transparent 1deg 12deg),
+  radial-gradient(ellipse at 50% 60%, #3a2a1e, #0c0806) !important; color: #e8d6b8 !important; }
+/* on the Cave the bidding panel is just its outline over the picture, no shading: its words have a thin dark edge */
+body.table-cave #bid-panel { background: none !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+body.table-cave #bid-panel #bid-title, body.table-cave #bid-panel #bid-note { text-shadow: 0 0 1px #000, 0 0 2px #000, 0 0 3px #000, 0 1px 2px #000; }
+/* messages are just words, so they don't blot out the queen's eyes */
+body.table-cave .capture-toast {
+  background: none !important; border-color: transparent !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  text-shadow: 0 0 1px #000, 0 0 2px #000, 0 0 4px #000, 0 1px 3px #000;
+}
+/* the round summary and the scorecard: no dimming of the whole screen; their own background dark and slightly
+   see-through, no blur; their borders kept */
+body.table-cave #end-overlay, body.table-cave #scorecard,
+body.table-cave .end-table, body.table-cave .end-table th, body.table-cave .end-table td, body.table-cave .end-table tr,
+body.table-cave .scorecard-panel table, body.table-cave .scorecard-panel th, body.table-cave .scorecard-panel td, body.table-cave .scorecard-panel tr {
+  background: none !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+body.table-cave #end-panel, body.table-cave .scorecard-panel {
+  background: rgba(8, 5, 3, 0.72) !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  text-shadow: 0 0 1px #000, 0 0 2px #000, 0 1px 3px #000;
+}
