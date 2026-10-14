@@ -303,7 +303,7 @@ const CAVE = {
       if (d.st === "form") { if (d.t > 1.4) { d.st = "fall"; d.t = 0; } }
       else if (d.st === "fall") {
         d.v += d.g * dt; d.fy += d.v * dt;
-        if (d.y + d.fy >= d.land) { d.st = "splash"; d.t = 0; if (this.onDrip) this.onDrip(d.wet ? 1 : 0.6); }
+        if (d.y + d.fy >= d.land) { d.st = "splash"; d.t = 0; }
       }
     }
     this.drips = this.drips.filter(d => !(d.st === "splash" && d.t > 1.6));
