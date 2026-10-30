@@ -2678,7 +2678,10 @@ Synth.prototype.celli=function(t,f,dur,v,dest){this.tapeStrings(t,f,dur,v,dest,-
           if(last){for(let m=top-3;m>=top-24;m--)if(isTone(m))ps.push(m);}
           else{let m=top-3;while(!isTone(m))m--;ps.push(m);m--;while(!isTone(m)||m%12===ps[0]%12)m--;ps.push(m);let lo=top-12;while(lo%12!==r)lo--;ps.push(lo);}
           ps.forEach((m,i)=>S.alienSing(at(e.at)+0.004*(i+1),hz(m-12),e.beats*beat*1.02,last?0.42:0.55,harm,e.syl,{echo:0.18,scale:[1.2,1.05,0.9,1.1,0.95,0.85][i%6],pan:[-0.7,0.7,0,-0.35,0.35,-0.6][i%6]}));});}
-      if(last){ring([[0,3.8]],1);S.epicBass(t,bass,bar,1.5,bus);K(0,1);crash(1.3);S.bell(t,hz(54),1,bus);S.bell(at(0.02),hz(66),0.7,bus);S.sleighBells(t,1.3,bus,true);S.sleighBells(at(0.5),1,bus,true);choir(0.45);S.alienChatter(at(2.5),beat*1.5,0.4,vox,b,320,1.5);return;}
+      // a bell with each note of the last climb ("O tidings of")
+      if(sec==='outro'&&k===5)((this.lead||lead)[b]||[]).forEach(e=>{if(!e.part)S.bell(at(e.at),hz(e.midi),0.75,bus);});
+      if(last){[78,73,69,66].forEach((m,i)=>S.bell(at(1.5+i),hz(m),0.85,bus));   // the intro's peal again, in the new key, as the last chord dies away
+        ring([[0,3.8]],1);S.epicBass(t,bass,bar,1.5,bus);K(0,1);crash(1.3);S.bell(t,hz(54),1,bus);S.bell(at(0.02),hz(66),0.7,bus);S.sleighBells(t,1.3,bus,true);S.sleighBells(at(0.5),1,bus,true);choir(0.45);S.alienChatter(at(2.5),beat*1.5,0.4,vox,b,320,1.5);return;}
       switch(sec){
       case 'intro':   // sleigh bells and the bells pealing, the creatures chattering, a swell - and straight into the first verse
         sleigh();peal(0.5+0.1*k);
