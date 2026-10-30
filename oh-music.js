@@ -2681,6 +2681,7 @@ Synth.prototype.celli=function(t,f,dur,v,dest){this.tapeStrings(t,f,dur,v,dest,-
       // a bell with each note of the last climb ("O tidings of")
       if(sec==='outro'&&k===5)((this.lead||lead)[b]||[]).forEach(e=>{if(!e.part)S.bell(at(e.at),hz(e.midi),0.75,bus);});
       if(last){[78,73,69,66].forEach((m,i)=>S.bell(at(1.5+i),hz(m),0.85,bus));   // the intro's peal again, in the new key, as the last chord dies away
+        [78,76,74,73,71,69,68,66].forEach((m,i)=>S.bell(at(5.5+i),hz(m),0.8-i*0.045,bus));S.bell(at(13.5),hz(54),0.7,bus);   // then rounds down the scale, ringing on for two bars after the song
         ring([[0,3.8]],1);S.epicBass(t,bass,bar,1.5,bus);K(0,1);crash(1.3);S.bell(t,hz(54),1,bus);S.bell(at(0.02),hz(66),0.7,bus);S.sleighBells(t,1.3,bus,true);S.sleighBells(at(0.5),1,bus,true);choir(0.45);S.alienChatter(at(2.5),beat*1.5,0.4,vox,b,320,1.5);return;}
       switch(sec){
       case 'intro':   // sleigh bells and the bells pealing, the creatures chattering, a swell - and straight into the first verse
