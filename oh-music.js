@@ -2598,7 +2598,7 @@ Synth.prototype.celli=function(t,f,dur,v,dest){this.tapeStrings(t,f,dur,v,dest,-
     'E6:1 B5:1 B5:1 A5:1 | G5:1 F#5:1 E5:1 D5:1 | E5:0.5 F#5:0.5 G5:0.5 A5:0.5 B5:0.5 C6:0.5 D6:0.5 E6:0.5 | F#6:4 | '+
     'G6:0.25 F#6:0.25 E6:0.25 B5:0.25 G6:0.25 F#6:0.25 E6:0.25 B5:0.25 G6:0.25 F#6:0.25 E6:0.25 B5:0.25 E6:1 | F#6:0.25 E6:0.25 D6:0.25 A5:0.25 F#6:0.25 E6:0.25 D6:0.25 A5:0.25 F#6:0.25 E6:0.25 D6:0.25 A5:0.25 D6:1 | '+
     'E6:0.25 D6:0.25 C6:0.25 G5:0.25 E6:0.25 D6:0.25 C6:0.25 G5:0.25 C6:0.5 E6:0.5 G6:0.5 C7:0.5 | B6:2 A6:0.5 F#6:0.5 D#6:0.5 B5:0.5 | '+
-    'E6:1.5 B5:0.5 E6:1 G6:1 | F#6:1.5 D6:0.5 A6:2 | G6:0.5 E6:0.5 C6:0.5 E6:0.5 G6:1 E6:1 | D#6:0.5 F#6:0.5 B6:1 F#6:0.5 D#6:0.5 B5:1');
+    'E6:1.5 B5:0.5 E6:1 G6:1 | F#6:1.5 D6:0.5 A6:2 | B5:0.5 D#6:0.5 F#6:0.5 A6:0.5 B6:0.5 D#7:0.5 F#7:1 | E7:3.5 r:0.5');   // up the B7 to a held top E: the solo ends
   // the breakdown: the first line again, an octave up and legato, written as a singer's part like the aria in First
   // Contact: NOTE:BEATS[:WORD][:ORNAMENTS], g:NOTE a grace note, r:BEATS a breath
   const BREAK='E5:1:o:scoop B5:2:-:slide A5:1 | G5:1 F#5:1 E5:1 D5:1 | g:D5 E5:1:shi F#5:1 G5:1 A5:1:-:slide | B5:3.5:-:tr r:0.5 | '+
@@ -2634,7 +2634,7 @@ Synth.prototype.celli=function(t,f,dur,v,dest){this.tapeStrings(t,f,dur,v,dest,-
     bpm:132,beats:4,send:0.2,gain:0.6,
     // intro 4 | verse 20 | riff 8 | verse 20 | solo 16 | breakdown 8 | verse (up a tone) 20 | outro 8
     sections:[[0,'intro'],[4,'verse'],[24,'riff'],[32,'verse 2'],[52,'solo'],[68,'breakdown'],[76,'verse 3'],[96,'outro']],
-    chords:['Em','Em','Em','B7',...V,...R,...V,...rep(['Em','D','C','B7'],4),'Em','D','C','B7','Em','D','C','C#7',...V.map(c=>UP[c]),...['C','B7','Em','Em','D','C','B7','Em'].map(c=>UP[c])],
+    chords:['Em','Em','Em','B7',...V,...R,...V,...rep(['Em','D','C','B7'],3),'Em','D','B7','Em','Em','D','C','B7','Em','D','C','C#7',...V.map(c=>UP[c]),...['C','B7','Em','Em','D','C','B7','Em'].map(c=>UP[c])],
     parts:[{inst:'ehLead',vel:0.85,shift:-12,notes:[...quiet(52),...solo,...quiet(36)]},
       {inst:'violins1',vel:1,shift:0,notes:[...quiet(24),...riff,...quiet(72)]},
       {inst:'violins2',vel:0.75,shift:0,notes:[...quiet(24),...vln2,...quiet(72)]},
@@ -2695,10 +2695,11 @@ Synth.prototype.celli=function(t,f,dur,v,dest){this.tapeStrings(t,f,dur,v,dest,-
         if(k===7)fill();
         return;
       case 'solo':   // the gallop under the solo; the creatures answer it in the second half
+        // its last bar is one hit with the whole band on E minor, left to ring under her held top E
+        if(k===15){ring([[0,3.8]],1.1);S.epicBass(t,bass,bar*.95,1.5,bus);K(0,1.1);crash(1.3);S.bell(t,hz(64),0.8,bus);S.sleighBells(t,1.1,bus,true);return;}
         gallop(1);rock(1);sleigh();
         if(k>=8&&k%2===1)S.alienChatter(at(0.3),beat*3,0.55,vox,b,300+((k*37)%5)*20,1.5);
         if(k%8===0){crash();S.bell(t,hz(64),0.8,bus);}
-        if(k===15)fill();
         return;
       case 'breakdown':   // the band falls away: soft sleigh bells, a glockenspiel, the low choir; she sings the first line legato; then the build to the key change
         choir(0.38);sleigh();S.epicBass(t,bass,bar*0.95,0.9,bus);
