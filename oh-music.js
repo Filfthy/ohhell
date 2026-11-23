@@ -3019,6 +3019,21 @@ Synth.prototype.tabla=function(t,f,v,dest){   // a hand drum: a bent tone and a 
   const o=this.osc('sine',f*1.5,t,t+0.5),g=this.amp(t,0.002,0.5*v,0.3,t+0.5);o.frequency.exponentialRampToValueAtTime(f,t+0.05);o.connect(g);g.connect(dest);
   this.hit(t,0.16*v,dest,f>200?3200:1800,1.5,0.012);
 };
+// a concert marimba for Kenya: the bar's note rings on through its tube resonator (two sines a hair apart give the
+// slow shimmer of a real resonator), an octave and the bright upper partials die quickly, a felt mallet's knock,
+// and a little of the room
+// A long note is rolled (tremolo): two mallets alternating fast, a little uneven, the strikes swelling and easing.
+Synth.prototype.bigMarimba=function(t,f,dur,v,dest){
+  const room=this.ctx.createGain();room.gain.value=0.22;room.connect(this.verb);
+  const strike=(t0,vv,ring)=>{const end=t0+ring+0.6;
+    for(const [ratio,level,decay] of [[1,0.46,ring],[1.004,0.22,ring*1.25],[2,0.03,0.3],[4,0.075,0.12],[10,0.012,0.05]]){
+      const g=this.amp(t0,0.002,level*vv,decay,end);this.osc('sine',f*ratio,t0,end).connect(g);g.connect(dest);if(ratio<2)g.connect(room);}
+    this.hit(t0,0.1*vv,dest,Math.min(2400,f*3),1.2,0.02,'lowpass');};
+  if(dur<0.5){strike(t,v,1.0);return;}
+  const n=Math.max(2,Math.floor(dur*13));
+  for(let i=0;i<n;i++){const x=i/n,swell=0.62+0.3*Math.sin(Math.PI*Math.min(1,x*1.4));
+    strike(t+i/13+(i%2?0.006:0),v*(i?swell*(i%2?0.88:1):1),i===n-1?1.0:0.28);}
+};
 // a fingered bass in the Steve Harris manner: bright roundwound strings played hard, all mids and clank, a snap off
 // the fingers and the string slapping the frets, light drive, with a round sine underneath so it keeps its bottom
 Synth.prototype.harrisBass=function(t,f,dur,v,dest){
@@ -3070,14 +3085,14 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
   TUNES.splice(TUNES.findIndex(t=>t.id==='jingleVoid')+1,0,{
     id:'stampede',title:'Stampede Across the Stars',
     meta:'Techno space rock · E minor, then F sharp minor · 136 bpm · four on the floor, acid sequencer, heavy band, and a hook that visits eight worlds',
-    desc:'The Vector Space teaser. Four on the floor and a galloping Steve Harris bass under the heavy band and an acid sequencer, and one synth hook that travels from world to world: a church bell and chugging guitars in England, a didgeridoo in Australia, a Phrygian Stylophone over darbuka in Egypt, trumpeting elephants and blaring brass over timpani in India, then up a tone for marimba in Kenya, pan flute in Peru and a stampede with whips and harmonica in the USA. On the ice of Antarctica the drums drop away for a theremin and a choir, the drone lifts off with the hook in octaves, and the band falls away into the stars.',
+    desc:'The Vector Space teaser. Four on the floor and a galloping Steve Harris bass under the heavy band and an acid sequencer, and one synth hook that travels from world to world: a church bell and chugging guitars in England, a didgeridoo in Australia, a Phrygian Stylophone over darbuka in Egypt, trumpeting elephants and blaring brass over timpani in India, then up a tone for a ringing marimba in Kenya, pan flute in Peru and a stampede with whips and harmonica in the USA. On the ice of Antarctica the drums drop away for a theremin and a choir, the drone lifts off with the hook in octaves, and the band falls away into the stars.',
     bpm:136,beats:4,send:0.25,gain:0.6,sections,chords,
     parts:[
       {inst:'ehSynLead',vel:0.95,shift:0,notes:[...Q(8),...Q(4),...hook,...Q(4),...hook,...Q(12),...Q(12),...Q(12),...Q(12),...Q(12),...Q(8),...Q(2),...hook.slice(0,4),...Q(2)]},
       {inst:'ehSynHigh',vel:0.5,shift:12,notes:[...Q(102),...hook.slice(0,4),...Q(2)]},
       {inst:'styloDrive',vel:0.8,shift:-12,notes:[...Q(36),...hookEgypt,...Q(64)]},
       {inst:'elephantHorn',vel:1.1,shift:-12,notes:[...Q(48),...hook,...Q(52)]},
-      {inst:'marimba',vel:1,shift:0,notes:[...Q(60),...hookUp,...Q(40)]},
+      {inst:'bigMarimba',vel:0.85,shift:0,notes:[...Q(60),...hookUp,...Q(40)]},
       {inst:'spaceFlute',vel:0.9,shift:0,notes:[...Q(72),...hookUp,...Q(28)]},
       {inst:'surfGtr',vel:0.85,shift:-12,notes:[...Q(84),...hookUp,...Q(16)]},
       {inst:'ehTheremin',vel:0.9,shift:0,notes:[...Q(92),...slow,...Q(8)]}],
@@ -3141,7 +3156,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
         return;
       case 'kenya':   // the marimba's ostinato and drums in three against four
         for(let x=0;x<4;x+=4/3)X.tom(x,0.8,[180,150,120][Math.round(x*3/4)%3]);
-        if(k<4)for(let i=0;i<8;i++)S.marimba(at(i/2),hz(64+r-4+[0,7,12,7,third+12,7,12,19][i]),beat*0.4,0.75,bus);
+        if(k<4)for(let i=0;i<8;i++)S.bigMarimba(at(i/2),hz(64+r-4+[0,7,12,7,third+12,7,12,19][i]),beat*0.4,0.6,bus);
         else X.pushes(0.7);
         return;
       case 'peru':   // charango strums and the bombo drum
