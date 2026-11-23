@@ -3094,10 +3094,10 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
     parts:[
       {inst:'ehSynLead',vel:0.95,shift:0,notes:[...Q(8),...Q(4),...hook,...Q(4),...hook,...Q(12),...Q(12),...Q(12),...Q(12),...Q(12),...Q(8),...Q(2),...hook.slice(0,4),...Q(2)]},
       {inst:'ehSynHigh',vel:0.5,shift:12,notes:[...Q(102),...hook.slice(0,4),...Q(2)]},
-      {inst:'styloDrive',vel:0.8,shift:-12,notes:[...Q(36),...hookEgypt,...Q(64)]},
-      {inst:'elephantHorn',vel:1.1,shift:-12,notes:[...Q(48),...hook,...Q(52)]},
+      {inst:'styloDrive',vel:1.25,shift:-12,notes:[...Q(36),...hookEgypt,...Q(64)]},
+      {inst:'elephantHorn',vel:1.55,shift:-12,notes:[...Q(48),...hook,...Q(52)]},
       {inst:'bigMarimba',vel:0.85,shift:0,notes:[...Q(60),...hookUp,...Q(40)]},
-      {inst:'spaceFlute',vel:0.9,shift:0,notes:[...Q(72),...hookUp,...Q(28)]},
+      {inst:'spaceFlute',vel:1.8,shift:0,notes:[...Q(72),...hookUp,...Q(28)]},
       {inst:'surfGtr',vel:0.85,shift:-12,notes:[...Q(84),...hookUp,...Q(16)]},
       {inst:'ehTheremin',vel:0.9,shift:0,notes:[...Q(92),...slow,...Q(8)]}],
     accomp(S,bus,t,b,ch,beat){
