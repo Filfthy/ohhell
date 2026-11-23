@@ -3097,7 +3097,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       {inst:'styloDrive',vel:1.25,shift:-12,notes:[...Q(36),...hookEgypt,...Q(64)]},
       {inst:'elephantHorn',vel:1.55,shift:-12,notes:[...Q(48),...hook,...Q(52)]},
       {inst:'bigMarimba',vel:0.85,shift:0,notes:[...Q(60),...hookUp,...Q(40)]},
-      {inst:'spaceFlute',vel:1.8,shift:0,notes:[...Q(72),...hookUp,...Q(28)]},
+      {inst:'spaceFlute',vel:3.4,shift:0,notes:[...Q(72),...hookUp,...Q(28)]},
       {inst:'surfGtr',vel:0.85,shift:-12,notes:[...Q(84),...hookUp,...Q(16)]},
       {inst:'ehTheremin',vel:0.9,shift:0,notes:[...Q(92),...slow,...Q(8)]}],
     accomp(S,bus,t,b,ch,beat){
