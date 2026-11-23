@@ -3086,7 +3086,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
     id:'stampede',title:'Stampede Across the Stars',
     meta:'Techno space rock · E minor, then F sharp minor · 136 bpm · four on the floor, acid sequencer, heavy band, and a hook that visits eight worlds',
     desc:'The Vector Space teaser. Four on the floor and a galloping Steve Harris bass under the heavy band, the alien voice chopped into a riff that rises and falls through the mix, the band spread wide in stereo, and an acid sequencer, and one synth hook that travels from world to world: a church bell and chugging guitars in England, a didgeridoo in Australia, a Phrygian Stylophone over darbuka in Egypt, trumpeting elephants and blaring brass over timpani in India, then up a tone for a ringing marimba in Kenya, pan flute in Peru and a stampede with whips and harmonica in the USA. On the ice of Antarctica the drums drop away for a theremin and a choir, the drone lifts off with the hook in octaves, and the band falls away into the stars.',
-    bpm:136,beats:4,send:0.25,gain:0.55,sections,chords,
+    bpm:136,beats:4,send:0.25,gain:0.52,sections,chords,
     parts:[
       {inst:'ehSynLead',vel:0.95,shift:0,notes:[...Q(8),...Q(4),...hook,...Q(4),...hook,...Q(12),...Q(12),...Q(12),...Q(12),...Q(12),...Q(8),...Q(2),...hook.slice(0,4),...Q(2)]},
       {inst:'ehSynHigh',vel:0.5,shift:12,notes:[...Q(102),...hook.slice(0,4),...Q(2)]},
@@ -3120,7 +3120,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       const chop=(v=1)=>{if(v<=0)return;RIFF[b%2].forEach(([x,syl,d],i)=>S.alienSing(at(x),hz(64+r-4+d),beat*0.2,v,bus,syl,{scale:1.5,echo:0.3,pan:i%2?0.55:-0.55}));};
       // how loud the riff is, bar by bar: out in front as the camera arrives at a herd, tucked under the hook after,
       // and riding high through the stampede and the build at the end
-      const RIFF_LEVEL={england:[0.8,0.17],australia:[0.5,0.15],egypt:[0.7,0.15],india:[0.5,0.13],kenya:[0.35,0.14],peru:[0.7,0.17],usa:[1,0.25]};   // [arriving, under the hook]
+      const RIFF_LEVEL={england:[0.8,0.06],australia:[0.5,0.05],egypt:[0.7,0.05],india:[0.5,0.05],kenya:[0.35,0.05],peru:[0.7,0.06],usa:[1,0.08]};   // [arriving, under the hook]
       // the stereo band: everything played twice, hard left and hard right, the right a hair late
       const dbl=fn=>{fn(S.pan(bus,-0.6),0);fn(S.pan(bus,0.6),0.012);};
       const chugW=(v=1)=>{for(let i=0;i<8;i++)dbl((d,dt)=>S.ehRhythm(at(i/2)+dt,X.pc,beat*0.32,(i%2?0.75:0.95)*v*0.8,d,false));};
@@ -3132,7 +3132,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       if(world){   // the groove every world shares: four on the floor and the gallop
         if(sec==='india')stomp(1);else four(1);gallopBass(1);if(sec!=='usa'&&sec!=='india'){gallopToms(k<4?0.8:1);if(hookBars&&sec!=='egypt')gallopGtr(0.6);}acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
         if(k===0){X.crash(1.15);S.ehSweep(t,hz(52),X.bar,0.6,bus,false);}
-        const RL=RIFF_LEVEL[sec];if(RL)chop(sec==='usa'&&k>=9?0.4:RL[k<4?0:1]);
+        const RL=RIFF_LEVEL[sec];if(RL)chop(sec==='usa'&&k>=9?0.12:RL[k<4?0:1]);
         if(k===4)X.crash(1);if(k===11)X.fill();
       }
       switch(sec){
@@ -3186,14 +3186,14 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
         pad(0.75);X.choir(tones,0.3);acid(500+120*k,0.35);
         for(let x=0;x<4;x+=0.5)X.H(x,0.25);
         if(k===0)S.ehSweep(t,hz(64),X.bar*2,0.8,bus,false);
-        if(k===2||k===3)chop(0.15);if(k>=6)chop(0.25+0.1*(k-6));   // softly: the theremin has the tune
+        if(k===2||k===3)chop(0.06);if(k>=6)chop(0.1+0.04*(k-6));   // softly: the theremin has the tune
         if(k>=4)X.K(0,0.7);if(k>=5)X.K(2,0.7);
         if(k>=6){four(0.8,false);roll(0.6);}
         if(k===6)S.ehJet(t,X.bar*2,1,bus,true);
         if(k===7){for(let i=0;i<16;i++)S.epicSnare(at(i/4),0.3+i*0.04,bus);S.ehSweep(t,hz(40),X.bar,1,bus,true);}
         return;
       case 'lift-off':   // the hook in octaves; then the band stops and the drone drifts out into the stars
-        if(k<6){four(1);roll(1);pushesW(1);chop(k<2?(k%2?0.95:0.6):(k%2?0.4:0.25));acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
+        if(k<6){four(1);roll(1);pushesW(1);chop(k<2?(k%2?0.95:0.6):(k%2?0.12:0.08));acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
         else{pad(0.7-0.25*(k-6),X.bar*(k===7?2.4:0.97));acid(2400*Math.pow(0.35,k-5),0.45-0.15*(k-6));
           if(k===6)chop(0.4);
           if(k===6){X.K(0,1);X.crash(1.3);S.epicBass(t,X.bass,X.bar,1.4,bus);S.bell(t,hz(52),0.8,bus);S.ehSweep(t,hz(76),X.bar*2.5,0.8,bus,false);S.ehJet(t,X.bar*2.5,0.7,bus,false);}}
