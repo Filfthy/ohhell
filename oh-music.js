@@ -3085,7 +3085,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
   TUNES.splice(TUNES.findIndex(t=>t.id==='jingleVoid')+1,0,{
     id:'stampede',title:'Stampede Across the Stars',
     meta:'Techno space rock · E minor, then F sharp minor · 136 bpm · four on the floor, acid sequencer, heavy band, and a hook that visits eight worlds',
-    desc:'The Vector Space teaser. Four on the floor and a galloping Steve Harris bass under the heavy band, the alien voice chopped into the beat and chattering on the radio, and an acid sequencer, and one synth hook that travels from world to world: a church bell and chugging guitars in England, a didgeridoo in Australia, a Phrygian Stylophone over darbuka in Egypt, trumpeting elephants and blaring brass over timpani in India, then up a tone for a ringing marimba in Kenya, pan flute in Peru and a stampede with whips and harmonica in the USA. On the ice of Antarctica the drums drop away for a theremin and a choir, the drone lifts off with the hook in octaves, and the band falls away into the stars.',
+    desc:'The Vector Space teaser. Four on the floor and a galloping Steve Harris bass under the heavy band, the alien voice chopped into a riff that rises and falls through the mix, the band spread wide in stereo, and an acid sequencer, and one synth hook that travels from world to world: a church bell and chugging guitars in England, a didgeridoo in Australia, a Phrygian Stylophone over darbuka in Egypt, trumpeting elephants and blaring brass over timpani in India, then up a tone for a ringing marimba in Kenya, pan flute in Peru and a stampede with whips and harmonica in the USA. On the ice of Antarctica the drums drop away for a theremin and a choir, the drone lifts off with the hook in octaves, and the band falls away into the stars.',
     bpm:136,beats:4,send:0.25,gain:0.6,sections,chords,
     parts:[
       {inst:'ehSynLead',vel:0.95,shift:0,notes:[...Q(8),...Q(4),...hook,...Q(4),...hook,...Q(12),...Q(12),...Q(12),...Q(12),...Q(12),...Q(8),...Q(2),...hook.slice(0,4),...Q(2)]},
@@ -3102,8 +3102,8 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       const four=(v=1,clap=true)=>{for(let x=0;x<4;x++){X.K(x,v);X.H(x,0.35*v);X.H(x+0.5,0.75*v,true);}if(clap){X.SN(1,0.85*v);X.SN(3,0.85*v);}};
       const roll=(v=1)=>{for(let i=0;i<16;i++)if(i%4)S.harrisBass(at(i/4),X.bass,beat*0.2,(i%4===2?1:0.7)*1.3*v,bus);};
       const acid=(cut,v=0.55)=>{const ns=[0,12,7,12,third+12,12,7,12,0,12,7,19,third+12,12,7,24];
-        for(let i=0;i<16;i++)S.ehSeq(at(i/4),hz(48+r+ns[i]),beat*0.2,1.5*v*(i%4===0?1:0.7),X.fx.pad,cut*(1+0.35*Math.sin(i/8*Math.PI)));};
-      const pad=(v=0.5,d=X.bar*0.97)=>tones.forEach(m=>S.ehPad(t,hz(m),d,v,bus));
+        for(let i=0;i<16;i++)S.ehSeq(at(i/4),hz(48+r+ns[i]),beat*0.2,1.5*v*(i%4===0?1:0.7),S.pan(X.fx.pad,i%2?0.45:-0.45),cut*(1+0.35*Math.sin(i/8*Math.PI)));};
+      const pad=(v=0.5,d=X.bar*0.97)=>tones.forEach((m,i)=>S.ehPad(t,hz(m),d,v,S.pan(bus,[-0.55,0,0.55][i%3])));
       const world=sec!=='intro'&&sec!=='antarctica'&&sec!=='lift-off',hookBars=world&&k>=4;
       // The gallop: the bass in "DUM da-da" (an eighth and two sixteenths) on every beat, low toms
       // doubling the "da-da", and in the hook bars the guitars chugging the same figure.
@@ -3114,17 +3114,25 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       const gallopBass=(v=1)=>{for(let q=0;q<3;q++)[0,.5,.75].forEach((x,i)=>hb(q+x,bm,i?0.18:0.38,(i?0.75:1)*1.4*v));
         if(nbm!==bm)[bm,bm+third,bm+7,bm+(third===3?10:11)].forEach((m,i)=>hb(3+i/4,m,0.2,(i?0.85:1)*1.4*v));
         else[0,.5,.75].forEach((x,i)=>hb(3+x,bm+(b%2?12:0),i?0.18:0.38,(i?0.75:1)*1.4*v));};
+      // The alien voice from the Christmas video, never singing or speaking: clipped syllables chopped into a riff.
+      const RIFF=[[[0,'ka',0],[0.75,'shi',0],[1.5,'ka',7],[2,'ru',0],[2.75,'ka',0],[3.5,'mo',12]],
+        [[0,'ka',0],[0.5,'ka',0],[1,'shi',7],[1.75,'ru',12],[2.5,'ka',0],[3,'mo',7],[3.25,'ka',0]]];
+      const chop=(v=1)=>{if(v<=0)return;RIFF[b%2].forEach(([x,syl,d],i)=>S.alienSing(at(x),hz(64+r-4+d),beat*0.2,v,bus,syl,{scale:1.5,echo:0.3,pan:i%2?0.55:-0.55}));};
+      // how loud the riff is, bar by bar: out in front as the camera arrives at a herd, tucked under the hook after,
+      // and riding high through the stampede and the build at the end
+      const RIFF_LEVEL={england:[0.8,0.35],australia:[0.5,0.3],egypt:[0.7,0.3],india:[0.5,0.25],kenya:[0.35,0.28],peru:[0.7,0.35],usa:[1,0.5]};
+      // the stereo band: everything played twice, hard left and hard right, the right a hair late
+      const dbl=fn=>{fn(S.pan(bus,-0.6),0);fn(S.pan(bus,0.6),0.012);};
+      const chugW=(v=1)=>{for(let i=0;i<8;i++)dbl((d,dt)=>S.ehRhythm(at(i/2)+dt,X.pc,beat*0.32,(i%2?0.75:0.95)*v*0.8,d,false));};
+      const pushesW=(v=1)=>[[0,1.4],[1.5,0.4],[2,1.4],[3.5,0.4]].forEach(([x,du])=>dbl((d,dt)=>S.ehRhythm(at(x)+dt,X.pc,beat*du,v*0.8,d,true)));
       // India's stomp: a heavy rock beat for the elephants instead of four on the floor
-      // The alien voice from the Christmas video, never singing: clipped syllables chopped into the beat, and bursts
-      // of its radio chatter.
-      const chop=(v=1)=>[[0,'ka',0],[0.75,'shi',0],[1.5,'ka',7],[2,'ru',0],[2.75,'ka',0],[3.5,'mo',12]].forEach(([x,syl,d])=>S.alienSing(at(x),hz(64+r-4+d),beat*0.2,v,bus,syl,{scale:1.5,echo:0.3}));
-      const chatter=(x,beats,v=0.5,pitch=300)=>S.alienChatter(at(x),beat*beats,v,bus,b,pitch,1.5);
       const stomp=(v=1)=>{X.K(0,1.1*v);X.K(1.5,0.6*v);X.K(2,v);X.K(2.75,0.6*v);X.SN(1,1.05*v);X.SN(3,1.05*v);for(let i=0;i<8;i++)X.H(i/2,(i%2?0.4:0.75)*v,i===7);};
-      const gallopToms=(v=1)=>{for(let q=0;q<4;q++){X.tom(q+.5,.42*v,96);X.tom(q+.75,.52*v,112);}};
-      const gallopGtr=(v=1)=>{for(let q=0;q<4;q++)[0,.5,.75].forEach((x,i)=>S.ehRhythm(at(q+x),X.pc,beat*(i?0.18:0.36),(i?0.7:0.95)*v,bus,false));};
+      const gallopToms=(v=1)=>{for(let q=0;q<4;q++){S.ehTom(at(q+.5),96,.42*v,S.pan(bus,-0.45));S.ehTom(at(q+.75),112,.52*v,S.pan(bus,0.45));}};
+      const gallopGtr=(v=1)=>{for(let q=0;q<4;q++)[0,.5,.75].forEach((x,i)=>dbl((d,dt)=>S.ehRhythm(at(q+x)+dt,X.pc,beat*(i?0.18:0.36),(i?0.7:0.95)*v*0.8,d,false)));};
       if(world){   // the groove every world shares: four on the floor and the gallop
         if(sec==='india')stomp(1);else four(1);gallopBass(1);if(sec!=='usa'&&sec!=='india'){gallopToms(k<4?0.8:1);if(hookBars&&sec!=='egypt')gallopGtr(0.6);}acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
-        if(k===0){X.crash(1.15);S.ehSweep(t,hz(52),X.bar,0.6,bus,false);chatter(2,1.5,0.45);}
+        if(k===0){X.crash(1.15);S.ehSweep(t,hz(52),X.bar,0.6,bus,false);}
+        const RL=RIFF_LEVEL[sec];if(RL)chop(sec==='usa'&&k>=9?0.9:RL[k<4?0:1]);
         if(k===4)X.crash(1);if(k===11)X.fill();
       }
       switch(sec){
@@ -3133,64 +3141,61 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
         if(k===0)S.ehSweep(t,hz(52),X.bar*3,1,bus,true);
         if(k===2)S.ehJet(t,X.bar*2,1,bus,true);
         if(k===3)S.ehZap(at(2),hz(76),0.8,bus);
-        if(k===1||k===3)chatter(0.5,2.5,0.4,280+k*10);
         if(k>=4){for(let x=0;x<4;x++){X.K(x,0.6+0.1*(k-4));X.H(x+0.5,0.5,true);}chop(0.55+0.08*(k-4));}
         if(k>=6)roll(0.5+0.25*(k-6));
         if(k===7)X.fill();
         return;
       case 'england':   // a church bell over chugging guitars, then the hook with power chords
         if(k===0)S.bell(t,hz(52),1,bus);
-        if(k<4)X.chug(0.85);else X.pushes(0.9);
-        if(k===2||k===3)chop(0.7);
+        if(k<4)chugW(0.85);else pushesW(0.9);
         return;
       case 'australia':   // the didgeridoo under it all, clapsticks on the eighths, a jaw harp's boing
         S.didg(t,hz(40),X.bar*0.98,0.36,bus);
         for(let x=0;x<4;x+=0.5)S.hit(at(x),x%1?0.22:0.32,bus,2300,7,0.03);
         if(k%4===1)S.jawHarp(at(3.5),hz(52),0.8,bus);
-        if(k>=4)X.pushes(0.6);
+        if(k>=4)pushesW(0.6);
         return;
       case 'egypt':   // the darbuka's maqsum (doum tek - tek doum - tek -), the guitars chugging in the strange scale
         [[0,90],[0.5,320],[1.5,320],[2,90],[3,320]].forEach(([x,f])=>S.tabla(at(x),f,f<200?1:0.7,bus));
-        X.chug(k<4?0.8:0.65);
+        chugW(k<4?0.8:0.65);
         if(k===0)S.ehZap(at(3),hz(76),0.6,bus);
         return;
       case 'india':   // the elephants: timpani on the stomp, the herd trumpeting and brass chords as they arrive, then the brass blares the hook
         S.timpani(at(0),hz(bm),0.9,bus);S.timpani(at(2),hz(bm),0.7,bus);
         if(k<4){if(k%2===0)S.elephantCall(at(k===0?0.5:2.5),hz(bm+31),0.9,bus);else tones.forEach(m=>S.brass(at(0),hz(m),beat*1.2,0.5,bus));}
-        else X.pushes(0.6);
+        else pushesW(0.6);
         if(k===3)S.timpRoll(at(2),hz(bm),beat*2,0.3,0.9,bus);
         return;
       case 'kenya':   // the marimba's ostinato and drums in three against four
         for(let x=0;x<4;x+=4/3)X.tom(x,0.8,[180,150,120][Math.round(x*3/4)%3]);
-        if(k<4)for(let i=0;i<8;i++)S.bigMarimba(at(i/2),hz(64+r-4+[0,7,12,7,third+12,7,12,19][i]),beat*0.4,0.6,bus);
-        else X.pushes(0.7);
+        if(k<4)for(let i=0;i<8;i++)S.bigMarimba(at(i/2),hz(64+r-4+[0,7,12,7,third+12,7,12,19][i]),beat*0.4,0.6,S.pan(bus,i%2?0.35:-0.35));
+        else pushesW(0.7);
         return;
       case 'peru':   // charango strums and the bombo drum
         S.ehTom(at(0),70,1,bus);S.ehTom(at(2.5),70,0.8,bus);
-        if(k<4)for(let i=0;i<16;i++)if(i%3!==2)tones.forEach(m=>S.surfGtr(at(i/4),hz(m+12),beat*0.14,0.22,bus));
-        else X.pushes(0.6);
+        if(k<4)for(let i=0;i<16;i++)if(i%3!==2)tones.forEach((m,j)=>S.surfGtr(at(i/4),hz(m+12),beat*0.14,0.22,S.pan(bus,[-0.5,0,0.5][j%3])));
+        else pushesW(0.6);
         return;
       case 'usa':   // the stampede: the band's gallop, whips cracking, a harmonica wail
         gallopGtr(0.9);
         if(k%4===0)S.whipCrack(at(0),1,bus);if(k%4===2)S.whipCrack(at(2.5),0.8,bus);
         if(k<4)S.harmonica(at(0.5),hz(64+r-4+12),beat*1.4,0.8,bus);
         if(k===2)S.jawHarp(at(3),hz(54),0.8,bus);
-        if(k===1||k===3||k===9)chop(0.75);
         return;
       case 'antarctica':   // the drums fall away for the theremin and the choir; then the beat builds back
         pad(0.75);X.choir(tones,0.3);acid(500+120*k,0.35);
         for(let x=0;x<4;x+=0.5)X.H(x,0.25);
         if(k===0)S.ehSweep(t,hz(64),X.bar*2,0.8,bus,false);
-        if(k===1||k===5)chatter(1,2,0.3,260);
+        if(k===2||k===3)chop(0.3);if(k>=6)chop(0.45+0.15*(k-6));
         if(k>=4)X.K(0,0.7);if(k>=5)X.K(2,0.7);
         if(k>=6){four(0.8,false);roll(0.6);}
         if(k===6)S.ehJet(t,X.bar*2,1,bus,true);
         if(k===7){for(let i=0;i<16;i++)S.epicSnare(at(i/4),0.3+i*0.04,bus);S.ehSweep(t,hz(40),X.bar,1,bus,true);}
         return;
       case 'lift-off':   // the hook in octaves; then the band stops and the drone drifts out into the stars
-        if(k<6){four(1);roll(1);X.pushes(1);if(k%2===1)chop(0.7);acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
+        if(k<6){four(1);roll(1);pushesW(1);chop(k%2?0.95:0.6);acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
         else{pad(0.7-0.25*(k-6),X.bar*(k===7?2.4:0.97));acid(2400*Math.pow(0.35,k-5),0.45-0.15*(k-6));
-          if(k===7)chatter(1,2,0.35,260);
+          if(k===6)chop(0.4);
           if(k===6){X.K(0,1);X.crash(1.3);S.epicBass(t,X.bass,X.bar,1.4,bus);S.bell(t,hz(52),0.8,bus);S.ehSweep(t,hz(76),X.bar*2.5,0.8,bus,false);S.ehJet(t,X.bar*2.5,0.7,bus,false);}}
         return;
       }
