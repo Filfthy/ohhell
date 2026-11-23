@@ -3057,8 +3057,13 @@ Synth.prototype.tabla=function(t,f,v,dest){   // a hand drum: a bent tone and a 
         for(let i=0;i<16;i++)S.ehSeq(at(i/4),hz(48+r+ns[i]),beat*0.2,1.5*v*(i%4===0?1:0.7),X.fx.pad,cut*(1+0.35*Math.sin(i/8*Math.PI)));};
       const pad=(v=0.5,d=X.bar*0.97)=>tones.forEach(m=>S.ehPad(t,hz(m),d,v,bus));
       const world=sec!=='intro'&&sec!=='antarctica'&&sec!=='lift-off',hookBars=world&&k>=4;
-      if(world){   // the groove every world shares; the hook bars add the band's power chords
-        four(1);if(sec!=='usa')roll(1);acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
+      // The gallop: the bass in "DUM da-da" (an eighth and two sixteenths) on every beat, low toms
+      // doubling the "da-da", and in the hook bars the guitars chugging the same figure.
+      const gallopBass=(v=1)=>{for(let q=0;q<4;q++)[0,.5,.75].forEach((x,i)=>S.epicBass(at(q+x),X.bass,beat*(i?0.18:0.38),(i?0.75:1)*1.4*v,bus));};
+      const gallopToms=(v=1)=>{for(let q=0;q<4;q++){X.tom(q+.5,.42*v,96);X.tom(q+.75,.52*v,112);}};
+      const gallopGtr=(v=1)=>{for(let q=0;q<4;q++)[0,.5,.75].forEach((x,i)=>S.ehRhythm(at(q+x),X.pc,beat*(i?0.18:0.36),(i?0.7:0.95)*v,bus,false));};
+      if(world){   // the groove every world shares: four on the floor and the gallop
+        four(1);if(sec!=='usa'){gallopBass(1);gallopToms(k<4?0.8:1);if(hookBars&&sec!=='egypt'&&sec!=='india')gallopGtr(0.6);}acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
         if(k===0){X.crash(1.15);S.ehSweep(t,hz(52),X.bar,0.6,bus,false);}
         if(k===4)X.crash(1);if(k===11)X.fill();
       }
