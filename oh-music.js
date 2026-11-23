@@ -2140,6 +2140,9 @@ Synth.prototype.alienSing=function(t,f,dur,v,dest,syl,o={}){
   if(dur>vb[0]){const l=this.osc('sine',o.sung?5.8:5.4,t,end),d=c.createGain();d.gain.setValueAtTime(0,t);d.gain.setValueAtTime(0,t+vb[1]);d.gain.linearRampToValueAtTime(vb[3],t+vb[2]);l.connect(d);d.connect(saw.detune);d.connect(sub.detune);}
   // the mouth: three formants, gliding through the vowels of the syllable, over the chest - the throat's own low warmth
   const voice=this.held(vt,0.035,0.13*v,Math.max(0.05,dur-cd),0.18),chest=this.filter('lowpass',Math.min(1400,f*2.2),0.7),cg=c.createGain();
+  // o.quiet: the voice's gain is held silent from the start, not left at its default of 1 until the vowel begins after the
+  // consonant (that leak is a loud burst at full volume whatever v is; the Christmas song keeps it as part of its sound)
+  if(o.quiet)voice.gain.setValueAtTime(0.0001,t);
   cg.gain.value=0.35;src.connect(chest);chest.connect(cg);cg.connect(voice);
   [[1,7],[0.5,9],[0.25,11]].forEach(([a,q],n)=>{
     const b=this.filter('bandpass',vowels[0][n]*sc,q),ga=c.createGain();ga.gain.value=a*2;
@@ -3118,12 +3121,13 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       const RIFF=[[[0,'ka',0],[0.75,'shi',0],[1.5,'ka',7],[2,'ru',0],[2.75,'ka',0],[3.5,'mo',12]],
         [[0,'ka',0],[0.5,'ka',0],[1,'shi',7],[1.75,'ru',12],[2.5,'ka',0],[3,'mo',7],[3.25,'ka',0]]];
       // The riff goes through a low-pass filter, so it leaves the 2-4 kHz presence band to the melody: muffled under the
-      // tune (1.7 kHz), opening brighter as the camera arrives at a herd (3.2 kHz). Darker vowels (scale 1.2) too.
-      const chop=(v=1,cut=1700)=>{if(v<=0)return;const lp=S.filter('lowpass',cut,0.8),lp2=S.filter('lowpass',cut*1.15,0.6);lp.connect(lp2);lp2.connect(bus);
-        RIFF[b%2].forEach(([x,syl,d],i)=>S.alienSing(at(x),hz(64+r-4+d),beat*0.2,v,lp,syl,{scale:1.2,pan:i%2?0.55:-0.55}));};
+      // tune (2.2 kHz), opening brighter as the camera arrives at a herd (3.2 kHz). Darker vowels (scale 1.2) too.
+      const chop=(v=1,cut=2200)=>{if(v<=0)return;const lp=S.filter('lowpass',cut,0.8),lp2=S.filter('lowpass',cut*1.15,0.6);lp.connect(lp2);lp2.connect(bus);
+        RIFF[b%2].forEach(([x,syl,d],i)=>S.alienSing(at(x),hz(64+r-4+d),beat*0.2,v*RIFF_GAIN,lp,syl,{scale:1.2,pan:i%2?0.55:-0.55,quiet:true}));};
+      const RIFF_GAIN=3;   // measured against a riff-free render: about 6 dB under the band as the camera arrives, about 14 dB under it below the melody
       // how loud the riff is, bar by bar: out in front as the camera arrives at a herd, tucked under the hook after,
       // and riding high through the stampede and the build at the end
-      const RIFF_LEVEL={england:[0.8,0.06],australia:[0.5,0.05],egypt:[0.7,0.05],india:[0.5,0.05],kenya:[0.35,0.05],peru:[0.7,0.06],usa:[1,0.08]};   // [arriving, under the hook]
+      const RIFF_LEVEL={england:[0.8,0.9],australia:[0.7,0.95],egypt:[0.75,0.7],india:[0.7,0.5],kenya:[0.6,1.1],peru:[0.75,0.55],usa:[1,0.7]};   // [arriving, under the hook], set per section from measurements   // [arriving, under the hook]
       // the stereo band: everything played twice, hard left and hard right, the right a hair late
       const dbl=fn=>{fn(S.pan(bus,-0.6),0);fn(S.pan(bus,0.6),0.012);};
       const chugW=(v=1)=>{for(let i=0;i<8;i++)dbl((d,dt)=>S.ehRhythm(at(i/2)+dt,X.pc,beat*0.32,(i%2?0.75:0.95)*v*0.8,d,false));};
@@ -3135,7 +3139,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       if(world){   // the groove every world shares: four on the floor and the gallop
         if(sec==='india')stomp(1);else four(1);gallopBass(1);if(sec!=='usa'&&sec!=='india'){gallopToms(k<4?0.8:1);if(hookBars&&sec!=='egypt')gallopGtr(0.6);}acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
         if(k===0){X.crash(1.15);S.ehSweep(t,hz(52),X.bar,0.6,bus,false);}
-        const RL=RIFF_LEVEL[sec];if(RL)chop(sec==='usa'&&k>=9?0.12:RL[k<4?0:1],k<4?3200:1700);
+        const RL=RIFF_LEVEL[sec];if(RL)chop(sec==='usa'&&k>=9?0.75:RL[k<4?0:1],k<4?3200:2200);
         if(k===4)X.crash(1);if(k===11)X.fill();
       }
       switch(sec){
@@ -3189,14 +3193,14 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
         pad(0.75);X.choir(tones,0.3);acid(500+120*k,0.35);
         for(let x=0;x<4;x+=0.5)X.H(x,0.25);
         if(k===0)S.ehSweep(t,hz(64),X.bar*2,0.8,bus,false);
-        if(k===2||k===3)chop(0.06);if(k>=6)chop(0.1+0.04*(k-6));   // softly: the theremin has the tune
+        if(k>=2)chop(k<6?1:1.2+0.2*(k-6));   // softly under the theremin, building with the beat
         if(k>=4)X.K(0,0.7);if(k>=5)X.K(2,0.7);
         if(k>=6){four(0.8,false);roll(0.6);}
         if(k===6)S.ehJet(t,X.bar*2,1,bus,true);
         if(k===7){for(let i=0;i<16;i++)S.epicSnare(at(i/4),0.3+i*0.04,bus);S.ehSweep(t,hz(40),X.bar,1,bus,true);}
         return;
       case 'lift-off':   // the hook in octaves; then the band stops and the drone drifts out into the stars
-        if(k<6){four(1);roll(1);pushesW(1);chop(k<2?(k%2?0.95:0.6):(k%2?0.12:0.08),k<2?3200:1700);acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
+        if(k<6){four(1);roll(1);pushesW(1);chop(k<2?(k%2?0.95:0.7):(k%2?1.4:1.2),k<2?3200:2200);acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
         else{pad(0.7-0.25*(k-6),X.bar*(k===7?2.4:0.97));acid(2400*Math.pow(0.35,k-5),0.45-0.15*(k-6));
           if(k===6)chop(0.4);
           if(k===6){X.K(0,1);X.crash(1.3);S.epicBass(t,X.bass,X.bar,1.4,bus);S.bell(t,hz(52),0.8,bus);S.ehSweep(t,hz(76),X.bar*2.5,0.8,bus,false);S.ehJet(t,X.bar*2.5,0.7,bus,false);}}
