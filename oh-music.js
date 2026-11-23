@@ -2993,7 +2993,7 @@ function carolCrowd(S,t,beat,m,h,dest,v=1){if(!m)return;
 // heavy band, an acid sequencer, and one synth hook that travels: a twelve-bar stop on each world, four bars of local
 // colour as the drone arrives and then the hook on that world's own instrument. England (a church bell, chugging
 // guitars), Australia (didgeridoo, clapsticks, a jaw harp), Egypt (Phrygian dominant, darbuka, a driven Stylophone),
-// India (tanpura drone, tabla, sitar), then up a tone for Kenya (marimba against three-against-four drums), Peru
+// India (elephants: a stomping beat, timpani, trumpeting calls, brass blaring the hook), then up a tone for Kenya (marimba against three-against-four drums), Peru
 // (charango and pan flute) and the USA (the stampede gallop, whips, harmonica, twang guitar). Antarctica drops the
 // drums for a theremin and choir and builds back; the lift-off plays the hook in octaves and the band falls away into
 // the dark.
@@ -3019,6 +3019,39 @@ Synth.prototype.tabla=function(t,f,v,dest){   // a hand drum: a bent tone and a 
   const o=this.osc('sine',f*1.5,t,t+0.5),g=this.amp(t,0.002,0.5*v,0.3,t+0.5);o.frequency.exponentialRampToValueAtTime(f,t+0.05);o.connect(g);g.connect(dest);
   this.hit(t,0.16*v,dest,f>200?3200:1800,1.5,0.012);
 };
+// a fingered bass in the Steve Harris manner: bright roundwound strings played hard, all mids and clank, a snap off
+// the fingers and the string slapping the frets, light drive, with a round sine underneath so it keeps its bottom
+Synth.prototype.harrisBass=function(t,f,dur,v,dest){
+  const c=this.ctx,end=t+dur+0.15,s=this.osc('sawtooth',f,t,end),p=this.osc('square',f*1.003,t,end),pg=c.createGain();pg.gain.value=0.45;
+  const hp=this.filter('highpass',45,0.7),lp=this.filter('lowpass',5200,0.9),mid=this.filter('peaking',900,1),clank=this.filter('peaking',2500,1.6),sh=c.createWaveShaper(),g=this.held(t,0.002,0.12*v,dur,0.06);
+  mid.gain.value=5;clank.gain.value=9;
+  lp.frequency.setValueAtTime(5200,t);lp.frequency.exponentialRampToValueAtTime(1600,t+0.22);
+  sh.curve=new Float32Array(512).map((_,i)=>Math.tanh(2.2*(i*2/511-1))/Math.tanh(2.2));
+  s.connect(hp);p.connect(pg);pg.connect(hp);hp.connect(lp);lp.connect(sh);sh.connect(mid);mid.connect(clank);clank.connect(g);g.connect(dest);
+  this.hit(t,0.05*v,dest,3200,1.2,0.012);
+  const o=this.osc('sine',f,t,end),og=this.held(t,0.003,0.05*v,dur,0.06);o.connect(og);og.connect(dest);
+};
+// a big brass blare for the elephants: three detuned saws scooping up into the note over a square an octave down, a
+// growling flutter, the bell's filter flaring open
+Synth.prototype.elephantHorn=function(t,f,dur,v,dest){
+  const c=this.ctx,end=t+dur+0.4,mix=c.createGain(),lp=this.filter('lowpass',900,1.4),pk=this.filter('peaking',1400,1.2),g=this.held(t,0.025,0.075*v,dur,0.18);
+  pk.gain.value=5;
+  [0.996,1,1.005].forEach(k=>{const o=this.osc('sawtooth',f*k,t,end);o.frequency.setValueAtTime(f*k*0.84,t);o.frequency.exponentialRampToValueAtTime(f*k,t+0.07);o.connect(mix);});
+  const sub=this.osc('square',f/2,t,end),sg=c.createGain();sg.gain.value=0.25;sub.connect(sg);sg.connect(mix);
+  const fl=this.osc('sine',28,t,end),fg=c.createGain();fg.gain.value=0.18;mix.gain.value=0.82;fl.connect(fg);fg.connect(mix.gain);
+  lp.frequency.setValueAtTime(700,t);lp.frequency.exponentialRampToValueAtTime(3800,t+0.09);lp.frequency.exponentialRampToValueAtTime(2200,t+Math.max(0.12,dur));
+  mix.connect(lp);lp.connect(pk);pk.connect(g);this.dubOut(g,dest,0.18,0.3);
+};
+// an elephant trumpeting: a harsh reedy blast swooping up, wavering, and sagging away
+Synth.prototype.elephantCall=function(t,f,v,dest){
+  const c=this.ctx,dur=0.95,end=t+dur+0.3,mix=c.createGain(),bp=this.filter('bandpass',1700,1.6),sh=c.createWaveShaper(),g=this.held(t,0.04,0.1*v,dur-0.2,0.25);
+  sh.curve=new Float32Array(512).map((_,i)=>Math.tanh(3*(i*2/511-1))/Math.tanh(3));
+  [['sawtooth',1],['square',1.006]].forEach(([ty,k])=>{const o=this.osc(ty,f*k,t,end);o.frequency.setValueAtTime(f*k*0.7,t);o.frequency.exponentialRampToValueAtTime(f*k*1.25,t+0.22);
+    o.frequency.exponentialRampToValueAtTime(f*k*1.12,t+0.6);o.frequency.exponentialRampToValueAtTime(f*k*0.8,t+dur);
+    const l=this.osc('sine',9,t,end),lg=c.createGain();lg.gain.value=35;l.connect(lg);lg.connect(o.detune);o.connect(mix);});
+  mix.connect(sh);sh.connect(bp);bp.connect(g);this.dubOut(g,dest,0.25,0.3);
+  this.hit(t,0.08*v,g,900,0.8,0.25,'bandpass');
+};
 {
   const Q=n=>bars(rests(n,4)),up=(bs,k)=>bs.map(bar=>bar.map(e=>({...e,midi:e.midi.map(m=>m+k)})));
   const HOOK='E5:0.5 E5:0.5 G5:0.5 E5:0.5 B5:1 A5:0.5 G5:0.5 | F#5:1 E5:0.5 D5:0.5 E5:2 | E5:0.5 E5:0.5 G5:0.5 E5:0.5 B5:1 D6:0.5 B5:0.5 | A5:1 G5:0.5 F#5:0.5 G5:1 A5:1 | '+
@@ -3037,13 +3070,13 @@ Synth.prototype.tabla=function(t,f,v,dest){   // a hand drum: a bent tone and a 
   TUNES.splice(TUNES.findIndex(t=>t.id==='jingleVoid')+1,0,{
     id:'stampede',title:'Stampede Across the Stars',
     meta:'Techno space rock · E minor, then F sharp minor · 136 bpm · four on the floor, acid sequencer, heavy band, and a hook that visits eight worlds',
-    desc:'The Vector Space teaser. Four on the floor and a rolling bass under the heavy band and an acid sequencer, and one synth hook that travels from world to world: a church bell and chugging guitars in England, a didgeridoo in Australia, a Phrygian Stylophone over darbuka in Egypt, sitar and tabla in India, then up a tone for marimba in Kenya, pan flute in Peru and a stampede with whips and harmonica in the USA. On the ice of Antarctica the drums drop away for a theremin and a choir, the drone lifts off with the hook in octaves, and the band falls away into the stars.',
+    desc:'The Vector Space teaser. Four on the floor and a galloping Steve Harris bass under the heavy band and an acid sequencer, and one synth hook that travels from world to world: a church bell and chugging guitars in England, a didgeridoo in Australia, a Phrygian Stylophone over darbuka in Egypt, trumpeting elephants and blaring brass over timpani in India, then up a tone for marimba in Kenya, pan flute in Peru and a stampede with whips and harmonica in the USA. On the ice of Antarctica the drums drop away for a theremin and a choir, the drone lifts off with the hook in octaves, and the band falls away into the stars.',
     bpm:136,beats:4,send:0.25,gain:0.6,sections,chords,
     parts:[
       {inst:'ehSynLead',vel:0.95,shift:0,notes:[...Q(8),...Q(4),...hook,...Q(4),...hook,...Q(12),...Q(12),...Q(12),...Q(12),...Q(12),...Q(8),...Q(2),...hook.slice(0,4),...Q(2)]},
       {inst:'ehSynHigh',vel:0.5,shift:12,notes:[...Q(102),...hook.slice(0,4),...Q(2)]},
       {inst:'styloDrive',vel:0.8,shift:-12,notes:[...Q(36),...hookEgypt,...Q(64)]},
-      {inst:'sitar',vel:0.55,shift:-12,notes:[...Q(48),...hook,...Q(52)]},
+      {inst:'elephantHorn',vel:1.1,shift:-12,notes:[...Q(48),...hook,...Q(52)]},
       {inst:'marimba',vel:1,shift:0,notes:[...Q(60),...hookUp,...Q(40)]},
       {inst:'spaceFlute',vel:0.9,shift:0,notes:[...Q(72),...hookUp,...Q(28)]},
       {inst:'surfGtr',vel:0.85,shift:-12,notes:[...Q(84),...hookUp,...Q(16)]},
@@ -3052,18 +3085,26 @@ Synth.prototype.tabla=function(t,f,v,dest){   // a hand drum: a bent tone and a 
       const X=carolKit(S,bus,t,b,ch,beat,this),sec=sectionOf(this,b),k=b-this.sections.find(x=>x[1]===sec)[0],r=ch.root,third=ch.tones[1];
       const tones=(this.voiced||(this.voiced=carolVoicing(this.chords)))[b],at=X.at;
       const four=(v=1,clap=true)=>{for(let x=0;x<4;x++){X.K(x,v);X.H(x,0.35*v);X.H(x+0.5,0.75*v,true);}if(clap){X.SN(1,0.85*v);X.SN(3,0.85*v);}};
-      const roll=(v=1)=>{for(let i=0;i<16;i++)if(i%4)S.epicBass(at(i/4),X.bass,beat*0.2,(i%4===2?1:0.7)*1.3*v,bus);};
+      const roll=(v=1)=>{for(let i=0;i<16;i++)if(i%4)S.harrisBass(at(i/4),X.bass,beat*0.2,(i%4===2?1:0.7)*1.3*v,bus);};
       const acid=(cut,v=0.55)=>{const ns=[0,12,7,12,third+12,12,7,12,0,12,7,19,third+12,12,7,24];
         for(let i=0;i<16;i++)S.ehSeq(at(i/4),hz(48+r+ns[i]),beat*0.2,1.5*v*(i%4===0?1:0.7),X.fx.pad,cut*(1+0.35*Math.sin(i/8*Math.PI)));};
       const pad=(v=0.5,d=X.bar*0.97)=>tones.forEach(m=>S.ehPad(t,hz(m),d,v,bus));
       const world=sec!=='intro'&&sec!=='antarctica'&&sec!=='lift-off',hookBars=world&&k>=4;
       // The gallop: the bass in "DUM da-da" (an eighth and two sixteenths) on every beat, low toms
       // doubling the "da-da", and in the hook bars the guitars chugging the same figure.
-      const gallopBass=(v=1)=>{for(let q=0;q<4;q++)[0,.5,.75].forEach((x,i)=>S.epicBass(at(q+x),X.bass,beat*(i?0.18:0.38),(i?0.75:1)*1.4*v,bus));};
+      // The bass gallops like Steve Harris: three beats of DUM da-da on the root, and the fourth either a run up the
+      // chord into the next one or the gallop jumped up an octave.
+      const bm=33+(r+3)%12,nx=this.chords[b+1]?chordOf(this.chords[b+1]).root:r,nbm=33+(nx+3)%12;
+      const hb=(x,m,d,v)=>S.harrisBass(at(x),hz(m),beat*d,v,bus);
+      const gallopBass=(v=1)=>{for(let q=0;q<3;q++)[0,.5,.75].forEach((x,i)=>hb(q+x,bm,i?0.18:0.38,(i?0.75:1)*1.4*v));
+        if(nbm!==bm)[bm,bm+third,bm+7,bm+(third===3?10:11)].forEach((m,i)=>hb(3+i/4,m,0.2,(i?0.85:1)*1.4*v));
+        else[0,.5,.75].forEach((x,i)=>hb(3+x,bm+(b%2?12:0),i?0.18:0.38,(i?0.75:1)*1.4*v));};
+      // India's stomp: a heavy rock beat for the elephants instead of four on the floor
+      const stomp=(v=1)=>{X.K(0,1.1*v);X.K(1.5,0.6*v);X.K(2,v);X.K(2.75,0.6*v);X.SN(1,1.05*v);X.SN(3,1.05*v);for(let i=0;i<8;i++)X.H(i/2,(i%2?0.4:0.75)*v,i===7);};
       const gallopToms=(v=1)=>{for(let q=0;q<4;q++){X.tom(q+.5,.42*v,96);X.tom(q+.75,.52*v,112);}};
       const gallopGtr=(v=1)=>{for(let q=0;q<4;q++)[0,.5,.75].forEach((x,i)=>S.ehRhythm(at(q+x),X.pc,beat*(i?0.18:0.36),(i?0.7:0.95)*v,bus,false));};
       if(world){   // the groove every world shares: four on the floor and the gallop
-        four(1);if(sec!=='usa'){gallopBass(1);gallopToms(k<4?0.8:1);if(hookBars&&sec!=='egypt'&&sec!=='india')gallopGtr(0.6);}acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
+        if(sec==='india')stomp(1);else four(1);gallopBass(1);if(sec!=='usa'&&sec!=='india'){gallopToms(k<4?0.8:1);if(hookBars&&sec!=='egypt')gallopGtr(0.6);}acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
         if(k===0){X.crash(1.15);S.ehSweep(t,hz(52),X.bar,0.6,bus,false);}
         if(k===4)X.crash(1);if(k===11)X.fill();
       }
@@ -3092,10 +3133,11 @@ Synth.prototype.tabla=function(t,f,v,dest){   // a hand drum: a bent tone and a 
         X.chug(k<4?0.8:0.65);
         if(k===0)S.ehZap(at(3),hz(76),0.6,bus);
         return;
-      case 'india':   // the tanpura drone and tabla; the sitar runs up the chord as the drone arrives
-        S.ehPad(t,hz(40),X.bar,0.16,bus);S.ehPad(t,hz(47),X.bar,0.12,bus);
-        for(let i=0;i<16;i++){const f=[110,300,300,260,110,300,260,300][i%8];if(i%2===0||i%8===5)S.tabla(at(i/4),f,(i%4===0?0.45:0.25),bus);}
-        if(k<4)[0,1,2,3].forEach(x=>[0,7,12,third+12].forEach((d,j)=>S.sitar(at(x+j*0.25),hz(52+r-4+d),beat*0.3,0.35,bus)));
+      case 'india':   // the elephants: timpani on the stomp, the herd trumpeting and brass chords as they arrive, then the brass blares the hook
+        S.timpani(at(0),hz(bm),0.9,bus);S.timpani(at(2),hz(bm),0.7,bus);
+        if(k<4){if(k%2===0)S.elephantCall(at(k===0?0.5:2.5),hz(bm+31),0.9,bus);else tones.forEach(m=>S.brass(at(0),hz(m),beat*1.2,0.5,bus));}
+        else X.pushes(0.6);
+        if(k===3)S.timpRoll(at(2),hz(bm),beat*2,0.3,0.9,bus);
         return;
       case 'kenya':   // the marimba's ostinato and drums in three against four
         for(let x=0;x<4;x+=4/3)X.tom(x,0.8,[180,150,120][Math.round(x*3/4)%3]);
@@ -3108,7 +3150,7 @@ Synth.prototype.tabla=function(t,f,v,dest){   // a hand drum: a bent tone and a 
         else X.pushes(0.6);
         return;
       case 'usa':   // the stampede: the band's gallop, whips cracking, a harmonica wail
-        X.gallop(0.9);
+        gallopGtr(0.9);
         if(k%4===0)S.whipCrack(at(0),1,bus);if(k%4===2)S.whipCrack(at(2.5),0.8,bus);
         if(k<4)S.harmonica(at(0.5),hz(64+r-4+12),beat*1.4,0.8,bus);
         if(k===2)S.jawHarp(at(3),hz(54),0.8,bus);
