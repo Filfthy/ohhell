@@ -3128,7 +3128,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       const RIFF_GAIN=3.75;   // measured against a riff-free render: about 4 dB under the band as the camera arrives, about 12 dB under it below the melody
       // how loud the riff is, bar by bar: out in front as the camera arrives at a herd, tucked under the hook after,
       // and riding high through the stampede and the build at the end
-      const RIFF_LEVEL={england:[0.9,0.33],australia:[0.8,0.3],egypt:[0.85,0.3],india:[0.8,0.3],kenya:[0.75,0.3],peru:[0.85,0.33],usa:[1,0.35]};   // [arriving, under the hook]
+      const RIFF_LEVEL={england:[0.9,0.46],australia:[0.8,0.42],egypt:[0.85,0.42],india:[0.8,0.42],kenya:[0.75,0.42],peru:[0.85,0.46],usa:[1,0.5]};   // [arriving, under the hook]
       // the stereo band: everything played twice, hard left and hard right, the right a hair late
       const dbl=fn=>{fn(S.pan(bus,-0.6),0);fn(S.pan(bus,0.6),0.012);};
       const chugW=(v=1)=>{for(let i=0;i<8;i++)dbl((d,dt)=>S.ehRhythm(at(i/2)+dt,X.pc,beat*0.32,(i%2?0.75:0.95)*v*0.8,d,false));};
@@ -3140,7 +3140,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       if(world){   // the groove every world shares: four on the floor and the gallop
         if(sec==='india')stomp(1);else four(1);gallopBass(1);if(sec!=='usa'&&sec!=='india'){gallopToms(k<4?0.8:1);if(hookBars&&sec!=='egypt')gallopGtr(0.6);}acid(hookBars?1600+400*Math.sin(k/6*Math.PI):2600,hookBars?0.4:0.55);pad(hookBars?0.35:0.5);
         if(k===0){X.crash(1.15);S.ehSweep(t,hz(52),X.bar,0.6,bus,false);}
-        const RL=RIFF_LEVEL[sec];if(RL)chop(sec==='usa'&&k>=9?0.38:RL[k<4?0:1],k<4?6000:2200);
+        const RL=RIFF_LEVEL[sec];if(RL)chop(sec==='usa'&&k>=9?0.52:RL[k<4?0:1],k<4?6000:3200);
         if(k===4)X.crash(1);if(k===11)X.fill();
       }
       switch(sec){
@@ -3194,14 +3194,14 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
         pad(0.75);X.choir(tones,0.3);acid(500+120*k,0.35);
         for(let x=0;x<4;x+=0.5)X.H(x,0.25);
         if(k===0)S.ehSweep(t,hz(64),X.bar*2,0.8,bus,false);
-        if(k>=2)chop(k<6?0.25:0.32+0.06*(k-6));   // softly under the theremin, building with the beat
+        if(k>=2)chop(k<6?0.35:0.44+0.06*(k-6));   // softly under the theremin, building with the beat
         if(k>=4)X.K(0,0.7);if(k>=5)X.K(2,0.7);
         if(k>=6){four(0.8,false);roll(0.6);}
         if(k===6)S.ehJet(t,X.bar*2,1,bus,true);
         if(k===7){for(let i=0;i<16;i++)S.epicSnare(at(i/4),0.3+i*0.04,bus);S.ehSweep(t,hz(40),X.bar,1,bus,true);}
         return;
       case 'lift-off':   // the hook in octaves; then the band stops and the drone drifts out into the stars
-        if(k<6){four(1);roll(1);pushesW(1);chop(k<2?(k%2?0.95:0.7):(k%2?0.36:0.3),k<2?6000:2200);acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
+        if(k<6){four(1);roll(1);pushesW(1);chop(k<2?(k%2?0.95:0.7):(k%2?0.5:0.42),k<2?6000:3200);acid(3200,0.5);pad(0.5);if(k===0||k===2)X.crash(1.2);if(k===0)S.ehSweep(t,hz(40),X.bar*2,1.1,bus,true);if(k===5)X.fill();}
         else{pad(0.7-0.25*(k-6),X.bar*(k===7?2.4:0.97));acid(2400*Math.pow(0.35,k-5),0.45-0.15*(k-6));
           if(k===6)chop(0.4);
           if(k===6){X.K(0,1);X.crash(1.3);S.epicBass(t,X.bass,X.bar,1.4,bus);S.bell(t,hz(52),0.8,bus);S.ehSweep(t,hz(76),X.bar*2.5,0.8,bus,false);S.ehJet(t,X.bar*2.5,0.7,bus,false);}}
