@@ -3125,7 +3125,7 @@ Synth.prototype.elephantCall=function(t,f,v,dest){
       // tune (2.2 kHz), opening brighter as the camera arrives at a herd (3.2 kHz). Darker vowels (scale 1.2) too.
       const chop=(v=1,cut=2200)=>{if(v<=0)return;const lp=S.filter('lowpass',cut,0.8),lp2=S.filter('lowpass',cut*1.15,0.6);lp.connect(lp2);lp2.connect(bus);
         RIFF[b%2].forEach(([x,syl,d],i)=>S.alienSing(at(x),hz(64+r-4+d),beat*0.2,v*RIFF_GAIN,lp,syl,{scale:1.2,pan:i%2?0.55:-0.55,burst:v}));};
-      const RIFF_GAIN=3;   // measured against a riff-free render: about 6 dB under the band as the camera arrives, about 14 dB under it below the melody
+      const RIFF_GAIN=3.75;   // measured against a riff-free render: about 4 dB under the band as the camera arrives, about 12 dB under it below the melody
       // how loud the riff is, bar by bar: out in front as the camera arrives at a herd, tucked under the hook after,
       // and riding high through the stampede and the build at the end
       const RIFF_LEVEL={england:[0.9,0.33],australia:[0.8,0.3],egypt:[0.85,0.3],india:[0.8,0.3],kenya:[0.75,0.3],peru:[0.85,0.33],usa:[1,0.35]};   // [arriving, under the hook]
